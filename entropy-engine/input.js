@@ -1,17 +1,20 @@
 import { v2 } from "./maths.js";
 import { Sprite } from "./sprite.js";
 import { Camera } from "./camera.js";
-import { getZoomScaledPosition } from "./util.js";
+import { screenSpaceToWorldSpace } from "./util.js";
 export function getMousePos(canvas, event) {
     let rect = canvas.getBoundingClientRect();
-    return new v2(event.clientX - rect.left, canvas.height - (event.clientY - rect.top));
+    const ctx = canvas.getContext('2d');
+    const pos = new v2(event.pageX - rect.left - scrollX, 
+    // invert
+    rect.height - (event.pageY - rect.top - scrollY));
+    const scale = new v2(canvas.width / rect.width, canvas.height / rect.height);
+    pos.mul(scale);
+    return pos;
 }
 export function getMousePosWorldSpace(canvas, event) {
-    const mousePos = getMousePos(canvas, event), center = new v2(canvas.width, canvas.height).scale(0.5), camera = Camera.main;
-    mousePos.set(getZoomScaledPosition(mousePos, 1 / camera.getComponent('Camera').zoom, center));
-    mousePos.add(camera.transform.position);
-    mousePos.sub(center);
-    return mousePos;
+    const mousePos = getMousePos(canvas, event);
+    return screenSpaceToWorldSpace(mousePos, Camera.main, canvas);
 }
 export const input = {
     listen: (type, handler) => {

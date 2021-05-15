@@ -11,7 +11,6 @@ import { Sprite } from "./sprite.js";
 import { setCanvasSize, startAnimation } from "./renderer.js";
 import renderAll from "./renderComponents.js";
 import { Script, scriptManager } from "./scripts.js";
-import { v2 } from './maths.js';
 import { collideAll } from "./collisions.js";
 import { license } from "./license.js";
 import { getMousePos, input, setMousePos } from "./input.js";
@@ -30,6 +29,7 @@ export { input } from './input.js';
 export { Camera } from './camera.js';
 export { spritesFromJSON } from './JSONprocessor.js';
 export { Transform } from './component.js';
+export { worldSpaceToScreenSpace, screenSpaceToWorldSpace } from './util.js';
 /**
  * Returns a number whose value is limited to the given range.
  *
@@ -41,18 +41,22 @@ export { Transform } from './component.js';
  * @returns A number in the range [min, max]
  * @type Number
  */
+// keep as function(){} due to use of 'this'
 // @ts-ignore
 Number.prototype.clamp = function (min, max) {
     return Math.min(Math.max(this, min), max);
 };
-export default function entropyEngine({ licenseKey = '', canvasID = "canvas", width = 1024, height = 512, performanceDebug = 0, }) {
+export default function entropyEngine({ licenseKey = '', canvasID = "canvas", performanceDebug = 0, }) {
+    var _a;
     // for the event listeners
     let isInitialised = false;
     const licenseLevel = license(licenseKey);
-    // canvas stuff
-    let [passedWidth, passedHeight] = [width, height];
-    [width, height] = setCanvasSize(canvasID, width, height);
     const { canvas, ctx } = getCanvasStuff(canvasID);
+    setCanvasSize(canvas);
+    (_a = canvas === null || canvas === void 0 ? void 0 : canvas.parentNode) === null || _a === void 0 ? void 0 : _a.addEventListener('resize', () => {
+        console.log('l');
+        setCanvasSize(canvas);
+    });
     // make the Y axis go up rather than down - bit more intuitive
     ctx.transform(1, 0, 0, -1, 0, canvas.height);
     // for easy restoring
@@ -122,53 +126,49 @@ export default function entropyEngine({ licenseKey = '', canvasID = "canvas", wi
             }
         });
     }, false);
+    function init() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (licenseLevel < 2)
+                yield startAnimation(canvasID);
+            Camera.findMain();
+            // scripts start running their own start methods now
+            Script.runStartMethodOnInit = true;
+            scriptManager.runStartAll();
+            // for event listeners
+            isInitialised = true;
+        });
+    }
+    function tick(timestamp) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let initTime = timestamp;
+            Sprite.loopThroughSprites(sprite => {
+                sprite.tick();
+                if (sprite.hasComponent('Body'))
+                    sprite.getComponent('Body').applyGravity(Sprite.sprites, 10);
+            });
+            if (performanceDebug > 1)
+                console.log(`tick sprite and gravity: ${performance.now() - initTime}`);
+            let time = performance.now();
+            collideAll(Sprite.sprites, scriptManager.collide);
+            if (performanceDebug > 1)
+                console.log(`collisions: ${performance.now() - time}`);
+            time = performance.now();
+            renderAll(Sprite.sprites, canvas, ctx, background);
+            if (performanceDebug > 1)
+                console.log(`rendering: ${performance.now() - time}`);
+            if (performanceDebug > 0)
+                console.log(`${performanceDebug > 1 ? 'Total:' : ''}${performance.now() - initTime}`);
+            window.requestAnimationFrame(tick);
+        });
+    }
     function run() {
         return __awaiter(this, void 0, void 0, function* () {
-            function init() {
-                return __awaiter(this, void 0, void 0, function* () {
-                    if (licenseLevel < 2)
-                        yield startAnimation(canvasID);
-                    Camera.findMain();
-                    // scripts start running their own start methods now
-                    Script.runStartMethodOnInit = true;
-                    scriptManager.runStartAll();
-                    // for event listeners
-                    isInitialised = true;
-                });
-            }
-            function tick(timestamp) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    //console.log(`___`);
-                    let initTime = timestamp;
-                    Sprite.loopThroughSprites(sprite => {
-                        sprite.tick();
-                        if (sprite.hasComponent('Body'))
-                            sprite.getComponent('Body').applyGravity(Sprite.sprites, 10);
-                    });
-                    if (performanceDebug > 1)
-                        console.log(`tick sprite and gravity: ${performance.now() - initTime}`);
-                    let time = performance.now();
-                    collideAll(Sprite.sprites, scriptManager.collide);
-                    if (performanceDebug > 1)
-                        console.log(`collisions: ${performance.now() - time}`);
-                    time = performance.now();
-                    renderAll(Sprite.sprites, canvas, ctx, new v2(width, height), background);
-                    if (performanceDebug > 1)
-                        console.log(`rendering: ${performance.now() - time}`);
-                    if (performanceDebug > 0)
-                        console.log(`${performanceDebug > 1 ? 'Total:' : ''}${performance.now() - initTime}`);
-                    window.requestAnimationFrame(tick);
-                });
-            }
-            // driver code
             yield init();
             window.requestAnimationFrame(tick);
         });
     }
     return {
         run,
-        width,
-        height,
         background
     };
 }

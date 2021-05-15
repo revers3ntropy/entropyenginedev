@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        Sign In
+    </title>
+
+    <meta name="viewport" content="width=device-width">
+    <link rel='stylesheet' href="../../global.css">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script>
+        $(() => {
+            $("#header").load("../header.html");
+        });
+    </script>
+</head>
+<body>
+<div id="header"></div>
+<div style="display: flex; align-items: center; justify-content: center">
+    <div style="margin-top: 50px; border-radius: 20px; display: inline-block; padding: 10px; border: 1px solid var(--text-colour)" class="blur">
+        <div style="text-align: center; margin: 10px">
+            <label>
+                Username:
+                <input type="text" id="username" style="border-bottom: 1px solid var(--text-colour)">
+            </label>
+        </div>
+
+        <div style="text-align: center; margin: 10px">
+            <label>
+                Password:
+                <input type="password" id="password" style="border-bottom: 1px solid var(--text-colour)">
+            </label>
+        </div>
+
+        <div style="text-align: center; margin: 10px">
+            <button id="submit">Sign In</button>
+        </div>
+
+        <div style="text-align: center; min-height: 10px">
+            <div id="warning" style="color: #fd6262"></div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>
+
+<script type="module">
+    import {request} from '../../request.js';
+    import {isSignedIn} from '../../util.js';
+
+    $(`#submit`).click(async () => {
+        const username = $('#username').val();
+        const password = $('#password').val();
+
+        localStorage.id = (await request('/get-id', {
+            username,
+            password
+        }))._id;
+
+        if (isSignedIn()) {
+            window.location.href = 'https://entropyengine.dev/accounts';
+            return;
+        }
+
+        $('#warning').html(`
+            Sorry, that account doesn't exist
+        `)
+
+    });
+
+</script>

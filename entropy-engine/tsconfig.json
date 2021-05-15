@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "module": "es2020",
+    "target": "es6",
+    "outDir": "./",
+    "strict": true,
+  },
+  "files": [
+    "./src/collisions.ts",
+    "./src/component.ts",
+    "./src/index.ts",
+    "./src/maths.ts",
+    "./src/physics.ts",
+    "./src/presets.ts",
+    "./src/renderer.ts",
+    "./src/sprite.ts",
+    "./src/scripts.ts",
+    "./src/debugRenderer.ts"
+  ]
+}

@@ -3,9 +3,31 @@ export function sleep(ms) {
     // @ts-ignore
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+export function getCanvasSize(canvas) {
+    const bounds = canvas.getBoundingClientRect();
+    return new v2(canvas.width, canvas.height);
+}
 export function getZoomScaledPosition(pos, zoom, center) {
     // scales the position from the center
-    return new v2((pos.x - center.x) * zoom + center.x, (pos.y - center.y) * zoom + center.y);
+    return pos.sub(center).scale(zoom).add(center);
+}
+export function screenSpaceToWorldSpace(point, camera, canvas) {
+    point = point.clone;
+    const center = getCanvasSize(canvas).scale(0.5);
+    point.set(getZoomScaledPosition(point, 1 / camera.getComponent('Camera').zoom, center));
+    point.add(camera.transform.position);
+    point.sub(center);
+    return point;
+}
+export function worldSpaceToScreenSpace(point, camera, canvas) {
+    const canvasSize = getCanvasSize(canvas);
+    const mid = canvasSize.clone.scale(0.5);
+    const cameraPos = camera.transform.position.clone
+        .sub(canvasSize
+        .clone
+        .scale(0.5));
+    const renderPos = point.clone.sub(cameraPos);
+    return getZoomScaledPosition(renderPos, camera.getComponent('Camera').zoom, mid);
 }
 export function getCanvasStuff(id) {
     const c = document.getElementById(id);

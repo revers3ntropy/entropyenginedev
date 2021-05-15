@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        New Account
+    </title>
+
+    <meta name="viewport" content="width=device-width">
+    <link rel='stylesheet' id="stylesheet">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <link rel='stylesheet' href="../../global.css">
+    <script>
+        $(() => {
+            $("#header").load("../header.html");
+        });
+    </script>
+</head>
+<body>
+<div id="header"></div>
+<a href="../my-projects">back</a>
+<div id="confirm">
+
+</div>
+</body>
+</html>
+
+<script type="module">
+    import {request} from '../../request.js';
+    import {urlParam, sleep} from '../../util.js';
+
+    const projectID = urlParam('p');
+    const confirm = $('#confirm');
+
+    request('/get-project-name', {
+        projectID
+    }).then(async value => {
+        confirm.html(`
+            Are you Sure you want to delete the project <a href="../../editor?p=${projectID}">${value.name}</a>?
+        `);
+
+        await sleep(2000);
+
+        window.delete = () => {
+            request('/delete-project', {
+                userID: localStorage.id,
+                projectID
+            });
+            window.location.href = 'https://entropyengine.dev/accounts/my-projects';
+        };
+
+        confirm.append(`
+            <br>
+            <button onclick="window.delete()">
+             Yes
+            </button>
+        `)
+
+    });
+</script>

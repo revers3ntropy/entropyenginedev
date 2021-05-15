@@ -71,6 +71,10 @@ export class v2 {
         this.y = to.y;
         return this;
     }
+    apply(m) {
+        this.x = m(this.x);
+        this.y = m(this.y);
+    }
     static get up() {
         return new v2(0, 1);
     }

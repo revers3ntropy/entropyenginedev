@@ -61,7 +61,7 @@ export class Transform extends Component {
     }
     get scale() {
         if (this.parent !== undefined)
-            return this._scale.clone.mul(this.parent.scale);
+            return this._scale.clone.add(this.parent.scale);
         return this._scale;
     }
     get localScale() {
@@ -73,9 +73,9 @@ export class Transform extends Component {
     set scale(v) {
         var _a, _b;
         var _c, _d;
-        this._scale = v || new v2(1, 1);
-        (_a = (_c = this._scale).x) !== null && _a !== void 0 ? _a : (_c.x = 1);
-        (_b = (_d = this._scale).y) !== null && _b !== void 0 ? _b : (_d.y = 1);
+        this._scale = v || v2.zero;
+        (_a = (_c = this._scale).x) !== null && _a !== void 0 ? _a : (_c.x = 0);
+        (_b = (_d = this._scale).y) !== null && _b !== void 0 ? _b : (_d.y = 0);
     }
     detachParent() {
         this.parent = undefined;

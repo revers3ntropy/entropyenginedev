@@ -10,18 +10,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { v2 } from "./maths.js";
 import { sleep, getCanvasStuff } from "./util.js";
 // canvas util
-export function setCanvasSize(canvasID, width, height) {
-    var _a, _b, _c, _d;
-    // get the canvas and context
-    const { ctx } = getCanvasStuff(canvasID);
+export function setCanvasSize(canvas) {
+    /* depricated
+    // get the canvas and context from two numbers
+    const { ctx, canvas } = getCanvasStuff(canvasID);
     // set both the width and the height based off whether or not once has been specified - if it hasn't keep it the same
     // the '?? number' is a backup if the boundingClientRect cannot be found on the canvas element - so default value if everything goes wrong
-    let actualWidth = width || ((_b = (_a = document.getElementById(canvasID)) === null || _a === void 0 ? void 0 : _a.getBoundingClientRect().width) !== null && _b !== void 0 ? _b : 10);
-    let actualHeight = height || ((_d = (_c = document.getElementById(canvasID)) === null || _c === void 0 ? void 0 : _c.getBoundingClientRect().height) !== null && _d !== void 0 ? _d : 10);
-    ctx.canvas.width = actualWidth;
-    ctx.canvas.height = actualHeight;
+    let actualWidth = width || (document.getElementById(canvasID)?.getBoundingClientRect().width ?? 10);
+    let actualHeight = height || (document.getElementById(canvasID)?.getBoundingClientRect().height ?? 10);
+    canvas.style.width = `${actualWidth}px`;
+    canvas.style.height = `${actualHeight}px`;
     // return what the actual size of the canvas is for use later on
-    return [actualWidth, actualHeight];
+    return [actualWidth, actualHeight]
+     */
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
 }
 export function startAnimation(canvasID) {
     return __awaiter(this, void 0, void 0, function* () {

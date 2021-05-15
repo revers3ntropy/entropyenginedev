@@ -64,6 +64,8 @@ export class Sprite {
         this.components.push(component);
     }
     hasComponent(type, subType = '') {
+        if (type === 'transform')
+            return true;
         for (let c of this.components)
             if ((c.type === type &&
                 (c.subtype === subType || subType === '')) || c.subtype === type)
@@ -71,9 +73,13 @@ export class Sprite {
         return false;
     }
     getComponent(type, subType = '') {
+        if (type === 'transform')
+            return this.transform;
         // returns the first component of passed type
-        const component = this.components.find(c => (c.type === type &&
+        let component = this.components.find(c => (c.type === type &&
             (c.subtype === subType || subType === '')) || c.subtype === type);
+        if (component === undefined)
+            component = this.getComponents('Script').find(c => c.subtype === subType || c.subtype === type);
         if (component === undefined)
             throw new Error(`Cannot find component of type ${type} on sprite ${this.name}`);
         return component;

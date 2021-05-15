@@ -23,11 +23,12 @@ export class Script extends Component {
     json() {
         var _a, _b;
         return {
-            'type': 'CircleRenderer',
+            'type': 'Script',
             'shouldProfile': this.shouldProfile,
             // assume that the script src is in scripts.js
             'path': 'scripts.js',
-            'name': (_a = this === null || this === void 0 ? void 0 : this.scriptName) !== null && _a !== void 0 ? _a : (_b = this.script) === null || _b === void 0 ? void 0 : _b.constructor.name
+            'name': (this === null || this === void 0 ? void 0 : this.scriptName) || ((_a = this.script) === null || _a === void 0 ? void 0 : _a.constructor.name),
+            'scriptName': (this === null || this === void 0 ? void 0 : this.scriptName) || ((_b = this.script) === null || _b === void 0 ? void 0 : _b.constructor.name)
         };
     }
     setScript(script) {

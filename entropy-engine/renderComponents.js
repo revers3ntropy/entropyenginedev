@@ -2,15 +2,15 @@ import { Component } from "./component.js";
 import { v2 } from "./maths.js";
 import { circle, image, rect } from "./renderer.js";
 import { Camera } from "./camera.js";
-import { getZoomScaledPosition, JSONifyComponent } from './util.js';
-export default function renderAll(sprites, canvas, ctx, screenDimensions, background) {
+import { getCanvasSize, getZoomScaledPosition, JSONifyComponent } from './util.js';
+export default function renderAll(sprites, canvas, ctx, background) {
     // background
-    const canvasSize = new v2(canvas.width, canvas.height);
+    const canvasSize = getCanvasSize(canvas);
     const mid = canvasSize.clone.scale(0.5);
     function fillBackground() {
-        rect(ctx, v2.zero, canvas.width, canvas.height, background.colour);
+        rect(ctx, v2.zero, canvasSize.x, canvasSize.y, background.colour);
     }
-    if (background.image === '') {
+    if (!background.image) {
         fillBackground();
     }
     else {
@@ -25,10 +25,8 @@ export default function renderAll(sprites, canvas, ctx, screenDimensions, backgr
     // camera
     const camera = Camera.main
         .getComponent("Camera");
-    const cameraPos = Camera.main.transform
-        .position
-        .clone
-        .sub(screenDimensions
+    const cameraPos = Camera.main.transform.position.clone
+        .sub(canvasSize
         .clone
         .scale(0.5));
     // sub the screen size to put 0, 0 in the middle of the screen
@@ -65,9 +63,8 @@ export default function renderAll(sprites, canvas, ctx, screenDimensions, backgr
     }
 }
 class Renderer extends Component {
-    constructor(type, colour, offset, zLayer) {
+    constructor(type, offset, zLayer) {
         super("Renderer", type);
-        this.colour = colour;
         this.offset = offset;
         this.zLayer = zLayer;
     }
@@ -78,8 +75,9 @@ class Renderer extends Component {
 }
 export class CircleRenderer extends Renderer {
     constructor({ radius = 1, offset = new v2(0, 0), colour = 'rgb(0, 0, 0)', zLayer = 1 }) {
-        super("CircleRenderer", colour, offset, zLayer);
+        super("CircleRenderer", offset, zLayer);
         this.radius = radius;
+        this.colour = colour;
     }
     draw(position, transform, ctx, cameraZoom, center) {
         const radius = this.radius * cameraZoom * transform.scale.x;
@@ -90,9 +88,10 @@ export class CircleRenderer extends Renderer {
 }
 export class RectRenderer extends Renderer {
     constructor({ height = 1, offset = new v2(0, 0), width = 1, colour = 'rgb(0, 0, 0)', zLayer = 1 }) {
-        super("RectRenderer", colour, offset, zLayer);
+        super("RectRenderer", offset, zLayer);
         this.width = width;
         this.height = height;
+        this.colour = colour;
     }
     draw(position, transform, ctx, cameraZoom, center) {
         const width = this.width * transform.scale.x * cameraZoom;
@@ -106,16 +105,18 @@ export class RectRenderer extends Renderer {
 }
 export class ImageRenderer extends Renderer {
     constructor({ height = 1, offset = new v2(0, 0), width = 1, url = '', zLayer = 1 }) {
-        super("RectRenderer", 'rgb(255, 255, 255)', offset, zLayer);
+        super("ImageRenderer", offset, zLayer);
         this.width = width;
         this.height = height;
         this.url = url;
     }
     draw(position, transform, ctx, cameraZoom, center) {
-        if (this.height <= 0 || this.width <= 0)
+        const width = this.width * transform.scale.x * cameraZoom;
+        const height = this.height * transform.scale.y * cameraZoom;
+        if (height <= 0 || width <= 0)
             return;
         let renderPos = this.offset.clone
             .add(position);
-        image(ctx, getZoomScaledPosition(renderPos, cameraZoom, center), new v2(this.width, this.height).scale(cameraZoom), this.url);
+        image(ctx, getZoomScaledPosition(renderPos, cameraZoom, center), new v2(width, height).scale(cameraZoom), this.url);
     }
 }

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Build</title>
+
+    <meta name="viewport" content="width=device-width">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <link rel='stylesheet' href="../../global.css">
+    <script>
+		$(() => {
+			$("#header").load("../../accounts/header.html");
+		});
+    </script>
+
+    <link rel="stylesheet" href="../chartist-js-develop/dist/chartist.min.css">
+
+    <style>
+
+        #podium {
+            display: grid;
+        }
+
+        #title {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 40px;
+        }
+
+        #latest-contributor {
+            border: 1px solid #7d7d7d;
+            margin: 10px;
+            border-radius: 10px;
+            background-color: #555555;
+            grid-column: 1/1;
+            text-align: center;
+            padding: 10px;
+        }
+
+        #contributor-podium {
+            border: 1px solid #7d7d7d;
+            background-color: #444444;
+            border-radius: 10px;
+            grid-column: 2/4;
+            text-align: center;
+            display: grid;
+            margin: 5px 10px 5px 5px;
+        }
+
+        #all-contributors {
+            text-align: center;
+            display: grid;
+            grid-auto-rows: auto;
+            grid-gap: 1rem;
+            grid-template-columns: repeat(auto-fill, 32%);
+            margin: 10px;
+        }
+
+        .chart {
+            height: 300px;
+            width: 500px;
+            background-color: #a7a7a7;
+            margin: 0 8px 8px 8px;
+            border-radius: 5px;
+        }
+
+    </style>
+
+    <script>
+		const queryString = window.location.search;
+		const urlParams = new URLSearchParams(queryString);
+		const currentTime = Math.round(new Date().getTime()/1000);
+
+		fetch(`https://entropyengine.dev:50001/all-contributions/${urlParams.get('p')}`)
+			.then(async data => {
+				data = await data.json();
+
+				if (data.length < 1) return;
+
+				let leastRecent = Math.floor(data[0].date / (60*60*24));
+				let mostRecent = 0;
+				let max = 0;
+
+				let series = [];
+
+				let perPersonSeries = {};
+
+				for (const save of data) {
+					const secondsSince = currentTime - save.date;
+					const daysSince = Math.floor(secondsSince / (60*60*24));
+
+					if (daysSince > leastRecent)
+						leastRecent = daysSince;
+
+					if (daysSince < mostRecent)
+						mostRecent = daysSince;
+
+					if (series[daysSince])
+						series[daysSince] += 1;
+					else
+						series[daysSince] = 1;
+
+					if (!perPersonSeries[save.username])
+						perPersonSeries[save.username] = [];
+
+					if (perPersonSeries[save.username][daysSince])
+						perPersonSeries[save.username][daysSince] += 1;
+					else
+						perPersonSeries[save.username][daysSince] = 1;
+				}
+
+				// find max
+				for (let day of series) {
+					if (day > max)
+						max = day;
+                }
+
+				series.reverse();
+
+				new Chartist.Line('#chart-total', {series: [series]}, {
+					showPoint: false,
+					showArea: true,
+					showLine: false,
+
+					axisX: {
+						showLabel: true,
+						showGrid: true,
+					},
+					axisY: {
+						offset: 50,
+						showGrid: false,
+					},
+
+					lineSmooth: Chartist.Interpolation.simple({
+						divisor: 2,
+					}),
+					high: max,
+					low: 0,
+				});
+
+				function sleep(ms) {
+					return new Promise(resolve => setTimeout(resolve, ms));
+				}
+
+				async function doForPeople () {
+					if (!window.loadedPeople){
+						await sleep(0.1);
+						doForPeople();
+						return;
+                    }
+
+					for (const person in perPersonSeries) {
+						let max = 0;
+
+						for (let day of perPersonSeries[person]) {
+							if (day > max)
+								max = day;
+						}
+
+						perPersonSeries[person].reverse();
+
+						new Chartist.Line(`#chart-${person}`, {series: [perPersonSeries[person]]}, {
+							showPoint: false,
+							showArea: true,
+							showLine: false,
+
+							axisX: {
+								showLabel: true,
+								showGrid: true,
+							},
+							axisY: {
+								offset: 50,
+								showGrid: false,
+							},
+
+							lineSmooth: Chartist.Interpolation.simple({
+								divisor: 2,
+							}),
+							high: max,
+							low: 0,
+						});
+					}
+
+					window.scrollTo(0, 0);
+                }
+
+                doForPeople();
+
+			});
+
+    </script>
+</head>
+<body>
+<div id="header"></div>
+
+<div id="project-name" style="text-align: center; font-size: 25px"></div>
+
+<div id="title">
+    Contributors <span style="font-size: 20px">(<span id="no-of-contributors"></span>)</span>
+</div>
+
+<div id="your-rank"></div>
+
+
+<div id="podium">
+    <div id="latest-contributor"></div>
+    <div id="contributor-podium"></div>
+</div>
+
+<p style="text-align: center">
+    Saves per Day
+</p>
+<div style="display: flex; justify-content: center; align-items: center">
+    <div class="chart">
+        <div class="ct-chart ct-golden-section" id="chart-total" style=""></div>
+    </div>
+</div>
+
+
+<div id="all-contributors"></div>
+
+<script src="../chartist-js-develop/dist/chartist.min.js"></script>
+
+</body>
+</html>
+
+<script type="module">
+    import {request} from '../../request.js';
+	import { urlParam, secondsToReadable, isSignedIn } from '../../util.js';
+
+    request('/contributor-info', {
+    	projectID: urlParam('p')
+    }).then(async info => {
+        $('#no-of-contributors').html(info.length);
+
+        // update podium
+        const podium = $('#contributor-podium');
+        podium.append(`
+            <div style="
+                background-color: rgba(100, 100, 100, 0.7);
+                grid-column: 1/3;
+                grid-row: 1/3;
+                margin: 2px;
+                border-radius: 10px;
+            ">
+                ${info.length > 0 ? `
+                <p style="font-size: 20px; margin: 4px">
+                    Top Contributor
+                </p>
+                <p style="font-size: 35px; margin: 8px">
+                    ${info[0].username}
+                </p>
+
+                <p style="font-size: 20px">
+                    (${info[0].count} saves)
+                </p>
+                ` : ''}
+            </div>
+
+            <div style="
+                background-color: rgba(100, 100, 100, 0.7);
+                grid-column: 1/1;
+                grid-row: 3/4;
+                margin: 2px;
+                border-radius: 10px;
+            ">
+               ${info.length > 1 ? `
+                <p style="font-size: 20px; margin: 4px">
+                    #2
+                </p>
+                <span style="font-size: 25px; margin: 8px">
+                    ${info[1].username}
+                </span>
+
+                <span style="font-size: 17px">
+                    (${info[1].count})
+                </span>
+                ` : 'Looks like theres only one contributor!'}
+            </div>
+
+            <div style="
+                background-color: rgba(100, 100, 100, 0.7);
+                grid-column: 2/2;
+                grid-row: 3/4;
+                margin: 2px;
+                border-radius: 10px;
+            ">
+                ${info.length > 2 ? `
+                <p style="font-size: 15px; margin: 4px">
+                    #3
+                </p>
+                <span style="font-size: 20px; margin: 8px">
+                    ${info[2].username}
+                </span>
+
+                <span style="font-size: 15px">
+                    (${info[2].count})
+                </span>
+                ` : ''}
+            </div>
+        `);
+
+        const myUsername = isSignedIn() ? (await request('/get-username', {userID: localStorage.id})).username : '';
+
+        // update all contributors
+        let i = 0;
+        for (let contributor of info) {
+
+        	if (myUsername === contributor.username) {
+
+            }
+
+			const lastWorkedOn = currentTime - parseInt(contributor.latest);
+
+        	$('#all-contributors').append(`
+        	    <div style="
+        	        border-radius: 10px;
+        	        border: 1px solid #555555;
+                    margin: 5px;
+                    flex: 0 1 calc(25% - 1em);
+                    background-color: rgba(100, 100, 100, 0.25)
+        	    ">
+                    <p style="font-size: 25px; margin: 5px">
+                        ${contributor.username}
+                    </p>
+                    ${contributor.count} saves - most recently ${secondsToReadable(lastWorkedOn)} ago.
+
+                    <div style="display: flex; justify-content: center; align-items: center">
+                        <div class="chart">
+                            <div class="ct-chart ct-golden-section" id="chart-${contributor.username}"></div>
+                        </div>
+                    </div>
+        	    </div>
+        	`);
+        	i++;
+        }
+
+        window.loadedPeople = true;
+    });
+
+    const currentTime = Math.round(new Date().getTime()/1000);
+
+	request('/latest-contributor', {
+		projectID: urlParam('p')
+	}).then(latest => {
+
+		const secondsSince = currentTime - parseInt(latest[0].date);
+
+		$('#latest-contributor').html(`
+		    <p style="font-size: 20px; margin: 4px">
+		    Latest Contributor
+		    </p>
+            <p style="font-size: 35px; margin: 8px">
+                ${latest[0].username}
+            </p>
+
+            <p style="font-size: 20px">
+                (${secondsToReadable(secondsSince)} ago)
+            </p>
+		`);
+
+		window.scrollTo(0, 0);
+    });
+
+</script>

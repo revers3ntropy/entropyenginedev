@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Error</title>
+
+    <meta name="viewport" content="width=device-width">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <link rel='stylesheet' href="../../global.css">
+    <script>
+        $(() => {
+            $("#header").load("../header.html");
+        });
+    </script>
+</head>
+<body>
+<div id="header"></div>
+    <div id="error-message" style="text-align: center; font-size: 50px"></div>
+    <div id="options"></div>
+
+
+</body>
+</html>
+
+<script type="module">
+    import { urlParam } from '../../util.js';
+
+    let message;
+    switch (urlParam('type')) {
+        case 'notSignedIn':
+            message = 'Looks like you need to sign in!';
+            $('#options').html(`
+                <div style="text-align: center; font-size: 30px; margin-top: 20px">
+                    <a href="../sign-in">Sign In</a>
+                    <a href="../new">Create Account</a>
+                </div>
+            `);
+            break;
+
+        case 'projectAccessDenied':
+            message = "Sorry, you don't have access to that project. " +
+                "<br>Try contacting whoever sent you the link and make sure you copied the whole link.";
+
+            break;
+
+        case 'serverPingFailed':
+        	message = "Looks like we can't connect to the server right now... Try again in a few minutes";
+        	break;
+
+        default:
+            message = 'Looks like theres been an error... try signing in again';
+            break
+    }
+
+    $('#error-message').html(message);
+
+
+</script>

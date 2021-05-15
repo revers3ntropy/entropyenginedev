@@ -45,7 +45,7 @@ function isV2(o) {
         typeof o[1] === 'number');
 }
 export function getSpriteFromJSON(JSON) {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
         /*
             Oh man what a horrible piece of code...
@@ -62,25 +62,18 @@ export function getSpriteFromJSON(JSON) {
         const transformJSON = JSON['transform'];
         let parentName = '';
         for (let transformPropertyJSON in transformJSON) {
-            if (!transformJSON.hasOwnProperty(transformPropertyJSON))
-                continue;
             switch (transformPropertyJSON) {
                 case 'position':
-                    if (!isV2(transformJSON[transformPropertyJSON])) {
-                        console.error(`transform component 'position' number be a v2. Sprite ${name}`);
-                        break;
-                    }
-                    transform.position = new v2(transformJSON[transformPropertyJSON][0], transformJSON[transformPropertyJSON][1]);
-                    break;
                 case 'scale':
                     if (!isV2(transformJSON[transformPropertyJSON])) {
-                        console.error(`transform component 'scale' number be a v2. Sprite ${name}`);
+                        console.error(`transform component '${transformPropertyJSON}' number be a v2. Sprite ${name}`);
                         break;
                     }
-                    transform.scale = new v2(transformJSON[transformPropertyJSON][0], transformJSON[transformPropertyJSON][1]);
+                    // either position or scale
+                    transform[transformPropertyJSON] = new v2(transformJSON[transformPropertyJSON][0], transformJSON[transformPropertyJSON][1]);
                     break;
                 case 'rotation':
-                    transform.scale = transformJSON[transformPropertyJSON];
+                    transform.rotation = transformJSON[transformPropertyJSON];
                     break;
                 case 'parent':
                     parentName = transformJSON[transformPropertyJSON];
@@ -95,7 +88,7 @@ export function getSpriteFromJSON(JSON) {
                 // two parts to a script: path and name
                 const path = componentJSON['path'];
                 // use either a specified name or the name of the file (found using some regex)
-                const className = (_e = componentJSON['className']) !== null && _e !== void 0 ? _e : 
+                const className = componentJSON['name'] || componentJSON['className'];
                 // gets name of file
                 path.replace(/^.*[\\\/]/, '')
                     // gets everything before the '.extension'
@@ -103,10 +96,13 @@ export function getSpriteFromJSON(JSON) {
                 const file = yield import(`${path}?${cacheBust}`);
                 // evaluate the script name as JS code, like when instantiating the component
                 try {
-                    components.push(new Script({
+                    const script = new Script({
                         script: new (file[className])(),
                         profile: componentJSON['profile']
-                    }));
+                    });
+                    script['name'] = className;
+                    script.scriptName = className;
+                    components.push(script);
                 }
                 catch (E) {
                     console.error(`Couldn't find script ${componentJSON}: ${E}`);

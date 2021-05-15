@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        Home
+    </title>
+
+    <meta name="viewport" content="width=device-width">
+    <link rel='stylesheet' id="stylesheet">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <link rel='stylesheet' href="../../global.css">
+    <script>
+        $(() => {
+            $("#header").load("../header.html");
+        });
+    </script>
+</head>
+
+<body>
+<div id="header"></div>
+<div style="text-align: center">
+    <p style="font-size: 50px">
+        Welcome to Entropy Engine Web Dev!
+    </p>
+
+    <div id="links"></div>
+</div>
+
+
+
+</body>
+</html>
+
+<script type="module">
+    import {isSignedIn} from '../../util.js';
+
+    const toFill = $('#links');
+
+    if (isSignedIn()) {
+        toFill.html(`
+        <a href="../my-projects/" style="font-size: 30px">
+            My Projects
+        </a>
+        `);
+    } else {
+        toFill.html(`
+        <a href="../sign-in" style="font-size: 25px; margin: 10px">
+            Sign In
+        </a>
+        <a href="../new" style="font-size: 25px">
+            Create Account
+        </a>
+        `);
+    }
+
+</script>
