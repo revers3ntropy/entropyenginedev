@@ -18,12 +18,46 @@
 </head>
 <body>
 <div id="header"></div>
-<a href="../my-projects">back</a>
-<div id="confirm">
-
+<div style="text-align: center; margin: 30px; font-size: 20px">
+    <a href="../my-projects">
+        back
+    </a>
 </div>
+
+<div id="confirm" style="text-align: center"></div>
+<div id="timer-container">
+    <div id="timer"></div>
+</div>
+
 </body>
 </html>
+
+<style>
+
+    #timer-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @keyframes timer-shrink {
+        0% {
+            width: 90%;
+        }
+        100% {
+            width: 0;
+        }
+    }
+
+    #timer {
+        height: 20px;
+        background-color: vaR(--text-colour);
+        border-radius: 10px;
+        opacity: 80%;
+    }
+
+
+</style>
 
 <script type="module">
     import {request} from '../../request.js';
@@ -36,8 +70,15 @@
         projectID
     }).then(async value => {
         confirm.html(`
-            Are you Sure you want to delete the project <a href="../../editor?p=${projectID}">${value.name}</a>?
+            <p style="font-size: 30px">
+                Are you sure you want to delete the project
+                <a href="../../editor?p=${projectID}">
+                    ${value.name}
+                </a>?
+            </p>
         `);
+
+        $('#timer').css('animation', 'timer-shrink 2000ms ease');
 
         await sleep(2000);
 
@@ -51,8 +92,8 @@
 
         confirm.append(`
             <br>
-            <button onclick="window.delete()">
-             Yes
+            <button onclick="window.delete()" style="font-size: 20px">
+                Yes
             </button>
         `)
 

@@ -49,26 +49,34 @@
 
 <script type="module">
     import {request} from '../../request.js';
-    import {isSignedIn} from '../../util.js';
+    import {validID} from '../../util.js';
 
-    $(`#submit`).click(async () => {
-        const username = $('#username').val();
-        const password = $('#password').val();
+    validID(localStorage.id).then(valid => {
+        if (valid) {
+			window.location.href = 'https://entropyengine.dev/accounts';
+			return;
+		}
 
-        localStorage.id = (await request('/get-id', {
-            username,
-            password
-        }))._id;
+		$(`#submit`).click(async () => {
+			const username = $('#username').val();
+			const password = $('#password').val();
 
-        if (isSignedIn()) {
-            window.location.href = 'https://entropyengine.dev/accounts';
-            return;
-        }
+			localStorage.id = (await request('/get-id', {
+				username,
+				password
+			}))._id;
 
-        $('#warning').html(`
-            Sorry, that account doesn't exist
-        `)
+			validID(localStorage.id).then(valid => {
+				if (valid) {
+					window.location.href = 'https://entropyengine.dev/accounts';
+					return;
+				}
 
-    });
+				$('#warning').html(`
+                    Sorry, that account doesn't exist
+                `);
+			});
+		});
+	});
 
 </script>

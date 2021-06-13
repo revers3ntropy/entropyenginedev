@@ -1,0 +1,9 @@
+
+        {
+            "canvasID": "myCanvas",
+            "sprites": [
+                {"name":"main camera","tag":"sprite","Static":false,"transform":{"type":"Transform","position":[0,0],"scale":[1,1],"rotation":0,"parent":""},"components":[{"type":"Camera","zoom":1}]},
+{"name":"sprite","tag":"sprite","Static":false,"transform":{"type":"Transform","position":[0,0],"scale":[100,100],"rotation":0,"parent":""},"components":[{"solid":true,"offset":[0,0],"width":1,"height":1,"type":"RectCollider"},{"offset":[0,0],"zLayer":1,"width":1,"height":1,"colour":"rgb(0, 0, 0)","type":"RectRenderer"}]}
+            ]
+        }
+        

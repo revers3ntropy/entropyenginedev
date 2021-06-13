@@ -37,8 +37,8 @@
     const error = $('#error');
     const nameElement = $('#name');
 
-    nameElement.change(() => {
-        nameElement.val(clean(nameElement.val(), [' ', '/', '|', ':', ';', '?']));
+    document.addEventListener('keypress', () => {
+        nameElement.val(clean(nameElement.val(), ['/', ';', '?', '-', '#']));
     });
 
     $(`#submit`).click(async () => {

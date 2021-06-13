@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "dependencies": {
     "express": "^4.17.1",
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "three": "^0.129.0"
   }
 }

@@ -50,17 +50,22 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+        align-items: center;
     }
 
     .project-button:hover {
-        background-color: var(--input-hover-bg);
+        background-color: vaR(--input-hover-bg);
     }
 
     .projectName {
         float: left;
         background: none;
         max-width: 33%;
-        font-size: 23px
+        font-size: 28px;
+        overflow: hidden;
+        margin-top: 1px;
+        display: flex;
+        align-items: center;
     }
 </style>
 
@@ -72,20 +77,36 @@
 
     request('/get-project-names', {
         userID: localStorage.id
-    }).then(projectNames => {
+    }).then(async projectNames => {
+
+    	const myUsername = (await request('/get-username', {
+    		userID: localStorage.id
+    	})).username;
 
         for (let projectName of projectNames) {
         	const isShared = projectName.level != 2;
 
-        	console.log(projectName.level);
             (!isShared ? myProjects : sharedWithMe).append(`
 
             <div
                 class="project-button"
-                onclick="window.location.href = '../../editor?p=${projectName._id}'">
-                <div class="projectName">
-                    ${projectName.name}
+                onclick="window.location.href = '../../editor?p=${projectName._id}'"
+            >
+            <div class="projectName">
+                <img
+                    src="../../projects/${projectName._id}/build/assets/COVER.png"
+                    alt="COVER.png"
+                    style="
+                        width: 40px;
+                        height:40px;
+                        border-radius: 4px;
+                        margin-right: 4px;
+                        font-size: 10px;
+                    "
+                />
+                ${projectName.name}
                 </div>
+
 
                 <div id="other-people-${projectName._id}"></div>
 
@@ -101,11 +122,32 @@
 
             `);
 
-            request(`/get-project-editors`, {
+            const editors = await request(`/get-project-editors`, {
                 projectID: projectName._id
-            }).then(data => {
-                $(`#other-people-${projectName._id}`).html(`(${data.map(m => m.username).join(', ')})`);
             });
+
+            const editorsHTML = () => {
+            	// these are just my projects, always have 'me' first
+            	let html = ['me'];
+
+            	let i = 0;
+            	for (const editor of editors) {
+            		if (i > 5) {
+            			html.push(`and ${editors.length-5} others`);
+						return html.join(', ');
+                    }
+
+            		if (editor.username === myUsername)
+						continue;
+
+                    html.push(editor.username);
+            		i++;
+                }
+
+            	return html.join(', ');
+            };
+
+            $(`#other-people-${projectName._id}`).html(`(${editorsHTML()})`);
         }
 		if (!myProjects.html()) {
 			myProjects.html(`<div style="text-align: center">Looks like you haven't made any projects yet!</div>`);

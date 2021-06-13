@@ -1,26 +1,25 @@
 "use strict";
 import entropyEngine, * as ee from "../entropy-engine";
-import {Sprite, Camera, v2} from "../entropy-engine";
-import {getMousePos} from '../entropy-engine/input.js';
-import {spritesFromJSON} from '../entropy-engine/JSONprocessor.js';
-import {screenSpaceToWorldSpace} from '../entropy-engine/util.js';
-//import {circle} from '../entropy-engine/renderer.js';
+import {Sprite, Camera, v2, v3, spritesFromJSON, screenSpaceToWorldSpace} from "../entropy-engine";
+import {initialiseScenes} from '../entropy-engine/util/JSONprocessor.js';
+import {getMousePos} from '../entropy-engine/util/input.js';
+import {cullString} from '../entropy-engine/util/util.js';
+//import {circle} from '../entropy-engine/render/renderer.js';
 
 import {urlParam, genCacheBust, mustBeSignedIn} from '../util.js';
 import {request} from '../request.js';
 
 import {reRender, reRenderCanvas, reRenderCanvasDebug, reRenderSceneToolbar} from './renderer.js';
-import * as builder from "./builder.js";
-import * as events from './events.js';
+import * as builder from "./builder.js"; builder;
+import * as events from './events.js'; events;
 import {loadScripts} from "./renderScript.js";
 import {setSelectedSpriteFromClick} from './events.js';
-
-builder;
-events;
 
 export const projectID = urlParam('p');
 
 export let redirectedFrom = urlParam('from');
+
+window.parseBool = string => string === 'true';
 
 if (!redirectedFrom) {
     redirectedFrom = sessionStorage.from;
@@ -35,7 +34,6 @@ document.getElementById('build-button').href += projectID;
 
 // global state
 export let selectedSprite = null;
-
 export const setSelected = sprite => selectedSprite = sprite;
 
 export const canvasID = 'myCanvas';
@@ -78,7 +76,7 @@ function drag (event) {
     diff.scale(1/camZoom);
     // reverse to drag naturally in the right direction
     diff.scale(-1);
-    sceneCamera.transform.position.add(diff);
+    sceneCamera.transform.localPosition.add(diff.v3);
     dragStart = dragEnd;
 
     reRenderCanvas();
@@ -132,6 +130,8 @@ window.gameView = 2;
 export const gameView = window.gameView;
 window.assets = 3;
 export const assets = window.assets;
+window.comments = 4;
+export const comments = window.comments;
 
 export let state = sceneView;
 export const setState = newState => {
@@ -142,18 +142,14 @@ export const setState = newState => {
 };
 window.setState = setState;
 
-export const sceneCamera = new Sprite({
-    components: [
-        new ee.Camera({})
-    ]
-});
+export let sceneCamera;
 
 export let eeReturns = {};
 
 // set default script
 export let scripts = {};
 export let currentScript = '';
-loadScripts().then(scripts_ =>  {
+loadScripts().then(scripts_ => {
     scripts = scripts_;
     currentScript = Object.keys(scripts)[0];
 });
@@ -170,18 +166,17 @@ export function numScripts () {
     return count;
 }
 
+// cache busting
+const scriptFetchHeaders = new Headers();
+scriptFetchHeaders.append('pragma', 'no-cache');
+scriptFetchHeaders.append('cache-control', 'no-cache');
+
+const scriptFetchInit = {
+    method: 'GET',
+    headers: scriptFetchHeaders,
+};
+
 async function initFromFiles (id) {
-
-    // cache busting
-    const scriptFetchHeaders = new Headers();
-    scriptFetchHeaders.append('pragma', 'no-cache');
-    scriptFetchHeaders.append('cache-control', 'no-cache');
-
-    const scriptFetchInit = {
-        method: 'GET',
-        headers: scriptFetchHeaders,
-    };
-
     const path = `../projects/${id}`;
     const config = {};
 
@@ -190,11 +185,20 @@ async function initFromFiles (id) {
     const data = await data_.json();
 
     for (let key in data) {
-        if (key === 'sprites')
+        if (['sprites', 'scenes'].includes(key))
             continue;
 
         config[key] = data[key];
     }
+
+    initialiseScenes(data['scenes'] || []);
+
+
+    sceneCamera = new Sprite({
+        components: [
+            new ee.Camera({})
+        ]
+    });
 
     eeReturns = entropyEngine(config);
 
@@ -202,27 +206,45 @@ async function initFromFiles (id) {
 
     setSelected(Sprite.sprites[0]);
 
+
+    import(`../projects/${projectID}/scripts.js?c=${genCacheBust()}`)
+        .then (async scripts => {
+            for (const sprite of Sprite.sprites) {
+                for (const component of sprite.components) {
+                    if (component.type !== 'Script') continue;
+
+                    component.script = new (scripts[component.name || component.scriptName])();
+                    component.public ??= component.script.public;
+                    reRender();
+                }
+            }
+        });
+
     ee.Camera.main = sceneCamera;
+
+    ee.Scene.active = parseInt(sessionStorage.sceneID) || 0;
 }
 
 async function checkCredentials(callback) {
     mustBeSignedIn(async () => {
-        const accessLevel = await request('/get-project-access', {
+        const accessLevel = (await request('/get-project-access', {
             projectID,
             userID: localStorage.id
-        });
+        })).accessLevel;
+
+        if (accessLevel < 1) {
+            window.location.href = 'https://entropyengine.dev/accounts/error?type=projectAccessDenied';
+            return;
+        }
+        console.log(`ACCESS LVL: ${accessLevel}`);
+
+        if (!accessLevel) return;
+        
         callback(accessLevel);
     });
 }
 
 checkCredentials(accessLevel => {
-    if (accessLevel.accessLevel < 1) {
-        window.location.href = 'https://entropyengine.dev/accounts/error?type=projectAccessDenied';
-        return;
-    }
-
-    console.log(`ACCESSLVL: ${accessLevel.accessLevel}`);
-    if (!accessLevel.accessLevel) return;
 
     initFromFiles(projectID)
         .then(reRender)
@@ -232,9 +254,28 @@ checkCredentials(accessLevel => {
 
     request('/get-project-name', {
         projectID
-    }).then(name => {
-        $(`#project-name`).html(name.name);
-        document.title = name.name;
+    }).then(data => {
+        const name = cullString(data.name, 16);
+        $(`#project-name`).html(name);
+        document.title = name;
     })
 });
 
+// show ping
+async function updatePing () {
+    const startTime = performance.now();
+
+    let response = await request('/ping', {});
+
+    if (!response.ok) {
+        console.error('Server ping failed');
+        return;
+    }
+
+    const time = performance.now() - startTime;
+
+    $('#ping').html(Math.floor(time));
+}
+
+setInterval(updatePing, 2000);
+updatePing();

@@ -19,32 +19,116 @@
 
 <body>
 <div id="header"></div>
-<div style="text-align: center">
-    <p style="font-size: 50px">
-        Welcome to Entropy Engine Web Dev!
-    </p>
 
+<!-- not ready yet
+<a href="../../bug-tracker/submit">
+    Report Bug or Security risk
+</a>
+-->
+
+<p style="font-size: 30px; margin: 10px" id="recent-projects-header">
+    Your Recent Projects
+</p>
+<div id="recent-projects-container">
+    <div id="recent-projects"></div>
+</div>
+
+<div style="text-align: center; margin-top: 20px">
     <div id="links"></div>
 </div>
 
-
+<p style="font-size: 30px; margin: 10px">
+    Featured Projects
+</p>
+<div id="top-projects-container">
+    <div id="top-projects"></div>
+</div>
 
 </body>
 </html>
 
+<style>
+
+    #top-projects-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 230px;
+    }
+
+    #top-projects {
+        width: 90%;
+        border-radius: 10px;
+        border: 1px solid vaR(--input-opposite-bg);
+        display: flex;
+        flex-direction: column;
+        overflow-x: scroll;
+        height: 100%;
+    }
+
+    .project {
+        border-radius: 8px;
+        border: 1px solid vaR(--input-opposite-bg);
+        width: 150px;
+        height: 100%;
+        background-color: vaR(--input-bg);
+        cursor: pointer;
+    }
+
+    .project:hover {
+        background-color: vaR(--input-hover-bg);
+    }
+
+    #recent-projects {
+        margin-top: 10px;
+    }
+
+    .project-button {
+        text-decoration: none;
+        background-color: vaR(--input-bg);
+        margin: 4px;
+        padding: 8px;
+        text-align: center;
+        height: 30px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .project-button:hover {
+        background-color: vaR(--input-hover-bg);
+    }
+
+    .projectName {
+        float: left;
+        background: none;
+        max-width: 33%;
+        overflow: hidden;
+        margin-top: 1px;
+        display: flex;
+        align-items: center;
+        font-size: 20px;
+    }
+</style>
+
 <script type="module">
-    import {isSignedIn} from '../../util.js';
+    import {mustBeSignedIn, unixTimeAgo} from '../../util.js';
+    import {request} from '../../request.js';
 
     const toFill = $('#links');
 
-    if (isSignedIn()) {
-        toFill.html(`
+    mustBeSignedIn(() => {
+		toFill.html(`
         <a href="../my-projects/" style="font-size: 30px">
-            My Projects
+            All Projects
         </a>
         `);
-    } else {
-        toFill.html(`
+
+		recentProjects();
+    }, () => {
+		toFill.html(`
         <a href="../sign-in" style="font-size: 25px; margin: 10px">
             Sign In
         </a>
@@ -52,6 +136,156 @@
             Create Account
         </a>
         `);
+
+		$('#recent-projects-header').html('');
+    });
+
+    request('/top-projects-by-views')
+        .then(async data => {
+            for (const project of data) {
+            	const projectID = project.id;
+
+                const name = (await request('/get-project-name', {
+                	projectID
+                })).name;
+
+                const owner = await request('/project-owner', {
+					projectID
+				});
+
+                const views = await request('/project-views', {
+                	projectID
+                });
+
+            	$('#top-projects').append(`
+                    <div class="project" id="project-${projectID}">
+                        <p style="text-align: center; font-size: 20px; margin: 2px">
+                            ${name}
+                        </p>
+                        <div style="
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                        ">
+                            <img
+                                src="../../projects/${projectID}/build/assets/COVER.png"
+                                alt="COVER.png"
+                                style="
+                                    width: 130px;
+                                    height: 130px;
+                                    border-radius: 4px;
+                                    border: 1px solid #848484;
+                                    font-size: 12px;
+                                "
+                            />
+                        </div>
+                        <div style="font-size: 12px; margin: 2px">
+                             By ${owner.owner} and ${owner.totalContributors - 1} others
+                        </div>
+
+                        <div style="font-size: 12px; text-align: right; margin-right: 2px">
+                            ${views.unique} viewers | ${views.total} views
+                        </div>
+                    </div>
+            	`);
+
+            	$(`#project-${projectID}`).click(() => {
+            		window.location.href = 'https://entropyengine.dev/play?p=' + projectID;
+                });
+            }
+
+			window.scrollTo(0, 0);
+        });
+
+
+    function recentProjects () {
+		request('/get-project-names', {
+			userID: localStorage.id
+		}).then(async projectNames => {
+
+			const projectsDiv = $('#recent-projects');
+
+			const myUsername = (await request('/get-username', {
+				userID: localStorage.id
+			})).username;
+
+			let i = 0;
+			for (let projectName of projectNames) {
+				// only show 5 projects
+				if (i > 4) {
+					window.scrollTo(0, 0);
+					return;
+				}
+				i++;
+
+				projectsDiv.append(`
+
+                <div
+                    class="project-button"
+                    onclick="window.location.href = '../../editor?p=${projectName._id}'">
+                    <div class="projectName">
+                        <img
+                            src="../../projects/${projectName._id}/build/assets/COVER.png"
+                            alt="COVER"
+                            style="
+                                width:40px;
+                                height:40px;
+                                border-radius: 4px;
+                                margin-right: 4px;
+                                font-size: 12px;
+                            "
+                        />
+                        ${projectName.name}
+                    </div>
+
+                    <div id="other-people-${projectName._id}"></div>
+
+                    <div style="font-size: 12px; text-align: right; margin-right: 2px">
+                        ${unixTimeAgo(projectName.latest)} ago
+                    </div>
+                 </div>
+
+                `);
+
+				const editors = await request(`/get-project-editors`, {
+					projectID: projectName._id
+				});
+
+				const editorsHTML = () => {
+					// these are just my projects, always have 'me' first
+					let html = ['me'];
+
+					let i = 0;
+					for (const editor of editors) {
+						if (i > 5) {
+							html.push(`and ${editors.length-5} others`);
+							return html.join(', ');
+						}
+
+						if (editor.username === myUsername)
+							continue;
+
+						html.push(editor.username);
+						i++;
+					}
+
+					return html.join(', ');
+				};
+
+				$(`#other-people-${projectName._id}`).html(`(${editorsHTML()})`);
+			}
+			if (!projectsDiv.html()) {
+
+				projectsDiv.html(`
+                <div style="text-align: center">
+                    Looks like you haven't made any projects yet!
+                </div>
+                `);
+			}
+
+			window.scrollTo(0, 0);
+		});
     }
+
 
 </script>

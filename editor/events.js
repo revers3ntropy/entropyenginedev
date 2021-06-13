@@ -10,10 +10,10 @@ import {
     setSelected
 } from "./index.js";
 
-import {reRender} from "./renderer.js";
-import {rect} from "../entropy-engine/renderer.js";
-import {v2, Sprite} from '../entropy-engine';
-import {scriptManager} from '../entropy-engine/scripts.js';
+import {reRender, reRenderCanvas, reRenderCanvasDebug, reRenderSceneToolbar} from "./renderer.js";
+import {rect} from "../entropy-engine/render/renderer.js";
+import {loopThroughScripts} from '../entropy-engine/util/util.js';
+import {v2, Sprite, Scene} from '../entropy-engine';
 import {genCacheBust} from '../util.js';
 
 window.addEventListener('click', () => {
@@ -35,12 +35,11 @@ document.addEventListener('contextmenu', event => {
 window.onPropertyChange = (id, componentName, componentPropertyChain, parser) => {
     let value = $(`#${id}`).val();
 
-    console.log(id, componentName, componentPropertyChain);
 
     let component;
-    if (componentName === 'nocomponent') {
+    if (componentName === 'nocomponent')
         component = selectedSprite;
-    } else
+    else
         component = selectedSprite.getComponent(componentName);
 
     let toChange = component;
@@ -55,7 +54,7 @@ window.onPropertyChange = (id, componentName, componentPropertyChain, parser) =>
     // its an asset
     if (lastPropertyName === 'url')
         value = `https://entropyengine.dev/projects/${projectID}/assets/${value}`;
-
+    
     toChange [lastPropertyName] = value;
 
     reRender();
@@ -89,15 +88,18 @@ window.run = async () => {
         'width': '15px',
         'margin': '2px 35px'
     });
-    playButton.click(() => {
+
+    // if you add another listener then it will run this function before reloading,
+    // which saves the project - not good
+    document.getElementById('run').onclick = () => {
         window.location.reload();
-    });
+    };
 
     $('#save, #build-button, #share').remove();
 
     const allScripts = await import(`../projects/${projectID}/scripts.js?c=${genCacheBust()}`);
 
-    scriptManager.loopThroughScripts((script, sprite) => {
+    loopThroughScripts((script, sprite) => {
         const className = script.name || script.scriptName;
         const scriptClass = allScripts[className];
         script.script = new scriptClass();
@@ -112,13 +114,15 @@ document.getElementById('myCanvas').onwheel = event => {
     cam.zoom *= 1 + (event.deltaY * -0.0001);
 
     cam.zoom = Math.min(Math.max(5*10**-3, cam.zoom), 5*10**2);
-    
-    reRender();
+
+    reRenderCanvas();
+    reRenderCanvasDebug();
+    reRenderSceneToolbar();
 };
 
 export function setSelectedSpriteFromClick (pos) {
     let touching = [];
-    Sprite.loopThroughSprites(sprite => {
+    Sprite.loop(sprite => {
         for (const component of sprite.components) {
             if (component.type === 'GUIElement')
                 if (component.touchingPoint(pos, ctx, sprite.transform))
@@ -130,15 +134,22 @@ export function setSelectedSpriteFromClick (pos) {
         }
     });
 
-    if (touching.length === 0) return;
-    else if (touching.length === 1) {
+    if (touching.length === 0) {
+        setSelected(null);
+    } else {
         setSelected(touching[0]);
-        reRender();
-        return;
     }
+    reRender();
 }
 
 window.goToBuildMenu = async () => {
     await window.backgroundSave();
     window.location.href = `https://entropyengine.dev/editor/build/?p=${projectID}`;
 };
+
+window.setScene = () => {
+    Scene.active = parseInt($('#scene-select').val()) || 0;
+    setSelected(Scene.activeScene.sprites[0]);
+    sessionStorage.sceneID = Scene.active;
+    reRender();
+}

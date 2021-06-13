@@ -1,11 +1,12 @@
 <style>
 
     #top-bar {
-        height: 20px;
+        height: 40px;
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
         margin: 5px 0;
+        border-bottom: 1px solid vaR(--input-bg);
     }
 
     .item {
@@ -17,20 +18,53 @@
 
     .item:hover {
         background: none;
-        color: var(--text-hover-colour);
+        color: vaR(--text-hover-colour);
     }
 
 </style>
+
 <div style="margin: 5px">
     <div id="top-bar">
-        <a class="item" href="https://entropyengine.dev/">
-            Home
-        </a>
-        <a class="item" href="https://entropyengine.dev/accounts/my-projects">
-            My Projects
-        </a>
-        <a class="item" href="https://entropyengine.dev/accounts">
-            My Account
-        </a>
+        <div>
+            <a class="item" href="https://entropyengine.dev/">
+                <img src="../../logo.png" alt="logo" style="height: 35px; width: 35px">
+            </a>
+        </div>
+        <div>
+            <a class="item" href="https://entropyengine.dev/accounts/my-projects">
+                My Projects
+            </a>
+            <a class="item" href="https://entropyengine.dev/accounts">
+                My Account
+            </a>
+        </div>
+        <div>
+            ping: <span id="ping"></span>ms
+        </div>
     </div>
 </div>
+
+<script>
+    const updatePing = async () => {
+		const startTime = performance.now();
+
+		let response = await fetch(`https://entropyengine.dev:50001/ping`, {
+			method: 'POST',
+			body: JSON.stringify({})
+		});
+
+		response = await response.json();
+
+		if (!response.ok) {
+			console.error('Server ping failed');
+			return;
+		}
+
+		const time = performance.now() - startTime;
+
+		$('#ping').html(Math.floor(time));
+	}
+
+    setInterval(updatePing, 5000);
+    updatePing();
+</script>

@@ -45,53 +45,65 @@
             width: 80px; height: 20px;
         "></button>
 
-        <div><!-- to put the project name in the middle --></div>
-
-        <a class="button svg-grow" href="../accounts/share?p=" style="
+        <a class="button svg-grow" href="./share?p=" style="
             background: url(../svg/share.svg) no-repeat center center;
             background-size: contain;
             width: 20px; height: 15px;
         " id="share"></a>
+
+        <div>
+            ping: <span id="ping"></span>ms
+        </div>
     </div>
     <div id="content">
         <div id="menu-bar-lower">
             <div style="display: grid">
                 <button
-                        onclick="window.setState(window.sceneView)"
-                        class="button tab"
-                        style="grid-column: 1/3; width: 100%"
-                        id="go-to-scene-button"
+                    onclick="window.setState(window.sceneView)"
+                    class="button tab"
+                    style="grid-column: 1/3; width: 100%"
+                    id="go-to-scene-button"
                 >
                     Scene
                 </button>
                 <button
-                        onclick="window.setState(window.scriptEditor)"
-                        class="button tab"
-                        style="grid-column: 3/5; width: 100%"
-                        id="go-to-scripts-button"
+                    onclick="window.setState(window.scriptEditor)"
+                    class="button tab"
+                    style="grid-column: 3/5; width: 100%"
+                    id="go-to-scripts-button"
                 >
                     Scripts
                 </button>
                 <button
-                        onclick="window.setState(window.gameView)"
-                        class="button tab"
-                        style="grid-column: 5/7; width: 100%"
-                        id="go-to-game-button"
+                    onclick="window.setState(window.gameView)"
+                    class="button tab"
+                    style="grid-column: 5/7; width: 100%"
+                    id="go-to-game-button"
                 >
                     Game
                 </button>
 
                 <button
-                        onclick="window.setState(window.assets)"
-                        class="button tab"
-                        style="grid-column: 7/9; width: 100%"
-                        id="go-to-assets-button"
+                    onclick="window.setState(window.assets)"
+                    class="button tab"
+                    style="grid-column: 7/9; width: 100%"
+                    id="go-to-assets-button"
                 >
                     Assets
+                </button>
+                <button
+                    onclick="window.setState(window.comments)"
+                    class="button tab"
+                    style="grid-column: 9/11; width: 100%"
+                    id="go-to-comments-button"
+                >
+                    Comments
                 </button>
             </div>
         </div>
         <div id="hierarchy"></div>
+
+        <div id="comments"></div>
 
         <div id="scripts"></div>
 
@@ -105,9 +117,7 @@
         <div id="inspector"></div>
 
         <div id="pop-up">
-            <div id="pop-up-content">
-
-            </div>
+            <div id="pop-up-content"></div>
         </div>
     </div>
 </div>

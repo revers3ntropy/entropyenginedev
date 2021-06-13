@@ -1,3 +1,5 @@
+import {request} from './request.js';
+
 export function signOut () {
     localStorage.id = undefined;
 }
@@ -7,8 +9,7 @@ export function forceSignOut (error) {
     window.location.href = 'https://entropyengine.dev/accounts/error?type=' + error;
 }
 
-export function isSignedIn () {
-    // get all possible cases
+export async function validID (userID) {
     return (
         ![
             undefined,
@@ -21,20 +22,20 @@ export function isSignedIn () {
             'undefined',
             'null',
             'none',
-        ].includes(localStorage.id)
-        // can't use yet as all ids are below 100...
-        //&&
-        //    localStorage.id > 100
-    );
+        ].includes(userID)
+    ) && (await request('/user-exists', {userID})).exists;
 }
 
-export function mustBeSignedIn (whenSignedIn) {
-    if (!isSignedIn()) {
-        forceSignOut('notSignedIn');
-        return;
-    }
-    
-    whenSignedIn();
+export function mustBeSignedIn (whenSignedIn, whenNotSignedIn) {
+    validID(localStorage.id).then(signedIn => {
+        if (!signedIn) {
+            forceSignOut('notSignedIn');
+            whenNotSignedIn();
+            return;
+        }
+
+        whenSignedIn();
+    });
 }
 
 const queryString = window.location.search;
@@ -66,20 +67,6 @@ export function genCacheBust () {
     return Math.ceil(Math.random() * 10000);
 }
 
-export function cullString (str, cutoff) { 
-    if (cutoff >= str.length) 
-        return str;
-
-    let newStr = '';
-    for (let i = 0; i < cutoff; i++)
-        newStr += str[i] || '';
-    
-    if (newStr.length < str.length)
-        newStr += '...';
-    
-    return newStr;
-}
-
 export function secondsToReadable (seconds) {
     const rawSeconds = seconds;
     let mins = seconds/60;
@@ -90,27 +77,34 @@ export function secondsToReadable (seconds) {
     let str = '';
 
     if (years >= 1) {
-        str += `${Math.floor(years)}yr `;
-        days = days % 365;
+        str += `${Math.floor(years)} years `;
+        days %= 365;
     }
 
-    if (days >= 1) {
-        str += `${Math.floor(days)} day `;
-        hours = hours % 24;
+    if (days >= 1 &&  rawSeconds < 31540000) {
+        str += `${Math.floor(days)} days `;
+        hours %= 24;
     }
 
-    if (hours >= 1 && rawSeconds < 31540000) {
-        str += `${Math.floor(hours)}hr `;
-        mins = mins % 60;
+    if (hours >= 1 && rawSeconds < 86400) {
+        str += `${Math.floor(hours)} hours `;
+        mins %= 60;
     }
 
-    if (mins >= 1 && rawSeconds < 86400) {
-        str += `${Math.floor(mins)}m `;
-        seconds = seconds % 60;
+    if (mins >= 1 && rawSeconds < 2600) {
+        str += `${Math.floor(mins)} minutes `;
+        seconds %= 60;
     }
 
-    if (rawSeconds < 3600)
-        str += `${seconds}s`;
-
+    if (rawSeconds < 60)
+        str += `${seconds} seconds`;
     return str;
+}
+
+export function unixTimeAgo (time) {
+    return secondsToReadable(
+        Math.round(
+            new Date().getTime() / 1000
+        ) - time
+    );
 }

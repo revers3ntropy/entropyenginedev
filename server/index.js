@@ -1,8 +1,10 @@
 const https = require("https"),
     fs = require("fs");
 
-const accounts = require('./accounts');
-const projects = require('./projects');
+const accounts = require('./accounts'),
+      projects = require('./projects'),
+      misc = require('./misc'),
+      bugs = require('./bugTracking');
 
 const options = {
     key: fs.readFileSync("./privatekey.pem"),
@@ -33,6 +35,20 @@ const handlers = {
     'username-exists': accounts.usernameExists,
     'get-username': accounts.username,
     'get-details': accounts.details,
+    'user-exists': accounts.userExists,
+    
+    'viewed-project': projects.viewed,
+    'report': misc.report,
+    'get-report': misc.getReport,
+    'comment': misc.comment,
+    'get-comments': misc.getComments,
+    'get-comment': misc.getComment,
+    'delete-comment': misc.deleteComment,
+
+    // bug tracker
+    'get-bug': bugs.getBug,
+    'get-bugs': bugs.getBugs,
+    'report-bug': bugs.reportbug,
     
     // projects
     'new-project': projects.createProject,
@@ -50,6 +66,9 @@ const handlers = {
     'contributor-info': projects.contributorInfo,
     'latest-contributor': projects.latestContributor,
     'all-contributions': projects.allContributors,
+    'project-owner': projects.projectOwner,
+    'project-views': projects.projectViews,
+    'top-projects-by-views': projects.topProjectViews,
 };
 
 const rawPaths = [
@@ -66,7 +85,6 @@ async function serverResponse (req, res) {
         // no handler can be found
         console.log(`ERROR: no handler '${url[1]}' for url '${req.url}'`);
         res.end('{}');
-        res.writeHead(200);
         return;
     }
 

@@ -1,0 +1,29 @@
+
+RewriteEngine on
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-SSL} !on
+RewriteCond %{HTTP_HOST} ^www\.entropyengine\.dev$
+RewriteRule ^/?$ "https\:\/\/entropyengine\.dev\/" [R=301,L]
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php73” package as the default “PHP” programming language.
+<IfModule mime_module>
+    AddHandler application/x-httpd-ea-php73 .php .php7 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit
+
+
+<Files ~ "\.js$">
+    Order Allow,Deny
+    Deny from All
+</Files>
+
+<Files ~ "\.pem$">
+    Order Allow,Deny
+    Deny from All
+</Files>
+
+<Files ~ "\.json$">
+    Order Allow,Deny
+    Deny from All
+</Files>

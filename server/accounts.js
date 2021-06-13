@@ -22,10 +22,28 @@ const genSalt = () => {
 
 
 exports.username = (url, req, res, body) => {
-    query(`SELECT username FROM users WHERE _id=${body.userID}`, value => {
+    query(`SELECT username FROM users WHERE _id=${body.userID} LIMIT 1`, value => {
         res.end(JSON.stringify(value[0]));
     });
 };
+
+exports.userExists = (url, req, res, body) => {
+    query(`
+    
+    SELECT
+        _id
+    FROM 
+         users
+    WHERE 
+          _id = ${body.userID}
+    
+    `, data => {
+        res.end(JSON.stringify({
+            // if multiple accounts have the same id, then it won't let you in
+            exists: data.length === 1
+        }));
+    });
+}
 
 exports.id = (url, req, res, body) => {
     query(`

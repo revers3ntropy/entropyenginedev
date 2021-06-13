@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        Home
+    </title>
+
+    <meta name="viewport" content="width=device-width">
+    <link rel='stylesheet' id="stylesheet">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <link rel='stylesheet' href="../global.css">
+    <script>
+		$(() => {
+			$("#header").load("../accounts/header.html");
+		});
+    </script>
+</head>
+
+<body>
+<div id="header"></div>
+
+<main id="main" role="main">
+    <div id="status"></div>
+    <div id="time"></div>
+    <blockquote id="report-message"></blockquote>
+</main>
+
+</body>
+</html>
+
+<style>
+    #status {
+        text-align: center;
+        font-size: 30px;
+    }
+
+    #time {
+        margin: 25px;
+        font-size: 15px;
+    }
+
+    #report-message {
+        font-size: 30px;
+        border-left: 1px solid vaR(--text-colour);
+        padding: 15px;
+    }
+
+    #main {
+        margin: 10px;
+    }
+
+</style>
+
+<script type="module">
+	import {urlParam, secondsToReadable} from '../util.js';
+	import {request} from '../request.js';
+
+	const bugID = urlParam('b');
+
+	request('/get-bug', {bugID}).then(report => {
+		$('#report-message').html(report.problem);
+
+		$('#time').html(`
+        reported
+		${secondsToReadable(
+			Math.round(
+				new Date().getTime() / 1000
+			) - report.date
+		)} ago
+
+        `);
+
+		const isFixed = !!report.fixed;
+        const fixedAt = secondsToReadable(
+			Math.round(
+				new Date().getTime() / 1000
+			) - report.fixed
+		)
+
+        const status = $('#status');
+		status.css({
+            'background-color': isFixed? 'rgb(0, 200, 0)' : 'rgb(200, 0, 0)',
+        });
+		status.html(isFixed? `Closed ${fixedAt} ago`: 'Open');
+
+	});
+
+</script>

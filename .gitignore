@@ -1,0 +1,11 @@
+/entropy-engine/.idea/
+/node_modules/
+/server/node_modules/
+/server/.env
+/server/privatekey.pem
+/server/certificate.pem
+/editor/codemirror/
+/editor/chartist-js-develop/
+/.idea/
+
+rm -rf .idea/

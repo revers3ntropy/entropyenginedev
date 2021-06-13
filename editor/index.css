@@ -8,6 +8,7 @@
 
 html {
     max-height: 100vh;
+    overflow-y: hidden;
 }
 
 #top-bar {
@@ -15,7 +16,7 @@ html {
     display: flex;
     justify-content: space-evenly;
     align-items: center;
-    background-color: var(--bg-dark);
+    background-color: vaR(--bg-dark);
 }
 
 #menu-bar-lower {
@@ -31,6 +32,7 @@ html {
     margin: 0;
     padding: 0;
     height: 99vh;
+    overflow-y: hidden;
 }
 
 #inspector {
@@ -38,8 +40,10 @@ html {
     grid-column: 4/4;
     grid-row: 1/5;
     min-width: 250px;
-    height: 100%;
+    max-width: 400px;
     overflow-y: scroll;
+    height: calc(100vh - 30px);
+    padding: 2px 0 5px 0;
 }
 
 #scene-toolbar {
@@ -47,7 +51,7 @@ html {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--bg-dark);
+    background-color: vaR(--bg-dark);
     width: 100%;
 }
 
@@ -84,6 +88,14 @@ html {
 
 #assets {
     border: 1px solid black;
+    grid-column: 2/4;
+    grid-row: 2/5;
+    height: 100%;
+    max-width: 100%;
+}
+
+#comments {
+    border: 1px solid darkgrey;
     grid-column: 2/4;
     grid-row: 2/5;
     height: 100%;
@@ -149,17 +161,18 @@ html {
     align-self: center;
 }
 
-input {
+input, select {
     border: none;
-    border-bottom: 1px solid var(--input-opposite-bg);
-    background-color: var(--input-bg);
+    border-bottom: 1px solid vaR(--input-opposite-bg);
+    background-color: vaR(--input-bg);
     border-radius: 4px;
     padding: 2px 2px 2px 4px;
     margin: 2px;
+    color: vaR(--text-colour);
 }
 
-input:hover {
-    background-color: var(--input-hover-bg);
+input:hover, select:hover {
+    background-color: vaR(--input-hover-bg);
 }
 
 input[type=number] {
@@ -171,15 +184,15 @@ input[type=number], input[type=text] {
 }
 
 input[type=checkbox] {
-    background-color: var(--input-bg);
+    background-color: vaR(--input-bg);
 }
 
 input[type=checkbox]:hover {
-    background-color: var(--input-hover-bg);
+    background-color: vaR(--input-hover-bg);
 }
 
 input[type=checkbox]:checked {
-    background-color: var(--input-opposite-bg);
+    background-color: vaR(--input-opposite-bg);
 }
 
 .array {
@@ -213,7 +226,7 @@ input[type=checkbox]:checked {
     max-height: 30px; overflow-x: scroll; overflow-y: hidden
 }
 #scripts-container > ::-webkit-scrollbar-track {
-    background-color: var(--input-opposite-bg);
+    background-color: vaR(--input-opposite-bg);
 }
 
 .tab {
@@ -246,7 +259,7 @@ input[type=checkbox]:checked {
 
 .asset-container:hover {
     transform: scale(1.02);
-    background-color: var(--input-bg);
+    background-color: vaR(--input-bg);
 }
 
 .asset-image-container {
@@ -272,6 +285,18 @@ input[type=checkbox]:checked {
     outline: none;
 }
 
+#add-comment-container {
+    text-align: center;
+    margin: 0 0 20px 0;
+}
+
+#add-comment {
+    border-bottom: 1px solid grey;
+    margin: 20px;
+    background-color: rgba(0,0,0,0);
+    width: 90%;
+    border-radius: 0;
+}
 
 .CodeMirror {
     border: 1px solid #eee;

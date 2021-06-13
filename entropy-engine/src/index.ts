@@ -1,29 +1,33 @@
-import { Sprite } from "./sprite.js"
-import { setCanvasSize, startAnimation } from "./renderer.js"
-import renderAll from "./renderComponents.js"
-import {Script, scriptManager} from "./scripts.js"
-import { Body} from "./physics.js"
-import { collideAll, Collider} from "./collisions.js"
-import { license } from "./license.js"
-import {getMousePos, input, setMousePos} from "./input.js"
-import { GUIElement, GUITextBox } from "./gui"
-import { spritesFromJSON } from './JSONprocessor.js'
-import {Camera} from "./camera.js"
-import {getCanvasStuff} from "./util.js"
+import { Sprite } from "./ECS/sprite.js"
+import { setCanvasSize, startAnimation } from "./render/renderer.js"
+import {renderAll} from "./render/renderer.js"
+import { Script } from './ECS/components/scriptComponent.js'
+import { collideAll} from "./physics/collisions.js"
+import {Collider} from './ECS/components/colliders.js'
+import { license } from "./util/license.js"
+import {getMousePos, input, setMousePos} from "./util/input.js"
+import { GUIElement, GUITextBox } from "./ECS/components/gui.js"
+import { spritesFromJSON, initialiseScenes } from './util/JSONprocessor.js'
+import {Camera} from "./ECS/components/camera.js"
+import {getCanvasStuff, loopThroughScripts} from "./util/util.js"
+import {rgb} from './util/colour.js'
+import {Scene} from './ECS/scene.js'
 
-export { Sprite } from "./sprite.js"
-export { Script, JSBehaviour } from "./scripts.js"
-export { CircleCollider, RectCollider } from './collisions.js'
-export { v2, Triangle, Mesh } from './maths.js'
-export { Body, PhysicsMaterial } from "./physics.js";
-export { CircleRenderer, RectRenderer, ImageRenderer } from './renderComponents.js'
-export { Presets } from './presets.js'
-export { GUIBox, GUIText, GUITextBox, GUIRect, GUICircle, GUIPolygon, GUIImage } from './gui.js'
-export { input } from './input.js'
-export { Camera } from './camera.js'
-export { spritesFromJSON } from './JSONprocessor.js'
-export {Transform} from './component.js'
-export {worldSpaceToScreenSpace, screenSpaceToWorldSpace} from './util.js'
+export {rgb} from './util/colour.js'
+export { Sprite } from"./ECS/sprite.js"
+export {Script} from './ECS/components/scriptComponent.js'
+export { CircleCollider, RectCollider } from './ECS/components/colliders.js'
+export { v2, TriangleV2, MeshV2, v3, TriangleV3, MeshV3 } from './util/maths/maths.js'
+export { Body } from "./physics/body.js"
+export { CircleRenderer, RectRenderer, ImageRenderer2D } from './ECS/components/renderComponents.js'
+export { GUIBox, GUIText, GUITextBox, GUIRect, GUICircle, GUIPolygon, GUIImage } from './ECS/components/gui.js'
+export { input } from './util/input.js'
+export { Camera } from './ECS/components/camera.js'
+export { spritesFromJSON } from './util/JSONprocessor.js'
+export {Transform} from './ECS/transform.js'
+export {worldSpaceToScreenSpace, screenSpaceToWorldSpace} from './util/util.js'
+export {JSBehaviour} from './scripting/scripts.js'
+export {Scene} from './ECS/scene.js'
 
 /**
  * Returns a number whose value is limited to the given range.
@@ -57,7 +61,7 @@ export default function entropyEngine ({
     setCanvasSize(canvas);
     
     canvas?.parentNode?.addEventListener('resize', () => {
-        console.log('l');
+        // TO-DO: this doesn't work
         setCanvasSize(canvas);
     });
 
@@ -68,7 +72,7 @@ export default function entropyEngine ({
     ctx.save();
 
     const background = {
-        colour: 'rgb(255, 255, 255)',
+        colour: rgb(255, 255, 255),
         image: ''
     };
 
@@ -78,11 +82,13 @@ export default function entropyEngine ({
 
         setMousePos(evt, canvas);
 
-        Sprite.loopThroughSprites(sprite => {
+        Sprite.loop(sprite => {
+            if (!sprite.active) return;
+            
             for (const component of sprite.components) {
                 if (component.type !== 'GUIElement') return;
 
-                const component_ = component as GUIElement;
+                const component_ = (<unknown>component) as GUIElement;
                 component_.hovered = component_.touchingPoint(input.cursorPosition, ctx, sprite.transform);
             }
         });
@@ -94,7 +100,8 @@ export default function entropyEngine ({
 
         setMousePos(evt, canvas);
 
-        scriptManager.loopThroughScripts((script, sprite) => {
+        loopThroughScripts((script, sprite) => {
+            if (!sprite.active) return;
             if (!sprite.hasComponent('Collider')) return;
 
             let collider = sprite.getComponent<Collider>('Collider');
@@ -119,7 +126,8 @@ export default function entropyEngine ({
         input.mouseDown = false;
         setMousePos(evt, canvas);
 
-        scriptManager.loopThroughScripts((script, sprite) => {
+        loopThroughScripts((script, sprite) => {
+            if (!sprite.active) return;
             if (sprite.hasComponent('Collider')){
 
                 let collider = sprite.getComponent<Collider>('Collider');
@@ -154,7 +162,10 @@ export default function entropyEngine ({
         // scripts start running their own start methods now
         Script.runStartMethodOnInit = true;
 
-        scriptManager.runStartAll();
+        loopThroughScripts((script: Script, sprite: Sprite) => {
+            script.script?.Start_(sprite);
+            script.runMethod('Start', []);
+        });
 
         // for event listeners
         isInitialised = true;
@@ -163,21 +174,31 @@ export default function entropyEngine ({
     async function tick (timestamp: number) {
 
         let initTime = timestamp;
-        Sprite.loopThroughSprites(sprite => {
+        
+        Sprite.loop(sprite => {            
+            if (!sprite.active) return;
             sprite.tick();
-            if (sprite.hasComponent('Body'))
-                sprite.getComponent<Body>('Body').applyGravity(Sprite.sprites, 10);
         });
+        
         if (performanceDebug > 1)
             console.log(`tick sprite and gravity: ${performance.now() - initTime}`);
 
         let time = performance.now();
-        collideAll(Sprite.sprites, scriptManager.collide);
+        collideAll(Scene.activeScene.sprites, (sprite1, sprite2) => {
+            for (let component of sprite1.components)
+                if (component.type === 'Script')
+                    (component as Script).runMethod('onCollision', [sprite2]);
+
+
+            for (let component of sprite2.components)
+                if (component.type === 'Script')
+                    (component as Script).runMethod('onCollision', [sprite1]);
+        });
         if (performanceDebug > 1)
             console.log(`collisions: ${performance.now() - time}`);
 
         time = performance.now();
-        renderAll(Sprite.sprites, canvas, ctx, background);
+        renderAll(Scene.activeScene.sprites, canvas, ctx, background);
         if (performanceDebug > 1)
             console.log(`rendering: ${performance.now() - time}`);
 
@@ -215,14 +236,16 @@ export async function runFromJSON (path: string, config: any = {}) {
     const data = await data_.json();
 
     for (let key in data) {
-        if (key === 'sprites')
+        if (['sprites', 'scenes'].includes(key))
             continue;
 
         config[key] = data[key];
     }
 
-    const returns = entropyEngine(config);
+    initialiseScenes(data['scenes']);
 
+    const returns = entropyEngine(config);
+    
     await spritesFromJSON(data['sprites']);
 
     await returns.run();

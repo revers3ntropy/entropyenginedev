@@ -18,8 +18,8 @@
 }
 
 body {
-    color: var(--text-colour);
-    background-color: var(--bg);
+    color: vaR(--text-colour);
+    background-color: vaR(--bg);
 }
 
 /* width */
@@ -71,9 +71,9 @@ html, body {
     margin: 2px;
     width: 50px;
     text-align: center;
-    background-color: var(--input-bg);
+    background-color: vaR(--input-bg);
     outline: none;
-    color: var(--text-colour);
+    color: vaR(--text-colour);
 }
 
 .empty-button:hover {
@@ -119,5 +119,15 @@ input:hover, a:hover, button:hover {
 }
 
 svg {
-    fill: var(--text-colour);
+    fill: vaR(--text-colour);
+}
+
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }

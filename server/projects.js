@@ -8,8 +8,39 @@ const idMax = parseInt(process.env.SEC_IDMAX);
 
 const emptyScripts = ``;
 
+const emptyProjectJSON = {
+    canvasID: 'myCanvas',
+    scenes: [
+        {
+            name: 'Sample Scene'
+        }
+    ],
+    sprites: [
+        {
+            name: 'main camera',
+            components: [{type: 'Camera'}]
+        }, {
+            name: 'sprite',
+            transform: {scale: [100, 100, 100]},
+            components: [
+                {type: 'RectCollider'},
+                {type: 'RectRenderer'}
+            ]
+        }
+    ]
+};
+
+const emptyGlobalState = `
+    {}
+`;
+
 exports.shareProject = (url, req, res, body) => {
-    query(`INSERT INTO projectAccess VALUES (${body.userID}, ${body.projectID}, ${body.level})`);
+    query(`
+
+    INSERT INTO projectAccess VALUES (${body.userID}, ${body.projectID}, ${body.level});
+    INSERT INTO projectSaves VALUES (${body.userID}, ${body.projectID}, null);
+    
+    `);
 };
 
 exports.createProject = (url, req, res, body) => {
@@ -18,8 +49,12 @@ exports.createProject = (url, req, res, body) => {
         const id = value[0]?.value || Math.ceil(Math.random() * idMax);
 
         // got the id, now do the same thing for the salt
-        query(`INSERT INTO projects
-               VALUES (${id}, '${body.name}', 0)`);
+        query(`
+
+        INSERT INTO projects VALUES (${id}, '${body.name}', 0);
+        INSERT INTO projectSaves VALUES (${body.userID}, ${id}, null);
+           
+       `);
 
         res.end(JSON.stringify({
             projectID: id
@@ -30,22 +65,7 @@ exports.createProject = (url, req, res, body) => {
         fs.mkdirSync(dir);
         fs.mkdirSync(dir + '/assets');
 
-        const emptyProjectJSON = {
-            canvasID: 'myCanvas',
-            sprites: [
-                {
-                    name: 'main camera',
-                    components: [{type: 'Camera'}]
-                }, {
-                    name: 'sprite',
-                    transform: {scale: [100, 100]},
-                    components: [
-                        {type: 'RectCollider'},
-                        {type: 'RectRenderer'}
-                    ]
-                }
-            ]
-        };
+
 
         fs.appendFile(dir + '/index.json', JSON.stringify(emptyProjectJSON), () => {
             console.log('made JSON file in ' + dir);
@@ -53,6 +73,10 @@ exports.createProject = (url, req, res, body) => {
 
         fs.appendFile(dir + '/scripts.js', emptyScripts, () => {
             console.log('made scripts.js file in ' + dir);
+        });
+
+        fs.appendFile(dir + '/globalState.json', emptyGlobalState, () => {
+            console.log('made globalState.json file in ' + dir);
         });
 
         exports.shareProject(url, req, res, {
@@ -79,29 +103,62 @@ exports.deleteProject = (url, req, res, body) => {
             return;
         }
 
-        //  actual deletion:
-        // delete rows in SQL database
-        query(`DELETE FROM projects WHERE _id=${body.projectID}`);
-        query(`DELETE FROM projectAccess WHERE projectID=${body.projectID}`);
-
         // delete files
         const dir = `../projects/${body.projectID}`;
         fs.rmdirSync(dir, { recursive: true });
 
-        res.end(JSON.stringify({
-            ok: true
-        }));
+        //  actual deletion:
+        // delete rows in SQL database
+        query(`
+
+        DELETE FROM projects WHERE _id=${body.projectID};
+        DELETE FROM projectAccess WHERE projectID=${body.projectID};
+        DELETE FROM comments WHERE projectID=${body.projectID};
+        DELETE FROM projectSaves WHERE projectID=${body.projectID};
+        DELETE FROM projectViews WHERE projectID=${body.projectID};
+        DELETE FROM reports WHERE issueID=${body.projectID} AND type="project";
+
+        `, () => {
+            res.end(JSON.stringify({
+                ok: true
+            }));
+        });
     });
 
 };
 
 exports.getUserProjectNames = (url, req, res, body) => {
     query(`
-        SELECT projects.name, projects._id, projectAccess.level
-        FROM projects, projectAccess
-        WHERE 
-            projectAccess.projectID=projects._id AND
-            projectAccess.userID=${body.userID}
+        SELECT
+            projects.name,
+            projects._id,
+            projectAccess.level,
+            UNIX_TIMESTAMP(MAX(projectSaves.date)) as latest
+        
+        FROM
+            projects,
+            projectAccess,
+            projectSaves
+        
+        WHERE
+            projectAccess.projectID = projects._id
+          AND
+            projectSaves.projectID = projects._id
+          AND
+            projectSaves.projectID = projectAccess.projectID
+          AND
+            projectAccess.userID = ${body.userID}
+          AND
+              projectAccess.level > 0
+        
+        GROUP BY 
+             projects.name, 
+             projects._id, 
+             projectAccess.level
+        
+        ORDER BY
+             latest DESC
+
     `, values => {
         res.end(JSON.stringify(values));
     });
@@ -160,7 +217,7 @@ exports.share = (url, req, res, body) => {
     }
     query(`SELECT _id FROM users WHERE username='${body.username}'`, user => {
         const userID = user[0]._id;
-        
+
         query(`SELECT *
                FROM projectAccess,users
                WHERE users._id = projectAccess.userID
@@ -239,6 +296,7 @@ exports.build = (url, req, res, body) => {
     // copy scripts and json
     fs.copyFile(projectDir + '/scripts.js', buildDir + '/scripts.js', () => {});
     fs.copyFile(projectDir + '/index.json', buildDir + '/index.json', () => {});
+    fs.copyFile(projectDir + '/globalState.json', buildDir + '/globalState.json', () => {});
 
     // copy assets
     fse.copy(projectDir + '/assets', buildDir + '/assets', { overwrite: true });
@@ -317,7 +375,7 @@ exports.contributorInfo = (url, req, res, body) => {
                UNIX_TIMESTAMP(MAX(projectSaves.date)) as latest
         from 
              (SELECT 
-                 users.username, 
+                 users.username,
                  users._id, 
                  count(*) as count 
              from 
@@ -332,11 +390,12 @@ exports.contributorInfo = (url, req, res, body) => {
              ) as t1,
              projectSaves 
         where
-              t1._id=projectSaves.userID
+              t1._id = projectSaves.userID
         group by
              t1.username,
              t1.count
         order by count desc
+
     `, value => {
         res.end(JSON.stringify(value));
     });
@@ -378,4 +437,109 @@ exports.allContributors = (url, req, res, body) => {
     `, data => {
         res.end(JSON.stringify(data));
     });
+};
+
+exports.projectOwner = (url, req, res, body) => {
+    query(`
+    
+    SELECT
+        users.username
+    FROM
+        users, projectAccess, projects
+    WHERE 
+          users._id=projectAccess.userID
+        AND projectAccess.projectID=projects._id
+        AND projects._id=${body.projectID}
+        AND projectAccess.level>=2
+    
+    LIMIT 1
+    
+    `, data => {
+
+        query(`
+        
+        SELECT COUNT(distinct userID) as count
+        FROM projectSaves
+        WHERE projectID=${body.projectID}
+        
+        `, total => {
+
+            res.end(JSON.stringify({
+                owner: data[0]?.username,
+                totalContributors: total[0].count
+            }));
+        });
+    });
+};
+
+exports.viewed = (url, req, res, body) => {
+    query(`
+    INSERT INTO projectViews
+    VALUES (${body.userID}, ${body.projectID}, CURRENT_TIMESTAMP)
+    `, () => {
+        res.end("{}");
+    });
+};
+
+exports.projectViews = (url, req, res, body) => {
+    query(`
+    SELECT COUNT(distinct userID) as count
+    FROM projectViews
+    WHERE projectID=${body.projectID}
+    `, unique => {
+
+        query(`
+        SELECT COUNT(*) as count
+        FROM projectViews
+        WHERE projectID=${body.projectID}
+        `, total => {
+
+            res.end(JSON.stringify({
+                unique: unique[0].count,
+                total: total[0].count
+            }));
+
+        });
+    });
+};
+
+exports.topProjectViews = (url, req, res, body) => {
+    query(`
+
+    SELECT
+        projects._id as id,
+        COUNT(distinct projectViews.userID) as views
+    FROM
+        projectViews,
+        projects
+    WHERE
+        projectViews.projectID=projects._id
+    GROUP BY
+        id
+    ORDER BY
+        views DESC
+    
+    `, data => {
+        res.end(JSON.stringify(data));
+    });
+};
+
+
+exports.updateGlobalState = (url, req, res, body) => {
+    let path;
+
+    if (body.token.isBuild) {
+        path = `../projects/${body.token.projectID}/build/globalState.json`;
+    } else {
+        path = `../projects/${body.token.projectID}/globalState.json`;
+    }
+
+    const file = fs.readFileSync(path);
+    const data = JSON.parse(file);
+
+    data[body.name] = body.replace;
+
+    fs.writeFileSync(path, data);
+
+    res.end("{}");
 };

@@ -6,7 +6,7 @@ const projectID = urlParam('p');
 
 document.getElementById('back').href += projectID;
 
-const buildURL = `https://entropyengine.dev/projects/${projectID}/build/`;
+const buildURL = `https://entropyengine.dev/play/?p=${projectID}`;
 
 document.getElementById('play-build').href = buildURL;
 

@@ -5,19 +5,14 @@ const dbConfig = {
     host     : process.env.DB_HOST,
     user     : process.env.DB_USER,
     password : process.env.DB_PASSWORD,
-    database : process.env.DB_DATABASE
+    database : process.env.DB_DATABASE,
+    // security risk, but useful
+    multipleStatements: true
 };
 
-let con = mysql.createConnection(dbConfig);
+let con;
 
 let hasConnectedSQL = false;
-
-con.connect((err) => {
-    if (err) throw err;
-
-    console.log("Connected to SQL server");
-    hasConnectedSQL = true;
-});
 
 exports.query = (sql, then) => {
     /**
@@ -45,11 +40,14 @@ function handleDisconnect() {
     con = mysql.createConnection(dbConfig); // Recreate the connection, since
                                             // the old one cannot be reused.
 
-    con.connect(err => {              // The server is either down
-        if(err) {                                     // or restarting (takes a while sometimes).
+    con.connect(err => {                     // The server is either down
+        if (err) {                                     // or restarting (takes a while sometimes).
             console.log('error when connecting to db:', err);
             setTimeout(handleDisconnect, 1000); // We introduce a delay before attempting to reconnect,
-        }                                     // to avoid a hot loop, and to allow our node script to
+        }
+
+        console.log("Connected to SQL server");
+        hasConnectedSQL = true;// to avoid a hot loop, and to allow our node script to
     });                                     // process asynchronous requests in the meantime.
                                             // If you're also serving http, display a 503 error.
     con.on('error', err => {

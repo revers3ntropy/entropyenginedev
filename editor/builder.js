@@ -1,4 +1,4 @@
-import {Sprite} from "../entropy-engine";
+import {Sprite, Scene} from "../entropy-engine";
 import {scripts, projectID} from "./index.js";
 import {request} from '../request.js';
 import {sleep} from '../util.js';
@@ -17,6 +17,9 @@ window.backgroundSave = async () => {
             "canvasID": "myCanvas",
             "sprites": [
                 ${await buildSpritesJSON(projectID)}
+            ],
+            "scenes": [
+                ${buildScenesJSON()}
             ]
         }
         `
@@ -49,6 +52,8 @@ const buildSpritesJSON = async projectID => {
     const json = [];
     for (const sprite of Sprite.sprites) {
         const spriteJSON = sprite.json();
+        
+        // deal with scripts
         for (const component of spriteJSON['components']) {
             if (component.type === 'Script') {
                 component.path = `https://entropyengine.dev/projects/${projectID}/scripts.js`;
@@ -59,6 +64,16 @@ const buildSpritesJSON = async projectID => {
     }
     return json.map(JSON.stringify).join(',\n');
 };
+
+function buildScenesJSON () {
+    const scenes = [];
+    
+    for (let scene of Scene.scenes) {
+        scenes.push(scene.json());
+    }
+    
+    return scenes.map(JSON.stringify).join(',\n');
+}
 
 // just combines all the scripts into a string string
 const buildScriptsJS = scripts => {

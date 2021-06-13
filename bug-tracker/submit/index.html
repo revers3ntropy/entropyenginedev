@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        Home
+    </title>
+
+    <meta name="viewport" content="width=device-width">
+    <link rel='stylesheet' id="stylesheet">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <link rel='stylesheet' href="../../global.css">
+    <script>
+		$(() => {
+			$("#header").load("../../accounts/header.html");
+		});
+    </script>
+</head>
+
+<body>
+<div id="header"></div>
+
+<main id="main" role="main">
+    <div id="form">
+        <div class="container">
+            <label for="title">
+                Title
+            </label><br>
+            <input id="title" type="text">
+        </div>
+
+        <div class="container">
+            <label for="description">
+                Description<br>
+            </label>
+            <textarea id="description"></textarea>
+        </div>
+
+        <div class="container">
+            <label for="reproduce">
+                How would you reproduce it?<br>
+            </label>
+            <input id="reproduce" type="text">
+        </div>
+
+        <div class="container">
+            <label for="expected">
+                Expected result<br>
+            </label>
+            <input id="expected" type="text">
+        </div>
+
+        <div class="container">
+            <label for="actual">
+                Actual result<br>
+            </label>
+            <input id="actual" type="text">
+        </div>
+
+        <div class="container">
+            <label for="severity">
+                Severity of bug<br>
+            </label>
+            <select id="severity">
+                <option value="0">Minor</option>
+                <option value="1">Irritating</option>
+                <option value="2">Unusable</option>
+                <option value="3">Security flaw</option>
+            </select><br>
+        </div>
+
+        <div class="container">
+            <label for="type">
+                Type of error<br>
+            </label>
+            <select id="type">
+                <option value="feature">feature request</option>
+                <option value="enhancement">enhancement</option>
+                <option value="bug">bug / security risk</option>
+            </select><br>
+
+            <div id="submit"></div>
+        </div>
+    </div>
+
+</main>
+
+</body>
+</html>
+
+<style>
+
+    .container {
+        margin: 30px;
+        font-size: 16px;
+    }
+
+    #main {
+        text-align: center;
+         margin-top: 10vh;
+    }
+
+
+</style>
+
+<script type="module">
+	import {urlParam, mustBeSignedIn} from '../../util.js';
+	import {request} from '../../request.js';
+
+	const bugID = urlParam('b');
+
+	mustBeSignedIn(() => {
+        $('#submit').html(`
+            <button onclick="window.">
+                Submit
+            </button>
+
+        `);
+    });
+
+
+</script>
