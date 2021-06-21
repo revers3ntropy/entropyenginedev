@@ -1,0 +1,25 @@
+{
+    "canvasID": "myCanvas",
+    "scenes": [
+        {
+            "name": "Sample Scene"
+        }
+    ],
+    "sprites": [
+        {
+            "name": "main camera",
+            "components": [
+                {"type": "Camera"}
+            ]
+        }, {
+            "name": "sprite",
+            "transform": {
+                "scale": [100, 100, 100]
+            },
+            "components": [
+                {"type": "RectCollider"},
+                {"type": "RectRenderer"}
+            ]
+        }
+    ]
+}

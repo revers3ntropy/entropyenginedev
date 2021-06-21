@@ -1,6 +1,6 @@
 import {request} from '../../../request.js';
 import {comment as commentComponent} from '../../../globalComponents.js';
-import {projectID} from '../../index.js';
+import {state, projectID} from '../../state.js';
 
 export function renderComments (div) {
 

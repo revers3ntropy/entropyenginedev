@@ -1,5 +1,4 @@
 import {v2, v3 } from "../util/maths/maths.js";
-import { expandV3 } from "../util/util.js";
 import { Component } from "./component.js";
 import { Scene } from "./scene.js";
 import { Sprite } from "./sprite.js";
@@ -8,14 +7,16 @@ export class Transform extends Component {
     private _position: v3;
     private _rotation: v3;
     private _scale: v3;
-    parent: Transform | number;
-    
+
     // @ts-ignore
     position: v3;
     // @ts-ignore
     scale: v3;
     // @ts-ignore
     rotation: v3;
+
+    // @ts-ignore
+    parent: Transform | number;
 
     constructor({
         position = v3.zero,
@@ -33,7 +34,6 @@ export class Transform extends Component {
         this._position = position || _position;
         this._scale = scale ?? scale;
         this._rotation = rotation || rotation;
-        this.parent = parent;
 
         this.addPublic({
             name: 'position',
@@ -55,6 +55,7 @@ export class Transform extends Component {
         this.addPublic({
             name: 'rotation',
             value: this._rotation,
+            type: 'v3',
             overrideGet: () => {
                 if (typeof this.parent === 'number')
                     return this._rotation;
@@ -69,6 +70,7 @@ export class Transform extends Component {
         this.addPublic({
             name: 'scale',
             value: this._scale,
+            type: 'v3',
             overrideGet: () => {
                 if (typeof this.parent === 'number')
                     return this._scale;
@@ -81,6 +83,38 @@ export class Transform extends Component {
                 this._scale.y ??= 0;
             }
         });
+
+        this.addPublic({
+            name: 'parent',
+            value: parent,
+            type: 'Transform'
+        });
+    }
+
+    setParentDirty (val: Transform | number) {
+        /*
+            For if the parent is not known to be safe, for example from user input.
+            Protects against types and circular parenting
+         */
+        if (!(val instanceof Transform) && typeof val !== 'number') {
+            this.parent = Scene.active;
+            return;
+        }
+
+        if (typeof val === "number") {
+            this.parent = val;
+            return;
+        }
+
+        // check for circular parenting
+        if (this.recursiveChildren.includes(val.sprite)) {
+            for (const child of this.children)
+                // shift children up one level if any of the
+                // children are becoming the parent of this sprite
+                child.transform.parent = this.parent;
+        }
+
+        this.parent = val;
     }
 
     json () {
@@ -98,9 +132,9 @@ export class Transform extends Component {
         
         return {
             type: 'Transform',
-            position: expandV3(this._position),
-            scale: expandV3(this._scale),
-            rotation: this._rotation,
+            position: this._position.array,
+            scale: this._scale.array,
+            rotation: this._rotation.array,
             parent
         }
     }
@@ -132,11 +166,11 @@ export class Transform extends Component {
         this.scale = v;
     }
 
-    detachParent (): void {
+    detachFromParent (): void {
         this.parent = Scene.active;
     }
 
-    getChildren (): Sprite[] {
+    get children (): Sprite[] {
         let children = [];
 
         for (let sprite of Sprite.sprites)
@@ -146,7 +180,23 @@ export class Transform extends Component {
         return children;
     }
 
-    getChildCount (): number {
+    get recursiveChildren (): Sprite[] {
+        const queue: Sprite[] = this.children;
+        const children: Sprite[] = [];
+
+        while (queue.length > 0) {
+            for (let child of queue[0].transform.children) {
+                queue.push(child);
+            }
+
+            // there must be an element so shift can't return undefined, but ts doesn't kow that
+            children.push( <Sprite> queue.shift());
+        }
+
+        return children;
+    }
+
+    get childCount (): number {
         let count = 0;
 
         for (let sprite of Sprite.sprites)
@@ -157,7 +207,7 @@ export class Transform extends Component {
     }
 
     detachChildren (): void {
-        for (let child of this.getChildren())
+        for (let child of this.children)
             child.transform.parent = Scene.active;
     }
 
@@ -206,6 +256,6 @@ export class Transform extends Component {
     }
 
     getChild (name: string) {
-        return this.getChildren().find(t => t.name === name);
+        return this.children.find(t => t.name === name);
     }
 }

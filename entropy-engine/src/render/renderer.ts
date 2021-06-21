@@ -1,43 +1,82 @@
 import {v2} from "../util/maths/maths.js"
-import {sleep, getCanvasStuff, getCanvasSize, getZoomScaledPosition, JSONifyComponent} from "../util/util.js";
-import {Component} from "../ECS/component.js";
+import {sleep, getCanvasStuff, getCanvasSize} from "../util/util.js";
 import {Sprite} from "../ECS/sprite.js";
 import {GUIElement} from "../ECS/components/gui.js";
 import {Camera} from "../ECS/components/camera.js";
-import {colour, parseColour, rgb } from "../util/colour.js";
-import { Transform } from "../ECS/transform.js";
-import { Renderer2D } from "../ECS/components/renderers2D.js";
 import { Renderer } from "../ECS/components/renderComponents.js";
+import {parseColour} from "../util/colour.js";
+import {background} from "../ECS/scene.js";
 
 export function reset(ctx: CanvasRenderingContext2D) {
     ctx.transform(1, 0, 0, -1, 0, ctx.canvas.height);
 }
 
-export function renderAll (sprites: Sprite[], canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, background: any) {
+function orderSpritesForRender (sprites: Sprite[]): Sprite[] {
+    // sort the sprites by their z position
+    const zOrderedSprites = sprites.sort((a: Sprite, b: Sprite) => {
+        return a.transform.position.z - b.transform.position.z;
+    })
+
+    // GUI elements appear always above normal sprites,
+    // so filter them out and put them last, still ordered by their z position
+    let justSprites = [];
+    let justGUI = [];
+    for (let sprite of zOrderedSprites) {
+        if (sprite.hasComponent('GUIElement'))
+            justGUI.push(sprite);
+        else
+            justSprites.push(sprite);
+    }
+
+    return [...justSprites, ...justGUI];
+}
+
+export function renderBackground (ctx: CanvasRenderingContext2D, canvasSize: v2, background: background) {
+
+    function fillBackground (alpha: number) {
+        let bgColour = background?.tint || parseColour('white');
+        bgColour = bgColour.clone;
+        bgColour.alpha = alpha;
+
+        ctx.beginPath();
+
+        ctx.rect(0, 0, canvasSize.x, canvasSize.y);
+
+        ctx.fillStyle = bgColour.rgba;
+
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    if (!background || !background.image) {
+        fillBackground(1);
+        return;
+    }
+    // if it can't use the image as a background, then just use the colour
+    try {
+        image(ctx, v2.zero, canvasSize, background.image);
+    } catch {
+        fillBackground(0.1);
+    }
+}
+
+
+export function renderAll (sprites: Sprite[], canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, background: background, cameraSprite: Sprite) {
 
     // background
     const canvasSize = getCanvasSize(canvas);
     const mid = canvasSize.clone.scale(0.5);
 
-    function fillBackground () {
-        rect(ctx, v2.zero, canvasSize.x, canvasSize.y, background.colour.rgb);
-    }
 
-    if (!background.image) {
-        fillBackground();
-    } else {
-        // if it can't use the image as a background, then just use the colour
-        try {
-            image(ctx, v2.zero, canvasSize, background.image)
-        } catch {
-            fillBackground();
-        }
-    }
+    renderBackground(ctx, canvasSize, background);
 
-    if (!Camera.main) return;
+    if (!cameraSprite) {
+        console.error('Camera was not passed to renderAll function! Main camera: ' + Camera.main.name);
+        return;
+    }
 
     // camera
-    const camera = Camera.main
+    const camera = cameraSprite
         .getComponent<Camera>("Camera");
 
     if (!camera) return;
@@ -58,25 +97,9 @@ export function renderAll (sprites: Sprite[], canvas: HTMLCanvasElement, ctx: Ca
         sprite.hasComponent('GUIElement')
     ));
 
-    // sort the sprites by their z position
-    const zOrderedSprites = sprites.sort((a: Sprite, b: Sprite) => {
-        return a.transform.position.z - b.transform.position.z;
-    })
-
-    // GUI elements appear always above normal sprites,
-    // so filter them out and put them last, still ordered by their z position
-    let justSprites = [];
-    let justGUI = [];
-    for (let sprite of zOrderedSprites)
-        if (sprite.hasComponent('GUIElement'))
-            justGUI.push(sprite);
-        else
-            justSprites.push(sprite);
-    const fullyOrderedSprites = [...justSprites, ...justGUI];
-
 
     // call the draw function for each
-    for (let sprite of fullyOrderedSprites) {
+    for (let sprite of orderSpritesForRender(sprites)) {
         // deal with GUI and normal render components separately
         if (sprite.hasComponent('GUIElement')) {
             sprite.getComponent<GUIElement>('GUIElement').draw(ctx, sprite.transform);
@@ -85,7 +108,15 @@ export function renderAll (sprites: Sprite[], canvas: HTMLCanvasElement, ctx: Ca
 
         const renderPos = sprite.transform.position.clone.sub(cameraPos);
 
-        sprite.getComponent<Renderer>('Renderer').draw(renderPos, sprite.transform, ctx, camera.zoom, mid);
+        sprite.getComponent<Renderer>('Renderer').draw({
+            position: renderPos,
+            transform: sprite.transform,
+            ctx,
+            zoom: camera.zoom,
+            center: mid,
+            camera,
+            cameraSprite
+        });
     }
 }
 
@@ -93,18 +124,6 @@ export function renderAll (sprites: Sprite[], canvas: HTMLCanvasElement, ctx: Ca
 // canvas util
 
 export function setCanvasSize (canvas: HTMLCanvasElement) {
-    /* depricated
-    // get the canvas and context from two numbers
-    const { ctx, canvas } = getCanvasStuff(canvasID);
-    // set both the width and the height based off whether or not once has been specified - if it hasn't keep it the same
-    // the '?? number' is a backup if the boundingClientRect cannot be found on the canvas element - so default value if everything goes wrong
-    let actualWidth = width || (document.getElementById(canvasID)?.getBoundingClientRect().width ?? 10);
-    let actualHeight = height || (document.getElementById(canvasID)?.getBoundingClientRect().height ?? 10);
-    canvas.style.width = `${actualWidth}px`;
-    canvas.style.height = `${actualHeight}px`;
-    // return what the actual size of the canvas is for use later on
-    return [actualWidth, actualHeight]
-     */
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     canvas.width  = canvas.offsetWidth;
@@ -189,18 +208,24 @@ export function rect (ctx: CanvasRenderingContext2D, position: v2, width: number
     ctx.closePath();
 }
 
-export function polygon (ctx: CanvasRenderingContext2D, points: v2[], fillColour: string) {
+export function polygon (ctx: CanvasRenderingContext2D, points: v2[], fillColour: string, fill = true) {
     ctx.beginPath();
 
     ctx.moveTo(points[0].x, points[0].y);
+    ctx.strokeStyle = fillColour;
 
     for (let point of points.slice(1, points.length))
         ctx.lineTo(point.x, point.y);
 
-    ctx.fillStyle = fillColour;
-    ctx.fill();
+    if (fill) {
+        ctx.fillStyle = fillColour;
+        ctx.fill();
 
-    ctx.closePath();
+        ctx.closePath();
+    } else {
+        ctx.stroke();
+    }
+
 }
 
 export function text (ctx: CanvasRenderingContext2D, text: string, fontSize: number, font: string, colour: string, position: v2, alignment='center') {

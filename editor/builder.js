@@ -1,5 +1,5 @@
 import {Sprite, Scene} from "../entropy-engine";
-import {scripts, projectID} from "./index.js";
+import {scripts, projectID} from "./state.js";
 import {request} from '../request.js';
 import {sleep} from '../util.js';
 
@@ -60,19 +60,19 @@ const buildSpritesJSON = async projectID => {
             }
         }
 
-        json.push(spriteJSON);
+        json.push(JSON.stringify(spriteJSON));
     }
-    return json.map(JSON.stringify).join(',\n');
+    return json.join(',\n');
 };
 
 function buildScenesJSON () {
     const scenes = [];
     
     for (let scene of Scene.scenes) {
-        scenes.push(scene.json());
+        scenes.push(JSON.stringify(scene.json()));
     }
     
-    return scenes.map(JSON.stringify).join(',\n');
+    return scenes.join(',\n');
 }
 
 // just combines all the scripts into a string string

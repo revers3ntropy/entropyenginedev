@@ -1,6 +1,6 @@
 import { Sprite } from '../ECS/sprite.js'
 import {v2, v3} from "./maths/maths.js";
-import {Component, publicField} from "../ECS/component.js";
+import {Component} from "../ECS/component.js";
 import {Script} from "../ECS/components/scriptComponent.js"
 // all components
 import {CircleCollider, RectCollider} from '../ECS/components/colliders.js';
@@ -45,12 +45,9 @@ function isV3(o: any) {
 
 function isColour (o: any) {
     if (!o) return false;
-    if (typeof o.red !== 'number') return false;
-    if (typeof o.green !== 'number') return false;
-    if (typeof o.blue !== 'number') return; false
-
-    if (typeof o.rgb !== 'string') return false;
-    return typeof o.hex !== 'string';
+    if (typeof o.r !== 'number') return false;
+    if (typeof o.g !== 'number') return false;
+    return typeof o.b === 'number';
 }
 
 function componentPropProccessor (propertyJSON: any, componentJSON: any, component: any) {
@@ -73,8 +70,8 @@ function componentPropProccessor (propertyJSON: any, componentJSON: any, compone
     }
 
     else if (isColour(componentJSON[propertyJSON])) {
-        const c = componentJSON[propertyJSON]
-        component[propertyJSON] = rgb(c.red, c.green, c.blue);
+        const c = componentJSON[propertyJSON];
+        component[propertyJSON] = rgb(c.r, c.g, c.b);
         return;
     }
 
@@ -91,7 +88,7 @@ function componentPropProccessor (propertyJSON: any, componentJSON: any, compone
     component[propertyJSON] = componentProperties;
 }
 
-function dealWithTranform (transformJSON: any) {
+function dealWithTransform (transformJSON: any) {
     let parentInfo = {
         type: '',
         name: ''
@@ -164,8 +161,6 @@ async function dealWithScriptComponent (componentJSON: any): Promise<Script | un
                 else if (field['type'] === 'v3')
                     value = v3.fromArray(field['value']);
 
-                console.log(value);
-
                 script.setPublic(field['name'], value);
 
             }
@@ -215,7 +210,7 @@ export async function getSpriteFromJSON (JSON: any) {
     let components: Component[] = [];
 
     const transformJSON = JSON['transform'];
-    const {parentInfo, transform} = dealWithTranform(transformJSON);
+    const {parentInfo, transform} = dealWithTransform(transformJSON);
     // components
     for (let componentJSON of componentsJSON) {
         const component = await componentProccessor(componentJSON);
@@ -260,7 +255,6 @@ export async function spritesFromJSON (JSON: any) {
     let parentPairs: {[key: string]: {type: string, name: string}} = {};
 
     for (let spriteJSON of JSON) {
-        console.log('3');
         let sprite = await getSpriteFromJSON(spriteJSON);
         parentPairs[sprite.sprite.name] = sprite.parentInfo;
         Sprite.sprites.push(sprite.sprite);

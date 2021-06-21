@@ -2,22 +2,19 @@ import { Scene, v2, Camera } from "../../entropy-engine";
 import {renderAll} from "../../entropy-engine/render/renderer.js";
 import {rect} from "../../entropy-engine/render/renderer.js";
 import {renderDebug, renderSelectedOutline, drawCameraViewArea} from '../../entropy-engine/render/debugRenderer.js';
-import {circle, image} from '../../entropy-engine/render/renderer.js';
-import {screenSpaceToWorldSpace} from '../../entropy-engine/util/util.js';
 
 import {
     ctx, background, canvas,
-    setSelected, selectedSprite,
+    setSelected,
     state, scriptEditor, sceneView, gameView, setState, assets, comments,
-    sceneCamera
-} from "../index.js";
+} from "../state.js";
 
-import {reRenderHierarchy} from "./renderHierarchy.js";
-import {reRenderInspector} from "./renderInspector.js";
-import {renderScripts} from "./renderScript.js";
-import {renderAssets} from './renderAssets.js';
+import {reRenderHierarchy} from "./hierarchy/renderHierarchy.js";
+import {reRenderInspector} from "./inspector/renderInspector.js";
+import {renderScripts} from "./script-editor/renderScript.js";
+import {renderAssets} from './assets/renderAssets.js';
 import {renderSceneMenu} from './renderSceneMenu.js';
-import {renderComments} from './renderComments.js';
+import {renderComments} from './comments/renderComments.js';
 
 export function showPopUpMenu (event, content) {
     setTimeout(() => {
@@ -64,19 +61,18 @@ export function rightClickOption (name, onclick, show=name) {
 }
 
 export function reRenderCanvas () {
-    renderAll(Scene.activeScene.sprites, canvas, ctx, background);
+    renderAll(Scene.activeScene.sprites, canvas, ctx, Scene.activeScene.settings.background, Camera.main);;
 }
 
 export function reRenderCanvasDebug () {
-    renderDebug(canvas, ctx, sceneCamera, Scene.activeScene.sprites);
-    if (selectedSprite) {
+    renderDebug(canvas, ctx, state.sceneCamera, Scene.activeScene.sprites);
 
-        renderSelectedOutline(canvas, ctx, sceneCamera, selectedSprite);
+    if (!state.selectedSprite) return;
 
-        if (selectedSprite.hasComponent('Camera'))
-            drawCameraViewArea(ctx, canvas, sceneCamera, selectedSprite, `rgb(255, 0, 0)`);
-    }
+    renderSelectedOutline(canvas, ctx, state.sceneCamera, state.selectedSprite);
 
+    if (state.selectedSprite.hasComponent('Camera'))
+        drawCameraViewArea(ctx, canvas, state.sceneCamera, state.selectedSprite, `rgb(255, 0, 0)`);
 }
 
 const canvasDIV = $('#canvas');
@@ -123,10 +119,10 @@ export function reRender () {
     }
 
     sceneToolbar.css('height', '0');
-    if (state !== sceneView)
+    if (state.window !== sceneView)
         sceneToolbar.html('');
 
-    switch (state) {
+    switch (state.window) {
         case sceneView:
             setTabNotActive(scriptsButton, scriptsDIV);
             setTabNotActive(gameButton, canvasDIV);
@@ -134,13 +130,10 @@ export function reRender () {
             setTabNotActive(assetButton, assetsDIV);
             setTabNotActive(commentsButton, commentsDIV);
 
-            Camera.main = sceneCamera;
+            Camera.main = state.sceneCamera;
 
             reRenderCanvas();
             reRenderCanvasDebug();
-
-            reRenderHierarchy();
-            reRenderInspector();
             reRenderSceneToolbar();
             
             sceneToolbar.css('height', '30px');
@@ -154,8 +147,6 @@ export function reRender () {
             setTabNotActive(commentsButton, commentsDIV);
 
             rect(ctx, v2.zero, canvas.width, canvas.height, `rgb(255, 255, 255)`);
-            reRenderHierarchy();
-            reRenderInspector();
             renderScripts('scripts');
             break;
 
@@ -169,9 +160,7 @@ export function reRender () {
             setTabNotActive(commentsButton, commentsDIV);
 
             reRenderCanvas();
-            
-            reRenderHierarchy();
-            reRenderInspector();
+
             break;
 
         case assets:
@@ -183,6 +172,7 @@ export function reRender () {
             setTabNotActive(commentsButton, commentsDIV);
             
             renderAssets(assetsDIV);
+
             break;
             
         case comments:
@@ -202,29 +192,7 @@ export function reRender () {
             break;
     }
 
-
-    /* shows dots in places where if you click there you wouldn't select anything
-
-    for (let x = 0; x < 1000; x += 5) {
-        for (let y = 0; y < 1100; y += 5) {
-            const pos = screenSpaceToWorldSpace(new v2(x, y), sceneCamera, canvas);
-            let touching = 0;
-            Sprite.loopThroughSprites(sprite => {
-                for (const component of sprite.components) {
-                    if (component.type === 'GUIElement')
-                        if (component.touchingPoint(pos, ctx, sprite.transform))
-                            touching++;
-
-                    if (component.type === 'Collider')
-                        if (component.overlapsPoint(sprite.transform, pos))
-                            touching++;
-                }
-            });
-
-            if (touching === 0)
-                circle(ctx, new v2(x, y), 1, 'rgb(0, 255, 0)');
-        }
-    }
-     */
+    reRenderHierarchy();
+    reRenderInspector();
 
 }

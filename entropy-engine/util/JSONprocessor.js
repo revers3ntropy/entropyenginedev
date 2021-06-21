@@ -57,16 +57,11 @@ function isV3(o) {
 function isColour(o) {
     if (!o)
         return false;
-    if (typeof o.red !== 'number')
+    if (typeof o.r !== 'number')
         return false;
-    if (typeof o.green !== 'number')
+    if (typeof o.g !== 'number')
         return false;
-    if (typeof o.blue !== 'number')
-        return;
-    false;
-    if (typeof o.rgb !== 'string')
-        return false;
-    return typeof o.hex !== 'string';
+    return typeof o.b === 'number';
 }
 function componentPropProccessor(propertyJSON, componentJSON, component) {
     // stop it overriding 'type'
@@ -87,7 +82,7 @@ function componentPropProccessor(propertyJSON, componentJSON, component) {
     }
     else if (isColour(componentJSON[propertyJSON])) {
         const c = componentJSON[propertyJSON];
-        component[propertyJSON] = rgb(c.red, c.green, c.blue);
+        component[propertyJSON] = rgb(c.r, c.g, c.b);
         return;
     }
     let componentProperties = [];
@@ -168,7 +163,6 @@ function dealWithScriptComponent(componentJSON) {
                         value = v2.fromArray(field['value']);
                     else if (field['type'] === 'v3')
                         value = v3.fromArray(field['value']);
-                    console.log(value);
                     script.setPublic(field['name'], value);
                 }
             }
@@ -253,7 +247,6 @@ export function spritesFromJSON(JSON) {
     return __awaiter(this, void 0, void 0, function* () {
         let parentPairs = {};
         for (let spriteJSON of JSON) {
-            console.log('3');
             let sprite = yield getSpriteFromJSON(spriteJSON);
             parentPairs[sprite.sprite.name] = sprite.parentInfo;
             Sprite.sprites.push(sprite.sprite);

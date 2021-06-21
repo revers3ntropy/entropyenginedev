@@ -1,8 +1,6 @@
 import { Component } from "../component.js"
-import {Sprite} from "../sprite.js"
 import {v2} from "../../util/maths/maths.js"
-import {Body} from "../../physics/body.js"
-import {expandV2, JSONifyComponent} from "../../util/util.js";
+import {JSONifyComponent} from "../../util/util.js";
 import { Transform } from "../../index.js";
 
 export abstract class Collider extends Component {

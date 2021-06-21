@@ -2,14 +2,22 @@ export type colour = {
     red: number,
     blue: number,
     green: number,
+    alpha: number,
+
+    isColour?: boolean,
 
     rgb: string,
+    rgba: string,
     hex: string,
+    clone: colour,
+    json: any,
 };
 
-export const rgb = (red: number, green: number, blue: number) => ({
+export const rgb = (red: number, green: number, blue: number, alpha = 1) => ({
 
-    red, green, blue,
+    red, green, blue, alpha,
+
+    isColour: true,
 
     get hex () {
         return `#${rgbValToHex(this.red)}${rgbValToHex(this.green)}${rgbValToHex(this.blue)}`;
@@ -18,10 +26,26 @@ export const rgb = (red: number, green: number, blue: number) => ({
     get rgb () {
         return `rgb(${this.red}, ${this.green}, ${this.blue})`
     },
+
+    get rgba () {
+        return `rgba(${this.red}, ${this.green}, ${this.blue}, ${this.alpha.toString()})`;
+    },
+
+    get clone () {
+        return rgb(this.red, this.green, this.blue, this.alpha);
+    },
+
+    get json () {
+        return {
+            r: this.red,
+            g: this.green,
+            b: this.blue,
+        }
+    }
 });
 
 export function rgbValToHex (val: number | string) {
-    var hex = Number(val).toString(16);
+    let hex = Number(val).toString(16);
     if (hex.length < 2) {
         hex = "0" + hex;
     }
@@ -31,10 +55,7 @@ export function rgbValToHex (val: number | string) {
 export function parseColour (val: string): colour {
     let m;
     
-    console.log(val);
-    
     m = val.match(/^#([0-9a-f]{3})$/i);
-    console.log(m);
     if (m && m[1]) {
         // in three-character format, each value is multiplied by 0x11 to give an
         // even scale from 0x00 to 0xff
@@ -46,7 +67,6 @@ export function parseColour (val: string): colour {
     }
 
     m = val.match(/^#([0-9a-f]{6})$/i);
-    console.log(m)
     if (m && [1]) {
         return rgb(
             parseInt(m[1].substr(0,2),16),
@@ -56,7 +76,6 @@ export function parseColour (val: string): colour {
     }
 
     m = val.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
-    console.log(m);
     if (m) {
         return rgb(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]));
     }

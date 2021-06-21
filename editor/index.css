@@ -33,14 +33,14 @@ html {
     padding: 0;
     height: 99vh;
     overflow-y: hidden;
+    grid-template-columns: 20vw auto auto 20vw;
 }
 
 #inspector {
     border: 1px solid black;
     grid-column: 4/4;
     grid-row: 1/5;
-    min-width: 250px;
-    max-width: 400px;
+    width: 20vw;
     overflow-y: scroll;
     height: calc(100vh - 30px);
     padding: 2px 0 5px 0;

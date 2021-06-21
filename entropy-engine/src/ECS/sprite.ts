@@ -1,5 +1,4 @@
 ﻿import { Component } from './component.js'
-import { v2 } from "../util/maths/maths.js"
 import { Body} from "../physics/body.js"
 import {CircleRenderer} from "./components/renderComponents.js";
 
@@ -9,9 +8,7 @@ import {ImageRenderer2D, RectRenderer} from './components/renderComponents.js'
 import {GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox} from './components/gui.js'
 import {Camera} from './components/camera.js'
 import {Script} from "./components/scriptComponent.js"
-import {deepClone, expandV2} from "../util/util.js";
 import {getSpriteFromJSON, setParentFromInfo} from "../util/JSONprocessor.js";
-import { rgb } from '../util/colour.js';
 import { Transform } from './transform.js';
 import { Scene } from './scene.js';
 
@@ -137,7 +134,8 @@ export class Sprite {
 
 
     getComponent <Type extends Component> (type: string, subType = ''): Type {
-        if (type === 'transform') return this.transform as unknown as Type;
+        if (type.toLowerCase() === 'transform')
+            return this.transform as unknown as Type;
 
         // returns the first component of passed type
         let component = this.components.find(c => (
@@ -176,8 +174,8 @@ export class Sprite {
 
             if (!Object.is(sprite, this)) continue;
 
-            delete Sprite.sprites[i];
             Sprite.sprites.splice(i, 1);
+            delete Sprite.sprites[i];
         }
     }
 
@@ -228,7 +226,8 @@ export class Sprite {
             return sprite.name === name;
         });
 
-        if (!sprite) return undefined;
+        if (!sprite)
+            return undefined;
 
         return sprite as Sprite;
     }

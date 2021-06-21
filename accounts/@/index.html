@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+
+    <meta name="viewport" content="width=device-width">
+
+    <link rel='stylesheet' href='../../global.css'>
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+
+    <script>
+		$(function () {
+			$("#menu").load("../header.html");
+		});
+    </script>
+
+    <style>
+
+        #username {
+            font-size: xx-large;
+            text-align: center;
+        }
+
+        #projects {
+            margin-top: 10px;
+        }
+
+        .project-button {
+            text-decoration: none;
+            background-color: var(--input-bg);
+            margin: 4px;
+            padding: 8px;
+            font-size: 14px;
+            text-align: center;
+            height: 30px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-button:hover {
+            background-color: vaR(--input-hover-bg);
+        }
+
+        .projectName {
+            float: left;
+            background: none;
+            max-width: 33%;
+            font-size: 28px;
+            overflow: hidden;
+            margin-top: 1px;
+            display: flex;
+            align-items: center;
+        }
+
+
+    </style>
+</head>
+
+<body>
+<div id="menu"></div>
+<main>
+
+    <header id="username"></header>
+
+    <div id="projects"></div>
+
+</main>
+</body>
+</html>
+
+<script type="module">
+
+    import {urlParam} from '../../util.js';
+    import {request} from '../../request.js';
+
+    let username = urlParam('u');
+
+    document.title = username;
+
+    $('#username').html(username);
+
+	let projects = $('#projects');
+
+	request('/public-projects', {
+		username,
+        userID: localStorage.id
+	}).then(async projectNames => {
+
+        const myUsername = (await request('/get-username', {
+            userID: localStorage.id
+        })).username;
+
+		for (let projectName of projectNames) {
+
+			projects.append(`
+
+            <div
+                class="project-button"
+                onclick="window.location.href = '../../play?p=${projectName._id}'"
+            >
+            <div class="projectName">
+                <img
+                    src="../../projects/${projectName._id}/build/assets/COVER.png"
+                    alt="COVER.png"
+                    style="
+                        width: 40px;
+                        height:40px;
+                        border-radius: 4px;
+                        margin-right: 4px;
+                        font-size: 10px;
+                    "
+                />
+                ${projectName.name}
+                </div>
+
+
+                <div id="other-people-${projectName._id}"></div>
+             </div>
+
+            `);
+
+			const editors = await request(`/get-project-editors`, {
+				projectID: projectName._id
+			});
+
+			const editorsHTML = () => {
+				// these are just my projects, always have 'me' first
+				let html = ['me'];
+
+				let i = 0;
+				for (const editor of editors) {
+					if (i > 5) {
+						html.push(`and ${editors.length-5} others`);
+						return html.join(', ');
+					}
+
+					if (editor.username === myUsername)
+						continue;
+
+					html.push(editor.username);
+					i++;
+				}
+
+				return html.join(', ');
+			};
+
+			$(`#other-people-${projectName._id}`).html(`(${editorsHTML()})`);
+		}
+		if (!projects.html()) {
+			projects.html(`
+                <div style="text-align: center">
+                    Looks like this user doesn't have any projects yet!
+                </div>
+            `);
+		}
+	});
+
+</script>

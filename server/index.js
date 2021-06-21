@@ -4,7 +4,8 @@ const https = require("https"),
 const accounts = require('./accounts'),
       projects = require('./projects'),
       misc = require('./misc'),
-      bugs = require('./bugTracking');
+      bugs = require('./bugTracking'),
+      util = require('./util');
 
 const options = {
     key: fs.readFileSync("./privatekey.pem"),
@@ -48,7 +49,7 @@ const handlers = {
     // bug tracker
     'get-bug': bugs.getBug,
     'get-bugs': bugs.getBugs,
-    'report-bug': bugs.reportbug,
+    'report-bug': bugs.reportBug,
     
     // projects
     'new-project': projects.createProject,
@@ -69,57 +70,69 @@ const handlers = {
     'project-owner': projects.projectOwner,
     'project-views': projects.projectViews,
     'top-projects-by-views': projects.topProjectViews,
+    'upload': projects.upload,
+    'folder-size': util.folderSizePublic,
+    'public-projects': projects.publicProjectsFromUser
 };
 
+// goes strait to these function without any data handling
 const rawPaths = [
-    'upload-asset',
+    'upload'
 ];
 
 async function serverResponse (req, res) {
     res.setHeader("Access-Control-Allow-Origin", "https://entropyengine.dev");
-    const url = req.url.split('/');
-    // expecting url of something like /api/987678,
-    // so url[0] should be empty, and url[1] should be the actual path
+    try {
+        const url = req.url.split('/');
+        // expecting url of something like /api/987678,
+        // so url[0] should be empty, and url[1] should be the actual path
 
-    if (url[0] !== '' || !handlers.hasOwnProperty(url[1])) {
-        // no handler can be found
-        console.log(`ERROR: no handler '${url[1]}' for url '${req.url}'`);
-        res.end('{}');
-        return;
+        if (url[0] !== '' || !handlers.hasOwnProperty(url[1])) {
+            // no handler can be found
+            console.log(`ERROR: no handler '${url[1]}' for url '${req.url}'`);
+            res.end('{}');
+            return;
+        }
+
+        if (rawPaths.includes(url[1])) {
+            url.shift();
+            const handler = handlers[url[0]];
+            handler(url, req, res);
+            return;
+        }
+
+
+        let data = '';
+        // need to get the data one packet at a time, and then deal with the whole lot at once
+        req.on('data', chunk => {
+            data += chunk;
+        });
+
+        req.on('end', () => {
+            // the POST body has fully come through, continue on now
+
+            res.writeHead(200);
+
+            let body = {};
+            try {
+                body = JSON.parse(data ?? '{}');
+            } catch (E) {
+                console.log(`Error parsing JSON data from URL ${req.url} with JSON ${data}: ${E}`)
+                return;
+            }
+
+
+            // so that the url now starts at index 0 from now on
+            url.shift();
+
+            const handler = handlers[url[0]];
+
+            handler(url, req, res, body);
+        });
+    } catch(e) {
+        console.log(`ERROR IN URL ${req.url}: ${e}`);
     }
 
-    if (rawPaths.includes(url[1])){
-        url.shift();
-        const handler = handlers[url[0]];
-        handler(url, req, res);
-        return;
-    }
-
-
-    let data = '';
-    // need to get the data one packet at a time, and then deal with the whole lot at once
-    req.on('data', chunk => {
-        data += chunk;
-    });
-    
-    req.on('end', () => {
-        // the POST body has fully come through, continue on now
-
-        res.writeHead(200);
-
-        let body = {};
-        try {
-            body = JSON.parse(data ?? '{}');
-        } catch (E) {}
-
-
-        // so that the url now starts at index 0 from now on
-        url.shift();
-
-        const handler = handlers[url[0]];
-        
-        handler(url, req, res, body);
-    });
 }
 
 https.createServer(options, serverResponse).listen(PORT, () => {

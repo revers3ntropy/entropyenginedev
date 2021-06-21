@@ -1,11 +1,10 @@
-import { v2 } from "./maths/maths.js";
+import { v2, v3 } from "./maths/maths.js";
 import { Sprite } from "../ECS/sprite.js";
 export function sleep(ms) {
     // @ts-ignore
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 export function getCanvasSize(canvas) {
-    const bounds = canvas.getBoundingClientRect();
     return new v2(canvas.width, canvas.height);
 }
 export function getZoomScaledPosition(pos, zoom, center) {
@@ -57,18 +56,19 @@ export function deepClone(obj, hash = new WeakMap()) {
     // Clone and assign enumerable own properties recursively
     return Object.assign(result, ...Object.keys(obj).map(key => ({ [key]: deepClone(obj[key], hash) })));
 }
-export const expandV2 = (v) => [v.x, v.y];
-export const expandV3 = (v) => [v.x, v.y, v.z];
 export function JSONifyComponent(component, type) {
     let json = {};
     for (const property in component) {
-        // public as they are set with getters and setters on the indevidual components
-        // type stuff as that is dealt with seperately
+        // public as they are set with getters and setters on the individual components
+        // type stuff as that is dealt with separately
         if (['type', 'subtype', 'hasSubType', 'public'].indexOf(property) !== -1)
             continue;
         let value = component[property];
-        if (value instanceof v2)
-            value = [value.x, value.y];
+        if (value instanceof v2 || value instanceof v3)
+            value = value.array;
+        else if (value.isColour) {
+            value = value.json;
+        }
         json[property] = value;
     }
     json.type = type || component.subtype;

@@ -1,38 +1,14 @@
-const query = require('./sql').query;
-const fs = require('fs');
-const formidable = require('./node_modules/formidable');
-const fse = require('./node_modules/fs-extra');
-const dotenv = require('./node_modules/dotenv').config();
+const query = require('./sql').query,
+    fs = require('fs'),
+    fse = require('./node_modules/fs-extra'),
+    dotenv = require('./node_modules/dotenv').config(),
+    mv = require('./node_modules/mv'),
+    util = require('./util.js'),
+    formidable = require('./node_modules/formidable');
 
 const idMax = parseInt(process.env.SEC_IDMAX);
 
 const emptyScripts = ``;
-
-const emptyProjectJSON = {
-    canvasID: 'myCanvas',
-    scenes: [
-        {
-            name: 'Sample Scene'
-        }
-    ],
-    sprites: [
-        {
-            name: 'main camera',
-            components: [{type: 'Camera'}]
-        }, {
-            name: 'sprite',
-            transform: {scale: [100, 100, 100]},
-            components: [
-                {type: 'RectCollider'},
-                {type: 'RectRenderer'}
-            ]
-        }
-    ]
-};
-
-const emptyGlobalState = `
-    {}
-`;
 
 exports.shareProject = (url, req, res, body) => {
     query(`
@@ -45,14 +21,31 @@ exports.shareProject = (url, req, res, body) => {
 
 exports.createProject = (url, req, res, body) => {
 
-    query(`SELECT FLOOR (1 + RAND() * ${idMax}) AS value FROM projects HAVING value NOT IN (SELECT DISTINCT _id FROM projects) LIMIT 1`, value => {
-        const id = value[0]?.value || Math.ceil(Math.random() * idMax);
+    query(`
+
+        SELECT 
+               FLOOR (1 + RAND() * ${idMax}) AS value 
+        FROM 
+             projects 
+        HAVING 
+            value NOT IN (
+               SELECT 
+                   DISTINCT _id 
+               FROM 
+                    projects
+            )
+        LIMIT 1
+        
+    `, value => {
+        const id = value[0]?.value ||
+            // defaults to random number which is most likely not going to be used yet
+            Math.ceil(Math.random() * idMax);
 
         // got the id, now do the same thing for the salt
         query(`
 
-        INSERT INTO projects VALUES (${id}, '${body.name}', 0);
-        INSERT INTO projectSaves VALUES (${body.userID}, ${id}, null);
+            INSERT INTO projects VALUES (${id}, '${body.name}', 0, 0);
+            INSERT INTO projectSaves VALUES (${body.userID}, ${id}, CURRENT_TIMESTAMP);
            
        `);
 
@@ -65,18 +58,24 @@ exports.createProject = (url, req, res, body) => {
         fs.mkdirSync(dir);
         fs.mkdirSync(dir + '/assets');
 
-
-
-        fs.appendFile(dir + '/index.json', JSON.stringify(emptyProjectJSON), () => {
+        fs.copyFile('../templates/project.txt', dir + '/index.json', err => {
+            if (err) {
+                console.error(`Creating JSON file in ${dir} failed: ${err}`);
+                return;
+            }
             console.log('made JSON file in ' + dir);
         });
 
-        fs.appendFile(dir + '/scripts.js', emptyScripts, () => {
+        fs.appendFile(dir + '/scripts.js', emptyScripts, err => {
             console.log('made scripts.js file in ' + dir);
         });
 
-        fs.appendFile(dir + '/globalState.json', emptyGlobalState, () => {
-            console.log('made globalState.json file in ' + dir);
+        fs.copyFile('../templates/globalState.txt', dir + '/globalState.json', err => {
+            if (err) {
+                console.error(`Creating globalState.json file in ${dir} failed: ${err}`);
+                return;
+            }
+            console.log('made  globalState.json file in ' + dir);
         });
 
         exports.shareProject(url, req, res, {
@@ -127,6 +126,45 @@ exports.deleteProject = (url, req, res, body) => {
 
 };
 
+exports.publicProjectsFromUser = (url, req, res, body) => {
+    query(`
+        SELECT
+            projects.name,
+            projects._id,
+            UNIX_TIMESTAMP(MAX(projectSaves.date)) as latest
+        
+        FROM
+            projects,
+            projectAccess,
+            projectSaves,
+            users
+        
+        WHERE
+                projectAccess.projectID = projects._id
+            AND
+                projectSaves.projectID = projects._id
+            AND
+                projectSaves.projectID = projectAccess.projectID
+            AND
+                projectAccess.userID = ${body.userID}
+            AND
+                (projectAccess.level > 0 OR projects.globalAccess > 0)
+            AND 
+                users.username = '${body.username}'
+        
+        GROUP BY 
+            projects.name, 
+            projects._id, 
+            projectAccess.level
+        
+        ORDER BY
+             latest DESC
+
+    `, values => {
+        res.end(JSON.stringify(values));
+    });
+};
+
 exports.getUserProjectNames = (url, req, res, body) => {
     query(`
         SELECT
@@ -149,7 +187,8 @@ exports.getUserProjectNames = (url, req, res, body) => {
           AND
             projectAccess.userID = ${body.userID}
           AND
-              projectAccess.level > 0
+            projectAccess.level > 0
+              
         
         GROUP BY 
              projects.name, 
@@ -191,9 +230,12 @@ exports.save = (url, req, res, body) => {
 exports.accessLevel = (url, req, res, body) => {
     query(`SELECT globalAccess from projects WHERE _id=${body.projectID}`, globalAccess => {
         query(`SELECT level FROM projectAccess WHERE projectID=${body.projectID} AND userID=${body.userID}`, personalAccess => {
+            const personal = personalAccess[0]?.level || 0;
+            const global = globalAccess[0]?.globalAccess || 0;
+
             res.end(JSON.stringify({
-                type: (personalAccess[0]?.level || 0) >= (globalAccess[0]?.globalAccess || 0) ? 'personal' : 'global',
-                accessLevel: Math.max(personalAccess[0]?.level || 0, (globalAccess[0]?.globalAccess || 0))
+                type: (personal) >= global ? 'personal' : 'global',
+                accessLevel: Math.max(personal, global)
             }));
         });
     });
@@ -242,42 +284,13 @@ exports.share = (url, req, res, body) => {
     res.end("{}");
 };
 
-const buildHTML = (htmlTitle, canvasID, projectID) => (`
-
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title> ${htmlTitle} </title>
-        <meta name="viewport" content="width=device-width">
-        <script type="module" src="https://entropyengine.dev/entropy-engine/index.js"></script>
-        <script defer type="module">
-            ${buildHTMLJS(canvasID, projectID)}
-        </script>
-        
-        <style>
-        @import url('https://fonts.googleapis.com/css?family=Nunito');
-        
-         html, body {
-            height: 100%;
-         }
-        </style>
-    </head>
-
-    <body>
-    <canvas id="myCanvas"></canvas>
-    </body>
-    </html>
-    
-
-    `);
-
-const buildHTMLJS = (canvasID, projectID) => (`
-
-import {runFromJSON} from "https://entropyengine.dev/entropy-engine/index.js";
-runFromJSON('https://entropyengine.dev/projects/${projectID}/build/index.json');
-
-`);
+const buildHTML = (htmlTitle, projectID) => {
+    let raw = fs.readFileSync('../templates/buildHTML.txt');
+    raw = raw.toString();
+    raw = raw.replace(/ID/, projectID);
+    raw = raw.replace(/TITLE/, htmlTitle);
+    return raw;
+};
 
 exports.build = (url, req, res, body) => {
     const projectDir = `../projects/${body.projectID}`;
@@ -303,10 +316,18 @@ exports.build = (url, req, res, body) => {
 
     fs.writeFileSync(
         buildDir + '/index.html',
-        buildHTML('Entropy Engine', 'myCanvas', body.projectID)
+        buildHTML('Entropy Engine', body.projectID)
     );
 
-    res.end("{}");
+    query(`
+    
+    UPDATE projects
+    SET projects.hasBuild = 1
+    WHERE projects._id = ${projectID}
+    
+    `, () => {
+        res.end("{}");
+    });
 };
 
 
@@ -322,30 +343,6 @@ exports.getAssets = (url, req, res, body) => {
 
     res.end(JSON.stringify(files));
 };
-
-/* Using PHP instead - nothing was really working
-
-exports.uploadAsset = (url, req, res, body) => {
-    console.log(body);
-    console.log(__dirname);
-
-    let form = new formidable.IncomingForm();
-
-    form.parse(req, (err, fields, files) => {
-        let oldpath = '../..' + files.filetoupload.path;
-        let newpath = `../projects/${url[1]}/assets/${files.filetoupload.name}`;
-        fs.rename(oldpath, newpath,  err => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            res.write('File uploaded and moved!');
-            res.end();
-        });
-    });
-};
-
- */
 
 exports.deleteAsset = (url, req, res, body) => {
     const path = `../projects/${body.projectID}/assets/${body.fileName}`;
@@ -513,7 +510,9 @@ exports.topProjectViews = (url, req, res, body) => {
         projectViews,
         projects
     WHERE
-        projectViews.projectID=projects._id
+        projectViews.projectID = projects._id
+    AND projects.globalAccess > 0
+    AND projects.hasBuild
     GROUP BY
         id
     ORDER BY
@@ -543,3 +542,63 @@ exports.updateGlobalState = (url, req, res, body) => {
 
     res.end("{}");
 };
+
+exports.upload = async (url, req, res) => {
+
+    url.shift();
+
+    const projectID = url.shift();
+    const from = url.shift();
+    const path = url.join('/') || '';
+
+
+    const assetsPath = `../projects/${projectID}/assets`;
+    util.folderSize(assetsPath, ({gb, mb}) => {
+        if (gb > 1) {
+            res.end(`
+
+                <p style="text-align: center; font-size: xx-large">
+                    Looks like you've ran out of space! You have used ${mb} / 1000 MB!
+                </p>
+                
+                <a href="https://entropyengine.dev/editor?p=${projectID}&from=${from}">
+                    back
+                </a>
+                
+            `);
+            return;
+        }
+        const form = new formidable.IncomingForm();
+
+        form.parse(req, (err, fields, files) => {
+
+            const file = files.filetoupload;
+
+            const oldPath = file.path;
+            const newPath = `${assetsPath}/${path}/${file.name}`;
+
+            mv(oldPath, newPath, err => {
+                if (err) {
+                    res.write(err.toString());
+                } else {
+                    res.write('');
+                    res.write(`
+
+                    <p style="text-align: center; font-size: xx-large">
+                        File uploaded! Returning to project...
+                    </p>
+                    
+                    
+                    <script>
+                        window.location.href = 'https://entropyengine.dev/editor?p=${projectID}&from=${from}'
+                    </script>
+                    `);
+                }
+
+                res.end();
+            });
+        });
+    });
+
+
+}

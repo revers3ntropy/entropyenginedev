@@ -126,34 +126,47 @@
 <script type="module">
 	import {request} from '../request.js';
 	import {urlParam} from '../util.js';
-	import {runFromJSON} from "../entropy-engine/index.js";
+	import {runFromJSON} from "../entropy-engine";
 	import {comment as commentComponent} from '../globalComponents.js';
+
+	function urlExists (url) {
+		const http = new XMLHttpRequest();
+		http.open('HEAD', url, false);
+		http.send();
+		return http.status != 404;
+	}
 
 	const projectID = urlParam('p');
 
-	document.getElementById('contributors-link').href += projectID;
-	const cacheBust = Math.floor(Math.random() * 10**5);
+	if (!urlExists(`https://entropyengine.dev/projects/${projectID}/build/index.json`)) {
+		$('#game-container').html('Error - game does not exist');
+		throw Error('Project has not been built or does not exist');
 
-	// run the actual game - use cache-bust to get the most recent version
-	runFromJSON(`../projects/${projectID}/build/index.json?cache-bust=${cacheBust}`);
+    } else {
 
-	request('/project-owner', {projectID})
-        .then(owner => {
-            $('#project-owner').html(`
+		document.getElementById('contributors-link').href += projectID;
+		const cacheBust = Math.floor(Math.random() * 10**5);
+
+		// run the actual game - use cache-bust to get the most recent version
+		runFromJSON(`../projects/${projectID}/build/index.json?cache-bust=${cacheBust}`);
+
+		request('/project-owner', {projectID})
+			.then(owner => {
+				$('#project-owner').html(`
                 ${owner.owner} and ${owner.totalContributors-1} others
             `);
-        });
+			});
 
-	request('/viewed-project', {
-		projectID,
-        userID: localStorage.id
-    });
+		request('/viewed-project', {
+			projectID,
+			userID: localStorage.id
+		});
 
-	request('/project-views', {
-		projectID,
-		userID: localStorage.id
-	}).then(data => {
-		$('#views').html(`
+		request('/project-views', {
+			projectID,
+			userID: localStorage.id
+		}).then(data => {
+			$('#views').html(`
             <span style="margin-right: 10px">
                 ${data.unique} viewers
             </span>
@@ -162,68 +175,69 @@
                 ${data.total} views
             </span>
         `);
-	});
+		});
 
-	function refreshComments (username) {
-		request('/get-comments', {
-			public: true,
-			projectID
-		}).then(comments => {
-			$('#num-comments').html(comments.length);
+		function refreshComments (username) {
+			request('/get-comments', {
+				public: true,
+				projectID
+			}).then(comments => {
+				$('#num-comments').html(comments.length);
 
-			if (!comments) return;
+				if (!comments) return;
 
-			const commentsDIV = $('#comments');
+				const commentsDIV = $('#comments');
 
-			commentsDIV.html('');
+				commentsDIV.html('');
 
-			for (let comment of comments) {
-                commentsDIV.append(
-                	commentComponent(comment, comment.username === username)
-                );
+				for (let comment of comments) {
+					commentsDIV.append(
+						commentComponent(comment, comment.username === username)
+					);
 
-                // have to do this here
-                if (comment.username !== username) continue;
+					// have to do this here
+					if (comment.username !== username) continue;
 
-                $(`#delete-comment-${comment._id}`).click(() => {
+					$(`#delete-comment-${comment._id}`).click(() => {
 
-                    $(`#comment-${comment._id}-menu`).hide();
-                    $(`#comment-${comment._id}`).hide();
+						$(`#comment-${comment._id}-menu`).hide();
+						$(`#comment-${comment._id}`).hide();
 
-                    request('/delete-comment', {
-                        commentID: comment._id
-                    }).then(() => {
-                        refreshComments(username);
-                    });
-                });
-            }
+						request('/delete-comment', {
+							commentID: comment._id
+						}).then(() => {
+							refreshComments(username);
+						});
+					});
+				}
+			});
+		}
+
+
+		const addMessage = $("#add-comment");
+
+		request('/get-username', {
+			userID: localStorage.id
+		}).then(username => {
+
+			addMessage.keyup(event => {
+				if (event.keyCode !== 13) return;
+
+				const content = addMessage.val();
+				addMessage.val('');
+
+				request('/comment', {
+					content,
+					projectID,
+					public: true,
+					userID: localStorage.id
+				}).then(() => {
+					refreshComments(username.username);
+				});
+			});
+
+			refreshComments(username.username);
 		});
     }
-
-
-	const addMessage = $("#add-comment");
-
-	request('/get-username', {
-		userID: localStorage.id
-	}).then(username => {
-
-		addMessage.keyup(event => {
-			if (event.keyCode !== 13) return;
-
-			const content = addMessage.val();
-			addMessage.val('');
-
-			request('/comment', {
-				content,
-				projectID,
-				public: true,
-				userID: localStorage.id
-			}).then(() => {
-				refreshComments(username.username);
-			});
-		});
-
-		refreshComments(username.username);
-    });
 
 </script>

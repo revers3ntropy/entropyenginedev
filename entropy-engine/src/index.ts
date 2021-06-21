@@ -19,7 +19,7 @@ export {Script} from './ECS/components/scriptComponent.js'
 export { CircleCollider, RectCollider } from './ECS/components/colliders.js'
 export { v2, TriangleV2, MeshV2, v3, TriangleV3, MeshV3 } from './util/maths/maths.js'
 export { Body } from "./physics/body.js"
-export { CircleRenderer, RectRenderer, ImageRenderer2D } from './ECS/components/renderComponents.js'
+export { CircleRenderer, RectRenderer, ImageRenderer2D, MeshRenderer } from './ECS/components/renderComponents.js'
 export { GUIBox, GUIText, GUITextBox, GUIRect, GUICircle, GUIPolygon, GUIImage } from './ECS/components/gui.js'
 export { input } from './util/input.js'
 export { Camera } from './ECS/components/camera.js'
@@ -70,11 +70,6 @@ export default function entropyEngine ({
     ctx.transform(1, 0, 0, -1, 0, canvas.height);
     // for easy restoring
     ctx.save();
-
-    const background = {
-        colour: rgb(255, 255, 255),
-        image: ''
-    };
 
     // managers and constants
     canvas.addEventListener('mousemove', (evt: any) => {
@@ -174,6 +169,8 @@ export default function entropyEngine ({
     async function tick (timestamp: number) {
 
         let initTime = timestamp;
+
+        Script.broadcast('Update', []);
         
         Sprite.loop(sprite => {            
             if (!sprite.active) return;
@@ -198,7 +195,7 @@ export default function entropyEngine ({
             console.log(`collisions: ${performance.now() - time}`);
 
         time = performance.now();
-        renderAll(Scene.activeScene.sprites, canvas, ctx, background);
+        renderAll(Scene.activeScene.sprites, canvas, ctx, Scene.activeScene.settings.background, Camera.main);
         if (performanceDebug > 1)
             console.log(`rendering: ${performance.now() - time}`);
 
@@ -214,8 +211,7 @@ export default function entropyEngine ({
     }
 
     return {
-        run,
-        background
+        run
     };
 }
 

@@ -1,12 +1,17 @@
-import { JSONifyComponent } from "../../util/util.js";
-import { Component } from "../component.js";
-import { Transform } from "../transform.js";
-import { Renderer } from "./renderComponents.js";
-import {TriangleV3, v2, v3, MeshV3} from '../../util/maths/maths.js';
-import { Sprite } from "../sprite.js";
+import {JSONifyComponent} from "../../util/util.js";
+import {Transform} from "../transform.js";
+import {Renderer} from "./renderComponents.js";
+import {MeshV3} from '../../util/maths/maths.js';
+import {Sprite} from "../sprite.js";
+import {drawMesh, renderMode} from "../../render/3d/renderMesh.js";
+import {Mat4} from "../../util/maths/matrix.js";
 
 export abstract class Renderer3D extends Renderer {
-    abstract draw (transform: Transform, camera: Sprite, ctx: any): void;
+    abstract draw (arg: {
+       transform: Transform,
+       ctx: CanvasRenderingContext2D,
+       cameraSprite: Sprite
+   }): void;
     
     protected constructor(type: string) {
         super(type, false);
@@ -20,17 +25,32 @@ export abstract class Renderer3D extends Renderer {
 }
 
 export class MeshRenderer extends Renderer3D {
-    tris: MeshV3;
+    mesh: MeshV3;
 
     constructor ({
-         tris = new MeshV3([]),
+         mesh = new MeshV3([]),
      }) {
-        super("CircleRenderer2D");
+        super("MeshRenderer");
 
-        this.tris = tris;
+        this.mesh = mesh;
     }
 
-    draw (transform: Transform, camera: Sprite, ctx: any): void {
-        
+    draw (arg: {
+        transform: Transform,
+        ctx: CanvasRenderingContext2D,
+        cameraSprite: Sprite
+    }): void {
+        let mesh = new MeshV3([]);
+        const rot = arg.transform.rotation;
+
+        for (let tri of this.mesh.triangles) {
+            tri = tri.clone;
+            tri.apply (p => {
+                return p.transform(Mat4.rotation(rot.x, rot.y, rot.z));
+            });
+            mesh.triangles.push(tri);
+        }
+
+        drawMesh(mesh, renderMode.WIREFRAME, arg.ctx, arg.cameraSprite);
     }
 }

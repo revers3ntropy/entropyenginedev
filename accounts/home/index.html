@@ -53,7 +53,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 230px;
+        height: 270px;
     }
 
     #top-projects {
@@ -180,8 +180,10 @@
                             />
                         </div>
                         <div style="font-size: 12px; margin: 2px">
-                             By ${owner.owner} and ${owner.totalContributors - 1} others
-                        </div>
+                             By ${owner.owner} ${owner.totalContributors > 1? `
+                                and ${owner.totalContributors - 1} others
+                             ` : ''}
+                         </div>
 
                         <div style="font-size: 12px; text-align: right; margin-right: 2px">
                             ${views.unique} viewers | ${views.total} views

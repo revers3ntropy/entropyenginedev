@@ -1,5 +1,4 @@
 import { v2, v3 } from "../util/maths/maths.js";
-import { expandV3 } from "../util/util.js";
 import { Component } from "./component.js";
 import { Scene } from "./scene.js";
 import { Sprite } from "./sprite.js";
@@ -10,7 +9,6 @@ export class Transform extends Component {
         this._position = position || _position;
         this._scale = scale !== null && scale !== void 0 ? scale : scale;
         this._rotation = rotation || rotation;
-        this.parent = parent;
         this.addPublic({
             name: 'position',
             value: this._position,
@@ -31,6 +29,7 @@ export class Transform extends Component {
         this.addPublic({
             name: 'rotation',
             value: this._rotation,
+            type: 'v3',
             overrideGet: () => {
                 if (typeof this.parent === 'number')
                     return this._rotation;
@@ -43,6 +42,7 @@ export class Transform extends Component {
         this.addPublic({
             name: 'scale',
             value: this._scale,
+            type: 'v3',
             overrideGet: () => {
                 if (typeof this.parent === 'number')
                     return this._scale;
@@ -56,6 +56,33 @@ export class Transform extends Component {
                 (_b = (_d = this._scale).y) !== null && _b !== void 0 ? _b : (_d.y = 0);
             }
         });
+        this.addPublic({
+            name: 'parent',
+            value: parent,
+            type: 'Transform'
+        });
+    }
+    setParentDirty(val) {
+        /*
+            For if the parent is not known to be safe, for example from user input.
+            Protects against types and circular parenting
+         */
+        if (!(val instanceof Transform) && typeof val !== 'number') {
+            this.parent = Scene.active;
+            return;
+        }
+        if (typeof val === "number") {
+            this.parent = val;
+            return;
+        }
+        // check for circular parenting
+        if (this.recursiveChildren.includes(val.sprite)) {
+            for (const child of this.children)
+                // shift children up one level if any of the
+                // children are becoming the parent of this sprite
+                child.transform.parent = this.parent;
+        }
+        this.parent = val;
     }
     json() {
         let parent = {
@@ -72,9 +99,9 @@ export class Transform extends Component {
         }
         return {
             type: 'Transform',
-            position: expandV3(this._position),
-            scale: expandV3(this._scale),
-            rotation: this._rotation,
+            position: this._position.array,
+            scale: this._scale.array,
+            rotation: this._rotation.array,
             parent
         };
     }
@@ -97,17 +124,29 @@ export class Transform extends Component {
     set localScale(v) {
         this.scale = v;
     }
-    detachParent() {
+    detachFromParent() {
         this.parent = Scene.active;
     }
-    getChildren() {
+    get children() {
         let children = [];
         for (let sprite of Sprite.sprites)
             if (Object.is(sprite.transform.parent, this))
                 children.push(sprite);
         return children;
     }
-    getChildCount() {
+    get recursiveChildren() {
+        const queue = this.children;
+        const children = [];
+        while (queue.length > 0) {
+            for (let child of queue[0].transform.children) {
+                queue.push(child);
+            }
+            // there must be an element so shift can't return undefined, but ts doesn't kow that
+            children.push(queue.shift());
+        }
+        return children;
+    }
+    get childCount() {
         let count = 0;
         for (let sprite of Sprite.sprites)
             if (Object.is(sprite.transform.parent, this))
@@ -115,7 +154,7 @@ export class Transform extends Component {
         return count;
     }
     detachChildren() {
-        for (let child of this.getChildren())
+        for (let child of this.children)
             child.transform.parent = Scene.active;
     }
     makeChildOf(t) {
@@ -150,6 +189,6 @@ export class Transform extends Component {
         return new v2(forwards.y, -forwards.x);
     }
     getChild(name) {
-        return this.getChildren().find(t => t.name === name);
+        return this.children.find(t => t.name === name);
     }
 }

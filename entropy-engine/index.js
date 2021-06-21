@@ -17,7 +17,6 @@ import { getMousePos, input, setMousePos } from "./util/input.js";
 import { spritesFromJSON, initialiseScenes } from './util/JSONprocessor.js';
 import { Camera } from "./ECS/components/camera.js";
 import { getCanvasStuff, loopThroughScripts } from "./util/util.js";
-import { rgb } from './util/colour.js';
 import { Scene } from './ECS/scene.js';
 export { rgb } from './util/colour.js';
 export { Sprite } from "./ECS/sprite.js";
@@ -25,7 +24,7 @@ export { Script } from './ECS/components/scriptComponent.js';
 export { CircleCollider, RectCollider } from './ECS/components/colliders.js';
 export { v2, TriangleV2, MeshV2, v3, TriangleV3, MeshV3 } from './util/maths/maths.js';
 export { Body } from "./physics/body.js";
-export { CircleRenderer, RectRenderer, ImageRenderer2D } from './ECS/components/renderComponents.js';
+export { CircleRenderer, RectRenderer, ImageRenderer2D, MeshRenderer } from './ECS/components/renderComponents.js';
 export { GUIBox, GUIText, GUITextBox, GUIRect, GUICircle, GUIPolygon, GUIImage } from './ECS/components/gui.js';
 export { input } from './util/input.js';
 export { Camera } from './ECS/components/camera.js';
@@ -65,10 +64,6 @@ export default function entropyEngine({ licenseKey = '', canvasID = "canvas", pe
     ctx.transform(1, 0, 0, -1, 0, canvas.height);
     // for easy restoring
     ctx.save();
-    const background = {
-        colour: rgb(255, 255, 255),
-        image: ''
-    };
     // managers and constants
     canvas.addEventListener('mousemove', (evt) => {
         if (!isInitialised)
@@ -155,6 +150,7 @@ export default function entropyEngine({ licenseKey = '', canvasID = "canvas", pe
     function tick(timestamp) {
         return __awaiter(this, void 0, void 0, function* () {
             let initTime = timestamp;
+            Script.broadcast('Update', []);
             Sprite.loop(sprite => {
                 if (!sprite.active)
                     return;
@@ -174,7 +170,7 @@ export default function entropyEngine({ licenseKey = '', canvasID = "canvas", pe
             if (performanceDebug > 1)
                 console.log(`collisions: ${performance.now() - time}`);
             time = performance.now();
-            renderAll(Scene.activeScene.sprites, canvas, ctx, background);
+            renderAll(Scene.activeScene.sprites, canvas, ctx, Scene.activeScene.settings.background, Camera.main);
             if (performanceDebug > 1)
                 console.log(`rendering: ${performance.now() - time}`);
             if (performanceDebug > 0)
@@ -189,8 +185,7 @@ export default function entropyEngine({ licenseKey = '', canvasID = "canvas", pe
         });
     }
     return {
-        run,
-        background
+        run
     };
 }
 // cache busting

@@ -40,11 +40,11 @@ export class CircleRenderer extends Renderer2D {
             }
         });
     }
-    draw(position, transform, ctx, cameraZoom, center) {
-        const radius = this.radius * cameraZoom * transform.scale.x;
+    draw(arg) {
+        const radius = this.radius * arg.zoom * arg.transform.scale.x;
         if (radius <= 0)
             return;
-        circle(ctx, getZoomScaledPosition(position.clone.add(this.offset), cameraZoom, center), radius, this.colour.rgb);
+        circle(arg.ctx, getZoomScaledPosition(arg.position.clone.add(this.offset), arg.zoom, arg.center), radius, this.colour.rgb);
     }
 }
 export class RectRenderer extends Renderer2D {
@@ -71,14 +71,14 @@ export class RectRenderer extends Renderer2D {
             }
         });
     }
-    draw(position, transform, ctx, cameraZoom, center) {
-        const width = this.width * transform.scale.x * cameraZoom;
-        const height = this.height * transform.scale.y * cameraZoom;
+    draw(arg) {
+        const width = this.width * arg.transform.scale.x * arg.zoom;
+        const height = this.height * arg.transform.scale.y * arg.zoom;
         if (height <= 0 || width <= 0)
             return;
         let renderPos = this.offset.clone
-            .add(position);
-        rect(ctx, getZoomScaledPosition(renderPos, cameraZoom, center), width, height, this.colour.rgb);
+            .add(arg.position);
+        rect(arg.ctx, getZoomScaledPosition(renderPos, arg.zoom, arg.center), width, height, this.colour.rgb);
     }
 }
 export class ImageRenderer2D extends Renderer2D {
@@ -99,13 +99,14 @@ export class ImageRenderer2D extends Renderer2D {
             description: 'The path to the image to be rendered - relative to /assets/ or /build/asssets/',
         });
     }
-    draw(position, transform, ctx, cameraZoom, center) {
-        const width = this.width * transform.scale.x * cameraZoom;
-        const height = this.height * transform.scale.y * cameraZoom;
+    draw(arg) {
+        const width = this.width * arg.transform.scale.x * arg.zoom;
+        const height = this.height * arg.transform.scale.y * arg.zoom;
         if (height <= 0 || width <= 0)
             return;
         let renderPos = this.offset.clone
-            .add(position);
-        image(ctx, getZoomScaledPosition(renderPos, cameraZoom, center), new v2(width, height).scale(cameraZoom), this.url);
+            .add(arg.position);
+        image(arg.ctx, getZoomScaledPosition(renderPos, arg.zoom, arg.center), new v2(width, height)
+            .scale(arg.zoom), this.url);
     }
 }

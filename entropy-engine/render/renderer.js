@@ -10,32 +10,61 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { v2 } from "../util/maths/maths.js";
 import { sleep, getCanvasStuff, getCanvasSize } from "../util/util.js";
 import { Camera } from "../ECS/components/camera.js";
+import { parseColour } from "../util/colour.js";
 export function reset(ctx) {
     ctx.transform(1, 0, 0, -1, 0, ctx.canvas.height);
 }
-export function renderAll(sprites, canvas, ctx, background) {
+function orderSpritesForRender(sprites) {
+    // sort the sprites by their z position
+    const zOrderedSprites = sprites.sort((a, b) => {
+        return a.transform.position.z - b.transform.position.z;
+    });
+    // GUI elements appear always above normal sprites,
+    // so filter them out and put them last, still ordered by their z position
+    let justSprites = [];
+    let justGUI = [];
+    for (let sprite of zOrderedSprites) {
+        if (sprite.hasComponent('GUIElement'))
+            justGUI.push(sprite);
+        else
+            justSprites.push(sprite);
+    }
+    return [...justSprites, ...justGUI];
+}
+export function renderBackground(ctx, canvasSize, background) {
+    function fillBackground(alpha) {
+        let bgColour = (background === null || background === void 0 ? void 0 : background.tint) || parseColour('white');
+        bgColour = bgColour.clone;
+        bgColour.alpha = alpha;
+        ctx.beginPath();
+        ctx.rect(0, 0, canvasSize.x, canvasSize.y);
+        ctx.fillStyle = bgColour.rgba;
+        ctx.fill();
+        ctx.closePath();
+    }
+    if (!background || !background.image) {
+        fillBackground(1);
+        return;
+    }
+    // if it can't use the image as a background, then just use the colour
+    try {
+        image(ctx, v2.zero, canvasSize, background.image);
+    }
+    catch (_a) {
+        fillBackground(0.1);
+    }
+}
+export function renderAll(sprites, canvas, ctx, background, cameraSprite) {
     // background
     const canvasSize = getCanvasSize(canvas);
     const mid = canvasSize.clone.scale(0.5);
-    function fillBackground() {
-        rect(ctx, v2.zero, canvasSize.x, canvasSize.y, background.colour.rgb);
-    }
-    if (!background.image) {
-        fillBackground();
-    }
-    else {
-        // if it can't use the image as a background, then just use the colour
-        try {
-            image(ctx, v2.zero, canvasSize, background.image);
-        }
-        catch (_a) {
-            fillBackground();
-        }
-    }
-    if (!Camera.main)
+    renderBackground(ctx, canvasSize, background);
+    if (!cameraSprite) {
+        console.error('Camera was not passed to renderAll function! Main camera: ' + Camera.main.name);
         return;
+    }
     // camera
-    const camera = Camera.main
+    const camera = cameraSprite
         .getComponent("Camera");
     if (!camera)
         return;
@@ -49,45 +78,27 @@ export function renderAll(sprites, canvas, ctx, background) {
     // filter out sprites that don't have render components
     sprites = sprites.filter((sprite) => (sprite.hasComponent('Renderer') ||
         sprite.hasComponent('GUIElement')));
-    // sort the sprites by their z position
-    const zOrderedSprites = sprites.sort((a, b) => {
-        return a.transform.position.z - b.transform.position.z;
-    });
-    // GUI elements appear always above normal sprites,
-    // so filter them out and put them last, still ordered by their z position
-    let justSprites = [];
-    let justGUI = [];
-    for (let sprite of zOrderedSprites)
-        if (sprite.hasComponent('GUIElement'))
-            justGUI.push(sprite);
-        else
-            justSprites.push(sprite);
-    const fullyOrderedSprites = [...justSprites, ...justGUI];
     // call the draw function for each
-    for (let sprite of fullyOrderedSprites) {
+    for (let sprite of orderSpritesForRender(sprites)) {
         // deal with GUI and normal render components separately
         if (sprite.hasComponent('GUIElement')) {
             sprite.getComponent('GUIElement').draw(ctx, sprite.transform);
             continue;
         }
         const renderPos = sprite.transform.position.clone.sub(cameraPos);
-        sprite.getComponent('Renderer').draw(renderPos, sprite.transform, ctx, camera.zoom, mid);
+        sprite.getComponent('Renderer').draw({
+            position: renderPos,
+            transform: sprite.transform,
+            ctx,
+            zoom: camera.zoom,
+            center: mid,
+            camera,
+            cameraSprite
+        });
     }
 }
 // canvas util
 export function setCanvasSize(canvas) {
-    /* depricated
-    // get the canvas and context from two numbers
-    const { ctx, canvas } = getCanvasStuff(canvasID);
-    // set both the width and the height based off whether or not once has been specified - if it hasn't keep it the same
-    // the '?? number' is a backup if the boundingClientRect cannot be found on the canvas element - so default value if everything goes wrong
-    let actualWidth = width || (document.getElementById(canvasID)?.getBoundingClientRect().width ?? 10);
-    let actualHeight = height || (document.getElementById(canvasID)?.getBoundingClientRect().height ?? 10);
-    canvas.style.width = `${actualWidth}px`;
-    canvas.style.height = `${actualHeight}px`;
-    // return what the actual size of the canvas is for use later on
-    return [actualWidth, actualHeight]
-     */
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     canvas.width = canvas.offsetWidth;
@@ -150,14 +161,20 @@ export function rect(ctx, position, width, height, colour) {
     ctx.fill();
     ctx.closePath();
 }
-export function polygon(ctx, points, fillColour) {
+export function polygon(ctx, points, fillColour, fill = true) {
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
+    ctx.strokeStyle = fillColour;
     for (let point of points.slice(1, points.length))
         ctx.lineTo(point.x, point.y);
-    ctx.fillStyle = fillColour;
-    ctx.fill();
-    ctx.closePath();
+    if (fill) {
+        ctx.fillStyle = fillColour;
+        ctx.fill();
+        ctx.closePath();
+    }
+    else {
+        ctx.stroke();
+    }
 }
 export function text(ctx, text, fontSize, font, colour, position, alignment = 'center') {
     ctx.beginPath();

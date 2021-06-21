@@ -1,5 +1,4 @@
 import {v2, v3} from "./maths/maths.js";
-import {Component} from "../ECS/component.js";
 import { Camera } from "../ECS/components/camera.js";
 import { Sprite } from "../ECS/sprite.js";
 import { Script } from "../index.js";
@@ -10,8 +9,6 @@ export function sleep(ms: number) {
 }
 
 export function getCanvasSize (canvas: HTMLCanvasElement): v2 {
-    const bounds = canvas.getBoundingClientRect();
-
     return new v2(canvas.width, canvas.height);
 }
 
@@ -73,21 +70,21 @@ export function deepClone(obj: any, hash = new WeakMap()): any {
         key => ({ [key]: deepClone(obj[key], hash) }) ));
 }
 
-export const expandV2 = (v: v2) => [v.x, v.y];
-export const expandV3 = (v: v3) => [v.x, v.y, v.z];
-
 export function JSONifyComponent (component: any, type? : string) {
     let json: any = {};
 
     for (const property in component) {
-        // public as they are set with getters and setters on the indevidual components
-        // type stuff as that is dealt with seperately
+        // public as they are set with getters and setters on the individual components
+        // type stuff as that is dealt with separately
         if (['type', 'subtype', 'hasSubType', 'public'].indexOf(property) !== -1) continue;
 
         let value = component[property];
 
-        if (value instanceof v2)
-            value = [value.x, value.y];
+        if (value instanceof v2 || value instanceof v3)
+            value = value.array;
+        else if (value.isColour) {
+            value = value.json
+        }
 
         json[property] = value;
     }

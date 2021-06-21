@@ -1,8 +1,8 @@
-import {sceneCamera} from '../index.js';
+import {state} from '../state.js';
 
 export function renderSceneMenu (div) {
-	const cameraZoom = sceneCamera.getComponent('Camera').zoom.toFixed(2);
-	const cameraPos = sceneCamera.transform.position;
+	const cameraZoom = state.sceneCamera.getComponent('Camera').zoom.toFixed(2);
+	const cameraPos = state.sceneCamera.transform.position;
 	const worldSpacePos = $('#world-space-pos').text() || '0, 0';
 	const screenSpacePos = $('#screen-space-pos').text() || '0, 0';
 
@@ -39,7 +39,7 @@ export function renderSceneMenu (div) {
 		<div>
 			Camera Pos:
 			<span id="scene-camera-pos" class="scene-toolbar-info">
-				${cameraPos.x.toFixed(2)} | ${cameraPos.y.toFixed(2)}
+				${cameraPos.x.toFixed(2)} | ${cameraPos.y.toFixed(2)} | ${cameraPos.z.toFixed(2)}
 			</span>
 		</div>
 	`);

@@ -1,9 +1,11 @@
-import { v2 } from './maths2D.js';
+import { TriangleV2, v2 } from './maths2D.js';
+import { Mat4 } from "./matrix.js";
 export class v3 {
-    constructor(x, y = x, z = x) {
+    constructor(x, y = x, z = x, w = 1) {
         this.x = x;
         this.y = y;
         this.z = z;
+        this.w = w;
     }
     add(v) {
         this.x += (v === null || v === void 0 ? void 0 : v.x) || 0;
@@ -112,6 +114,13 @@ export class v3 {
     get array() {
         return [this.x, this.y, this.z];
     }
+    transform(m) {
+        this.x = this.x * m.m[0][0] + this.y * m.m[1][0] + this.z * m.m[2][0] + m.m[3][0];
+        this.y = this.x * m.m[0][1] + this.y * m.m[1][1] + this.z * m.m[2][1] + m.m[3][1];
+        this.z = this.x * m.m[0][2] + this.y * m.m[1][2] + this.z * m.m[2][2] + m.m[3][2];
+        return this;
+    }
+    //      STATIC
     static get up() {
         return new v3(0, 1, 0);
     }
@@ -144,13 +153,45 @@ export class v3 {
     }
 }
 export class TriangleV3 {
-    constructor(points) {
-        this.points = points;
+    constructor(p1, p2, p3) {
+        this.points = [p1, p2, p3];
     }
     move(by) {
         for (const point of this.points) {
             point.add(by);
         }
+    }
+    apply(cb) {
+        for (let i = 0; i < 3; i++) {
+            this.points[i] = cb(this.points[i].clone);
+        }
+    }
+    get clone() {
+        return new TriangleV3(this.points[0].clone, this.points[1].clone, this.points[2].clone);
+    }
+    get triangleV2() {
+        return new TriangleV2([
+            this.points[0].v2,
+            this.points[1].v2,
+            this.points[2].v2
+        ]);
+    }
+    project3D(ctx, camera) {
+        const canvas = ctx.canvas;
+        const aspectRatio = canvas.height / canvas.width;
+        const camComponent = camera.getComponent('Camera');
+        // transform position
+        this.move(camera.transform.position);
+        //this.move(new v3(3, 3, 3));
+        // project to 3D
+        this.apply(p => p.transform(Mat4.projection(camComponent, aspectRatio)));
+        // scale into view
+        this.apply(p => {
+            p.add(new v3(1, 1, 0));
+            p.mul(new v3(canvas.width / 2, canvas.height / 2, 1));
+            return p;
+        });
+        return this;
     }
 }
 export class MeshV3 {
@@ -161,5 +202,28 @@ export class MeshV3 {
         for (const tri of this.triangles) {
             tri.move(by);
         }
+    }
+    // basic shapes
+    static get cube() {
+        return new MeshV3([
+            // SOUTH
+            new TriangleV3(new v3(0, 0, 0, 1), new v3(0, 1, 0, 1), new v3(1, 1, 0, 1)),
+            new TriangleV3(new v3(0, 0, 0, 1), new v3(1, 1, 0, 1), new v3(1, 0, 0, 1)),
+            // EAST
+            new TriangleV3(new v3(1, 0, 0, 1), new v3(1, 1, 0, 1), new v3(1, 1, 1, 1)),
+            new TriangleV3(new v3(1, 0, 0, 1), new v3(1, 1, 1, 1), new v3(1, 0, 1, 1)),
+            // NORTH
+            new TriangleV3(new v3(1, 0, 1, 1), new v3(1, 1, 1, 1), new v3(0, 1, 1, 1)),
+            new TriangleV3(new v3(1, 0, 1, 1), new v3(0, 1, 1, 1), new v3(0, 0, 1, 1)),
+            // WEST
+            new TriangleV3(new v3(0, 0, 1, 1), new v3(0, 1, 1, 1), new v3(0, 1, 0, 1)),
+            new TriangleV3(new v3(0, 0, 1, 1), new v3(0, 1, 0, 1), new v3(0, 0, 0, 1)),
+            // TOP
+            new TriangleV3(new v3(0, 1, 0, 1), new v3(0, 1, 1, 1), new v3(1, 1, 1, 1)),
+            new TriangleV3(new v3(0, 1, 0, 1), new v3(1, 1, 1, 1), new v3(1, 1, 0, 1)),
+            // BOTTOM
+            new TriangleV3(new v3(1, 0, 1, 1), new v3(0, 0, 1, 1), new v3(0, 0, 0, 1)),
+            new TriangleV3(new v3(1, 0, 1, 1), new v3(0, 0, 0, 1), new v3(1, 0, 0, 1)),
+        ]);
     }
 }

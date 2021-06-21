@@ -1,9 +1,7 @@
-import { v2 } from "../util/maths/maths.js";
 import {Sprite} from "./sprite.js";
-import {expandV2} from "../util/util.js";
 import { Transform } from "./transform.js";
 
-export type publicFieldType = 'string' | 'number' | 'Asset' | 'boolean' | 'json' | 'rgb' | 'v2' | 'v3';
+export type publicFieldType = 'string' | 'number' | 'Asset' | 'Transform' | 'boolean' | 'json' | 'rgb' | 'v2' | 'v3';
 
 export interface publicFieldConfig <T> {
     name: string,
@@ -100,7 +98,7 @@ export abstract class Component {
         this.public.push(field);
 
         Object.defineProperty(this, config.name, {
-            // so you can loop over it
+            // so you can loop over it using for ... in
             enumerable: true,
 
             get () {

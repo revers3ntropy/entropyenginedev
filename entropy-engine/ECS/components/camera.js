@@ -1,31 +1,35 @@
 import { Component } from "../component.js";
 import { v3 } from "../../util/maths/maths.js";
-import { Sprite } from "../sprite.js";
+import { Scene } from "../scene.js";
+import { JSONifyComponent } from "../../util/util.js";
 export class Camera extends Component {
-    constructor({ zoom = 1 }) {
+    constructor({ zoom = 1, far = 1000, near = 0.1, fov = 90 }) {
         super('Camera');
         this.addPublic({
             name: 'zoom',
             value: zoom
         });
-    }
-    get zoom() {
-        return this.getPublic('zoom');
-    }
-    set zoom(val) {
-        this.setPublic('zoom', val);
+        this.addPublic({
+            name: 'far',
+            value: far
+        });
+        this.addPublic({
+            name: 'near',
+            value: near
+        });
+        this.addPublic({
+            name: 'fov',
+            value: fov
+        });
     }
     json() {
-        return {
-            'type': 'Camera',
-            'zoom': this.zoom,
-        };
+        return JSONifyComponent(this);
     }
     tick() { }
-    static shake(magnitude = 1, durationMS = 200) {
+    shake(magnitude = 1, durationMS = 200) {
         // not super useful, just thought it'd be fun to have
         const start = performance.now();
-        const camera = Camera.main;
+        const camera = this.sprite;
         const pos = camera.transform.position;
         const cameraComponent = camera.getComponent('Camera');
         // to allow it to reset fully
@@ -38,8 +42,8 @@ export class Camera extends Component {
             if (time - start < durationMS)
                 window.requestAnimationFrame(doShakeFrame);
             else {
-                // TODO make this better by finding the total moved and subtracting that-
-                // the camera could have moved during the shake
+                // TODO make this better by finding the total moved and subtracting that
+                // the camera could have moved during the shake, and then jerks back to acutal position
                 cameraComponent.zoom = startZoom;
                 pos.set(startPos);
             }
@@ -47,7 +51,7 @@ export class Camera extends Component {
         window.requestAnimationFrame(doShakeFrame);
     }
     static findMain() {
-        for (const sprite of Sprite.sprites) {
+        for (const sprite of Scene.activeScene.sprites) {
             if (!sprite.hasComponent('Camera'))
                 continue;
             Camera.main = sprite;
@@ -55,7 +59,7 @@ export class Camera extends Component {
         }
         console.error(`
             No sprites with component of type 'camera' can be found. 
-            Make sure that there is at least one sprite with a 'Camera' component attached
+            Make sure that there is at least one sprite in the scene '${Scene.activeScene.name}' with a 'Camera' component attached
         `);
     }
 }

@@ -1,7 +1,6 @@
-import {v2, v3} from "../util/maths/maths.js";
-import { Sprite } from "../ECS/sprite.js";
+import {v3} from "../util/maths/maths.js";
 import {Component} from "../ECS/component.js";
-import {expandV2, JSONifyComponent} from "../util/util.js";
+import {JSONifyComponent} from "../util/util.js";
 import {Transform } from "../index.js";
 
 export class Body extends Component {

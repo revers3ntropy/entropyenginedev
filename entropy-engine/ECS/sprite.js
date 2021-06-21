@@ -109,7 +109,7 @@ export class Sprite {
         return false;
     }
     getComponent(type, subType = '') {
-        if (type === 'transform')
+        if (type.toLowerCase() === 'transform')
             return this.transform;
         // returns the first component of passed type
         let component = this.components.find(c => (c.type === type &&
@@ -135,8 +135,8 @@ export class Sprite {
             const sprite = Sprite.sprites[i];
             if (!Object.is(sprite, this))
                 continue;
-            delete Sprite.sprites[i];
             Sprite.sprites.splice(i, 1);
+            delete Sprite.sprites[i];
         }
     }
     getClone() {

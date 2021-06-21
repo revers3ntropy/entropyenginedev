@@ -67,9 +67,7 @@ export class Script extends Component {
             console.error(`Failed to run magic method '${functionName}' on JSBehaviour '${this.subtype}': ${E}`);
         }
     }
-    tick() {
-        this.runMethod('Update', []);
-    }
+    tick() { }
     static broadcast(funcName, params) {
         loopThroughScripts((script, sprite) => {
             script.runMethod(funcName, params);

@@ -4,8 +4,7 @@
 /server/.env
 /server/privatekey.pem
 /server/certificate.pem
-/editor/codemirror/
-/editor/chartist-js-develop/
 /.idea/
+/libraries/
 
 rm -rf .idea/

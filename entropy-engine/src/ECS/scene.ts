@@ -1,37 +1,113 @@
-import { v3 } from '../util/maths/maths3D.js';
 import {Sprite} from './sprite.js';
+import {Camera} from "./components/camera.js";
+import {v3} from "../util/maths/maths3D.js";
+import {colour, parseColour, rgb} from "../util/colour.js";
+
+export type background = {
+    tint?: colour,
+    image?: string
+}
+
+export type sceneSettings = {
+    // license + general
+    license: string;
+    version: string;
+    gameName: string;
+
+    // rendering
+    maxFrameRate: number;
+    timeScale: number;
+    background: background
+
+    // physics
+    G: number,
+    globalGravity: v3,
+    collisionIterations: number;
+
+    // sound
+    globalVolume: number;
+
+}
+
+export const defaultSceneSettings = (): sceneSettings => ({
+    license: '0000',
+    version: '0.0.0',
+    gameName: 'my game',
+
+    maxFrameRate: 60,
+    timeScale: 1,
+    background: {
+        tint: rgb(255, 255, 255)
+    },
+
+    G: 9.8,
+    globalGravity: new v3(0, -1, 0),
+    collisionIterations: 5,
+
+    globalVolume: 1
+});
 
 export class Scene {
     id: number;
     name: string;
+    settings: sceneSettings;
 
-    constructor (name: string) {
+    constructor (name: string, settings: sceneSettings) {
         this.id = Scene.scenes.length;
         this.name = name;
+        this.settings = settings;
     }
     
     json () {
         return {
-            name: this.name
+            name: this.name,
+            settings: {
+                license: this.settings.license,
+                version: this.settings.version,
+                gameName: this.settings.gameName,
+
+                maxFrameRate: this.settings.maxFrameRate,
+                timeScale: this.settings.timeScale,
+                background: {
+                    tint: this.settings.background?.tint?.json || parseColour('white').json,
+                    image: this.settings.background.image,
+                },
+
+                G: this.settings.G,
+                globalGravity: this.settings.globalGravity.array,
+                collisionIterations: this.settings.collisionIterations,
+
+                globalVolume: this.settings.globalVolume
+            }
         }
     }
 
     get sprites (): Sprite[] {
+        const queue: Sprite[] = [];
         const sprites: Sprite[] = [];
 
         for (const sprite of Sprite.sprites) {
             if (sprite.transform.isChild()) continue;
             if (sprite.transform.parent !== this.id) continue;
 
-            sprites.push(sprite);
+            queue.push(sprite);
+        }
+
+        while (queue.length > 0) {
+            for (let child of queue[0].transform.children) {
+                queue.push(child);
+            }
+
+            // there must be an element so shift can't return undefined, but ts doesn't kow that
+            sprites.push( <Sprite> queue.shift());
         }
 
         return sprites;
     }
 
+
     //      STATIC
-    
-    
+
     static scenes: Scene[] = [];
     
     static active = 0;
@@ -66,8 +142,10 @@ export class Scene {
         )[0];
         
         if (scene === undefined) {
-            console.error(`Cannot find scene ID: ${id} of type ${typeof id}. Scenes: ${Scene.scenes}`);
-            throw Error;
+            console.error(`Cannot find scene ID: ${id} of type ${typeof id}. Creating empty scene to compensate. Scenes: ${Scene.scenes}`);
+            const newScene = new Scene('Example Scene', defaultSceneSettings());
+            Scene.scenes.push(newScene);
+            return newScene;
         }
         
         return scene;
@@ -76,8 +154,9 @@ export class Scene {
     static create (config: {
         name: string
     }) {
-        console.log('created');
-        Scene.scenes.push(new Scene(config.name || 'Scene'));
+        const scene = new Scene(config.name || 'Scene', defaultSceneSettings());
+        Scene.scenes.push(scene);
+        return scene;
     }
 
     static next (persists: Sprite[]) {
@@ -93,6 +172,8 @@ export class Scene {
                 sprite.transform.parent = Scene.active;
             }
         }
+
+        Camera.findMain();
     }
 
     static previous (persists: Sprite[]) {
@@ -108,5 +189,11 @@ export class Scene {
                 sprite.transform.parent = Scene.active;
             }
         }
+
+        Camera.findMain();
+    }
+
+    static get sceneCount () {
+        return Scene.scenes.length;
     }
 }

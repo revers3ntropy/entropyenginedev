@@ -1,7 +1,6 @@
-import { Component, publicField, publicFieldConfig } from '../ECS/component.js'
+import { publicField, publicFieldConfig } from '../ECS/component.js'
 import {Sprite} from "../ECS/sprite.js";
-import {v2} from "../util/maths/maths.js";
-import {expandV2, loopThroughScripts} from "../util/util.js";
+import {loopThroughScripts} from "../util/util.js";
 import { Script } from '../ECS/components/scriptComponent.js';
 import { Transform } from '../index.js';
 

@@ -90,9 +90,7 @@ export class Script extends Component {
 
     }
 
-    tick () {
-        this.runMethod('Update', []);
-    }
+    tick () {}
 
     static broadcast(funcName: string, params: any[]) {
         loopThroughScripts((script, sprite) => {

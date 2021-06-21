@@ -42,7 +42,7 @@ export class Component {
         const field = new publicField(config);
         this.public.push(field);
         Object.defineProperty(this, config.name, {
-            // so you can loop over it
+            // so you can loop over it using for ... in
             enumerable: true,
             get() {
                 if (config.overrideGet === undefined)

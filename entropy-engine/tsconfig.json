@@ -36,7 +36,7 @@
     "./src/util/JSONprocessor.ts",
     "./src/util/license.ts",
     "./src/util/maths.ts",
-    "./src/util/multiplayer.ts",
+    "./src/ECS/components/multiplayer.ts",
     "./src/util/util.ts",
 
     "./src/util/maths/maths.ts",
