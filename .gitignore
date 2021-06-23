@@ -7,3 +7,4 @@
 *.json
 *.png
 /projects/
+/entropy-engine/*.js
