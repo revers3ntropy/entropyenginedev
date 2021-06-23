@@ -1,6 +1,6 @@
 import {Sprite} from "../ECS/sprite.js"
 import {v2} from "../util/maths/maths.js"
-import {Body} from "../physics/body.js";
+import {Body} from "../ECS/components/body.js";
 import {Collider, RectCollider, CircleCollider} from '../ECS/components/colliders.js';
 
 function getNewVelocityFromCollision (V1: v2, V2: v2, m1: number, m2: number, p1: v2, p2: v2, contactAngle: number) {

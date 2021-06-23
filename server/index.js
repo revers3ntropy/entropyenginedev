@@ -72,12 +72,20 @@ const handlers = {
     'top-projects-by-views': projects.topProjectViews,
     'upload': projects.upload,
     'folder-size': util.folderSizePublic,
-    'public-projects': projects.publicProjectsFromUser
+    'public-projects': projects.publicProjectsFromUser,
+    'robots.text': (url, req, res) => {
+        res.end(`
+            # block bots from the entire backend
+            User-agent: *
+            Disallow: /
+        `);
+    }
 };
 
 // goes strait to these function without any data handling
 const rawPaths = [
-    'upload'
+    'upload',
+    'robots.txt'
 ];
 
 async function serverResponse (req, res) {

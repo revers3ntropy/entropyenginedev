@@ -2,11 +2,10 @@ import {v2} from "./maths/maths.js";
 import {Sprite} from "../ECS/sprite.js";
 import {GUIElement, GUITextBox} from "../ECS/components/gui.js";
 import {Camera} from "../ECS/components/camera.js";
-import {getCanvasSize, getZoomScaledPosition, screenSpaceToWorldSpace} from "./util.js";
+import {screenSpaceToWorldSpace} from "./util.js";
 
 export function getMousePos(canvas: HTMLCanvasElement, event: MouseEvent) {
     let rect = canvas.getBoundingClientRect();
-    const ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
 
     const pos = new v2 (
         event.pageX - rect.left - scrollX,

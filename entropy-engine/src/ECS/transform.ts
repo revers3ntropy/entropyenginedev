@@ -4,10 +4,6 @@ import { Scene } from "./scene.js";
 import { Sprite } from "./sprite.js";
 
 export class Transform extends Component {
-    private _position: v3;
-    private _rotation: v3;
-    private _scale: v3;
-
     // @ts-ignore
     position: v3;
     // @ts-ignore
@@ -23,64 +19,61 @@ export class Transform extends Component {
         scale = new v3(1, 1, 1),
         rotation = v3.zero,
 
-        _position = v3.zero,
-        _scale = new v3(1, 1, 1),
-        _rotation = v3.zero,
-
         parent = Scene.active
     }) {
         super('Transform');
-        // doesn't need to use public as transforms are delt with seperately in the editor
-        this._position = position || _position;
-        this._scale = scale ?? scale;
-        this._rotation = rotation || rotation;
 
         this.addPublic({
             name: 'position',
-            value: this._position,
+            value: position,
             type: 'v3',
             overrideGet: () => {
                 if (typeof this.parent === 'number') 
-                    return this._position;
+                    return this.getPublic('position');
                 
-                return this._position.clone.add(this.parent.position);
+                return this.getPublic('position').clone.add(this.parent.position);
             },
             overrideSet: (v: v3) => {
-                this._position = v || v3.zero;
-                this._position.x ??= 0;
-                this._position.y ??= 0;
+                const p = v || v3.zero;
+                p.x ??= 0;
+                p.y ??= 0;
+                this.setPublic('position', p);
             }
         });
 
         this.addPublic({
             name: 'rotation',
-            value: this._rotation,
+            value: rotation,
             type: 'v3',
             overrideGet: () => {
                 if (typeof this.parent === 'number')
-                    return this._rotation;
+                    return this.getPublic('rotation');
                 
-                return this._rotation.clone.add(this.parent.rotation);
+                return this.getPublic('rotation').clone.add(this.parent.rotation);
             },
-            overrideSet: (value: v3) => {
-                this._rotation = value || v3.zero;
+            overrideSet: (v: v3) => {
+                const r = v || v3.zero;
+                r.x ??= 0;
+                r.y ??= 0;
+                this.setPublic('rotation', r);
             }
         });
 
         this.addPublic({
             name: 'scale',
-            value: this._scale,
+            value: scale,
             type: 'v3',
             overrideGet: () => {
                 if (typeof this.parent === 'number')
-                    return this._scale;
+                    return this.getPublic('scale');
                 
-                return this._scale.clone.mul(this.parent.scale);
+                return this.getPublic('scale').clone.mul(this.parent.scale);
             },
             overrideSet: (v: v3) => {
-                this._scale = v || v3.zero;
-                this._scale.x ??= 0;
-                this._scale.y ??= 0;
+                const s = v || v3.zero;
+                s.x ??= 0;
+                s.y ??= 0;
+                this.setPublic('scale', s);
             }
         });
 
@@ -132,9 +125,9 @@ export class Transform extends Component {
         
         return {
             type: 'Transform',
-            position: this._position.array,
-            scale: this._scale.array,
-            rotation: this._rotation.array,
+            position: this.position.array,
+            scale: this.scale.array,
+            rotation: this.rotation.array,
             parent
         }
     }
@@ -143,27 +136,27 @@ export class Transform extends Component {
     
 
     get localRotation () {
-        return this._rotation;
+        return this.getPublic('rotation');
     }
 
     set localRotation (v: v3) {
-        this.rotation = v;
+        this.setPublic('rotation', v);
     }
 
     get localPosition () {
-        return this._position;
+        return this.getPublic('position');
     }
 
     set localPosition (v: v3) {
-        this.position = v;
+        this.setPublic('position', v);
     }
 
     get localScale () {
-        return this._scale
+        return this.getPublic('scale');
     }
 
     set localScale (v: v3) {
-        this.scale = v;
+        this.setPublic('position', v);
     }
 
     detachFromParent (): void {
@@ -241,6 +234,10 @@ export class Transform extends Component {
         }
 
         return findNextRoot(this);
+    }
+
+    get scene (): Scene {
+        return Scene.sceneByID( <number> this.root.parent);
     }
 
     get forwards (): v3 {

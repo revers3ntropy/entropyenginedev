@@ -4,7 +4,6 @@ import { Camera } from "../ECS/components/camera.js";
 import { screenSpaceToWorldSpace } from "./util.js";
 export function getMousePos(canvas, event) {
     let rect = canvas.getBoundingClientRect();
-    const ctx = canvas.getContext('2d');
     const pos = new v2(event.pageX - rect.left - scrollX, 
     // invert
     rect.height - (event.pageY - rect.top - scrollY));

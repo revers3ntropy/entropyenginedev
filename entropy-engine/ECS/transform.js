@@ -3,57 +3,57 @@ import { Component } from "./component.js";
 import { Scene } from "./scene.js";
 import { Sprite } from "./sprite.js";
 export class Transform extends Component {
-    constructor({ position = v3.zero, scale = new v3(1, 1, 1), rotation = v3.zero, _position = v3.zero, _scale = new v3(1, 1, 1), _rotation = v3.zero, parent = Scene.active }) {
+    constructor({ position = v3.zero, scale = new v3(1, 1, 1), rotation = v3.zero, parent = Scene.active }) {
         super('Transform');
-        // doesn't need to use public as transforms are delt with seperately in the editor
-        this._position = position || _position;
-        this._scale = scale !== null && scale !== void 0 ? scale : scale;
-        this._rotation = rotation || rotation;
         this.addPublic({
             name: 'position',
-            value: this._position,
+            value: position,
             type: 'v3',
             overrideGet: () => {
                 if (typeof this.parent === 'number')
-                    return this._position;
-                return this._position.clone.add(this.parent.position);
+                    return this.getPublic('position');
+                return this.getPublic('position').clone.add(this.parent.position);
             },
             overrideSet: (v) => {
                 var _a, _b;
-                var _c, _d;
-                this._position = v || v3.zero;
-                (_a = (_c = this._position).x) !== null && _a !== void 0 ? _a : (_c.x = 0);
-                (_b = (_d = this._position).y) !== null && _b !== void 0 ? _b : (_d.y = 0);
+                const p = v || v3.zero;
+                (_a = p.x) !== null && _a !== void 0 ? _a : (p.x = 0);
+                (_b = p.y) !== null && _b !== void 0 ? _b : (p.y = 0);
+                this.setPublic('position', p);
             }
         });
         this.addPublic({
             name: 'rotation',
-            value: this._rotation,
+            value: rotation,
             type: 'v3',
             overrideGet: () => {
                 if (typeof this.parent === 'number')
-                    return this._rotation;
-                return this._rotation.clone.add(this.parent.rotation);
+                    return this.getPublic('rotation');
+                return this.getPublic('rotation').clone.add(this.parent.rotation);
             },
-            overrideSet: (value) => {
-                this._rotation = value || v3.zero;
+            overrideSet: (v) => {
+                var _a, _b;
+                const r = v || v3.zero;
+                (_a = r.x) !== null && _a !== void 0 ? _a : (r.x = 0);
+                (_b = r.y) !== null && _b !== void 0 ? _b : (r.y = 0);
+                this.setPublic('rotation', r);
             }
         });
         this.addPublic({
             name: 'scale',
-            value: this._scale,
+            value: scale,
             type: 'v3',
             overrideGet: () => {
                 if (typeof this.parent === 'number')
-                    return this._scale;
-                return this._scale.clone.mul(this.parent.scale);
+                    return this.getPublic('scale');
+                return this.getPublic('scale').clone.mul(this.parent.scale);
             },
             overrideSet: (v) => {
                 var _a, _b;
-                var _c, _d;
-                this._scale = v || v3.zero;
-                (_a = (_c = this._scale).x) !== null && _a !== void 0 ? _a : (_c.x = 0);
-                (_b = (_d = this._scale).y) !== null && _b !== void 0 ? _b : (_d.y = 0);
+                const s = v || v3.zero;
+                (_a = s.x) !== null && _a !== void 0 ? _a : (s.x = 0);
+                (_b = s.y) !== null && _b !== void 0 ? _b : (s.y = 0);
+                this.setPublic('scale', s);
             }
         });
         this.addPublic({
@@ -99,30 +99,30 @@ export class Transform extends Component {
         }
         return {
             type: 'Transform',
-            position: this._position.array,
-            scale: this._scale.array,
-            rotation: this._rotation.array,
+            position: this.position.array,
+            scale: this.scale.array,
+            rotation: this.rotation.array,
             parent
         };
     }
     tick() { }
     get localRotation() {
-        return this._rotation;
+        return this.getPublic('rotation');
     }
     set localRotation(v) {
-        this.rotation = v;
+        this.setPublic('rotation', v);
     }
     get localPosition() {
-        return this._position;
+        return this.getPublic('position');
     }
     set localPosition(v) {
-        this.position = v;
+        this.setPublic('position', v);
     }
     get localScale() {
-        return this._scale;
+        return this.getPublic('scale');
     }
     set localScale(v) {
-        this.scale = v;
+        this.setPublic('position', v);
     }
     detachFromParent() {
         this.parent = Scene.active;

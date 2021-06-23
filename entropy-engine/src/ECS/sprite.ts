@@ -1,5 +1,5 @@
 ﻿import { Component } from './component.js'
-import { Body} from "../physics/body.js"
+import { Body} from "./components/body.js"
 import {CircleRenderer} from "./components/renderComponents.js";
 
 // all components
@@ -118,7 +118,7 @@ export class Sprite {
     }
 
     hasComponent (type: string, subType = ''): boolean {
-        if (type === 'transform') return true;
+        if (type.toLowerCase() === 'transform') return true;
 
         for (let c of this.components)
             if (
@@ -174,8 +174,7 @@ export class Sprite {
 
             if (!Object.is(sprite, this)) continue;
 
-            Sprite.sprites.splice(i, 1);
-            delete Sprite.sprites[i];
+            delete Sprite.sprites.splice(i, 1)[0];
         }
     }
 
@@ -186,23 +185,6 @@ export class Sprite {
     }
 
     json (): any {
-        /*
-            Parts to the sprite:
-
-                ✅ name: string - easy
-                ✅ components: Component[] - very hard, lots of cases, scripting - each component has its own json method
-                ✅ id: number - easy, just generate new id
-                ✅ tag: string - easy
-                ✅ transform: Transform - medium - need to make sure it has the same parent transform, but everything else is cloned
-                            v2s are relatively hard, need to expand them into an array
-                        position
-                        scale
-                        rotation
-                        parent - string not object
-
-                ✅ Static: boolean - easy
-         */
-
         return {
             'name': this.name,
             'tag': this.tag,

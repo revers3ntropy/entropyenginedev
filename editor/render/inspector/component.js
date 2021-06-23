@@ -19,14 +19,18 @@ export const _component_ = (component, i) => {
 
 	if (cName !== 'Transform') {
 		setRightClick(`component-${cName}`, state.selectedSprite, `
-                ${rightClickOption('remove', () => {
-			let index = state.selectedSprite.components.indexOf(component);
-			if (index !== -1)
-				state.selectedSprite.components.splice(index, 1);
-
-			reRender();
-		})}
-            `);
+             ${rightClickOption('remove', () => {
+				let index = state.selectedSprite.components.indexOf(component);
+				if (index === -1){
+					console.error('No component found to delete: ' + component);
+					return;
+				}
+				
+				delete state.selectedSprite.components.splice(index, 1)[0];
+	
+				reRender();
+			})}
+		`);
 	}
 
 	const componentHTML = $(`#component-${cName}`);

@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { Body } from "../physics/body.js";
+import { Body } from "./components/body.js";
 import { CircleRenderer } from "./components/renderComponents.js";
 // all components
 import { RectCollider, CircleCollider } from '../ECS/components/colliders.js';
@@ -100,7 +100,7 @@ export class Sprite {
         this.components.push(toAdd);
     }
     hasComponent(type, subType = '') {
-        if (type === 'transform')
+        if (type.toLowerCase() === 'transform')
             return true;
         for (let c of this.components)
             if ((c.type === type &&
@@ -135,8 +135,7 @@ export class Sprite {
             const sprite = Sprite.sprites[i];
             if (!Object.is(sprite, this))
                 continue;
-            Sprite.sprites.splice(i, 1);
-            delete Sprite.sprites[i];
+            delete Sprite.sprites.splice(i, 1)[0];
         }
     }
     getClone() {
@@ -147,22 +146,6 @@ export class Sprite {
         });
     }
     json() {
-        /*
-            Parts to the sprite:
-
-                ✅ name: string - easy
-                ✅ components: Component[] - very hard, lots of cases, scripting - each component has its own json method
-                ✅ id: number - easy, just generate new id
-                ✅ tag: string - easy
-                ✅ transform: Transform - medium - need to make sure it has the same parent transform, but everything else is cloned
-                            v2s are relatively hard, need to expand them into an array
-                        position
-                        scale
-                        rotation
-                        parent - string not object
-
-                ✅ Static: boolean - easy
-         */
         return {
             'name': this.name,
             'tag': this.tag,

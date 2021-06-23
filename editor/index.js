@@ -67,8 +67,6 @@ async function initFromFiles (id) {
         });
 
     ee.Camera.main = state.sceneCamera;
-    console.log('loaded camera');
-
     ee.Scene.active = parseInt(sessionStorage.sceneID) || 0;
 }
 

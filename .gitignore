@@ -1,10 +1,9 @@
-/entropy-engine/.idea/
-/node_modules/
-/server/node_modules/
-/server/.env
-/server/privatekey.pem
-/server/certificate.pem
-/.idea/
+**/node_modules/
+*.env
+*.pem
+.idea
 /libraries/
-
-rm -rf .idea/
+*.htaccess
+*.json
+*.png
+/projects/

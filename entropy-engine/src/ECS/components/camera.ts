@@ -27,27 +27,31 @@ export class Camera extends Component {
 
         this.addPublic({
             name: 'zoom',
-            value: zoom
+            value: zoom,
+            description: '2D only camera zoom - does not affect 3D rendering'
         });
 
         this.addPublic({
             name: 'far',
-            value: far
+            value: far,
+            description: 'The far clipping plane. Does not affect 2D rendering.'
         });
 
         this.addPublic({
             name: 'near',
-            value: near
+            value: near,
+            description: 'The near clipping plane. Does not affect 2D rendering.'
         });
 
         this.addPublic({
             name: 'fov',
-            value: fov
+            value: fov,
+            description: 'Field of view - like zoom for 3D'
         });
     }
 
     json () {
-        return JSONifyComponent(this);
+        return JSONifyComponent(this, 'Camera');
     }
 
     tick(): void {}

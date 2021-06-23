@@ -1,4 +1,5 @@
 export const license = (key) => {
+    // UNFINISHED
     if (key.substr(0, 3) !== 'EE-')
         return 0;
     if (key.length !== 12)

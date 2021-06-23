@@ -1,4 +1,4 @@
-import {Scene, Sprite, v2} from "../../../entropy-engine";
+import {Scene, v2, v3} from "../../../entropy-engine";
 import {reRender} from "../renderer.js";
 import {state} from '../../state.js';
 
@@ -98,7 +98,6 @@ function _array_ (id, value, type=typeof value[0]) {
 		showValue = `${showValue} <div>${_componentProperty_(value, i, i)}</div>`;
 	}
 
-
 	showValue += `
 		</div>
 		<button onclick="window['addElement${id}']()" class="empty-button" style="width: 20px; height: 20px">+</button>
@@ -126,7 +125,7 @@ export const _componentProperty_ = (object, key, componentName, chain=[], showNa
 
 	let showDefault = !!defaultVal && value !== defaultVal;
 
-	if (object.default instanceof v2){
+	if (object.default instanceof v2 || object.default instanceof v3){
 		defaultVal = object.default.str;
 		showDefault = !object.default.equals(value);
 	}
@@ -178,9 +177,10 @@ export const _componentProperty_ = (object, key, componentName, chain=[], showNa
 			showValue += `
                     <div style="display: flex; justify-content: space-evenly; transform: scale(0.9)">
                 `
-			for (let prop in value) {
-				showValue += _componentProperty_(value, prop, componentName, [...chain, key])
-			}
+			showValue += _componentProperty_(value, 'x', componentName, [...chain, key]);
+			showValue += _componentProperty_(value, 'y', componentName, [...chain, key]);
+			if (type === 'v3')
+				showValue += _componentProperty_(value, 'z', componentName, [...chain, key]);
 
 			showValue += '</div>';
 			break;
@@ -212,33 +212,27 @@ export const _componentProperty_ = (object, key, componentName, chain=[], showNa
 			display: grid;
 			padding-bottom: 3px;
 		">
-			<span style="grid-column: 1/1; font-size: 14px">
+			<span style="grid-column: 1/1; font-size: 14px" class="tooltip-container">
 				${showName}
+				${!(description || defaultVal)? '' : `
+					<span class="tooltip">
+						${description ? description: ''}
+						
+						${showDefault ? `
+		
+							<span style="font-size: 10px">
+								Default: ${defaultVal}
+							</span>
+					
+					    `: ''}
+					</span>
+				`}
 			</span> 
-			<span style="grid-column: 2/2; text-align: right; padding-right: 2px">
+			<span style="grid-column: 2/2; text-align: right; padding-right: 2px" >
 				${showValue}
 			</span>
 		</div>
-		
-		${!description ? '' :`
-		
-		<div>
-			<p style="font-size: 10px; padding: 4px;">
-				${description}
-			</p>
-		</div>
-		
-		`}
-		
-		${showDefault ? `
-		
-		<div>
-			<p style="font-size: 10px">
-				Default: ${defaultVal}
-			</p>
-		</div>
-    
-    `: ''}
+	
 
 	`);
 };

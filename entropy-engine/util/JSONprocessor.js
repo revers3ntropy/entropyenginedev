@@ -12,8 +12,8 @@ import { v2, v3 } from "./maths/maths.js";
 import { Script } from "../ECS/components/scriptComponent.js";
 // all components
 import { CircleCollider, RectCollider } from '../ECS/components/colliders.js';
-import { Body } from '../physics/body.js';
-import { CircleRenderer, ImageRenderer2D, RectRenderer } from '../ECS/components/renderComponents.js';
+import { Body } from '../ECS/components/body.js';
+import { CircleRenderer, ImageRenderer2D, RectRenderer, MeshRenderer } from '../ECS/components/renderComponents.js';
 import { GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox } from '../ECS/components/gui.js';
 import { Camera } from '../ECS/components/camera.js';
 import { rgb, Transform } from '../index.js';
@@ -25,6 +25,7 @@ Body;
 CircleRenderer;
 RectRenderer;
 ImageRenderer2D;
+MeshRenderer;
 GUIBox;
 GUIText;
 GUITextBox;
@@ -63,64 +64,36 @@ function isColour(o) {
         return false;
     return typeof o.b === 'number';
 }
-function componentPropProccessor(propertyJSON, componentJSON, component) {
+function componentPropProcessor(propName, componentJSON, component) {
     // stop it overriding 'type'
-    if (propertyJSON === 'type' || propertyJSON === 'subType')
+    if (propName === 'type' || propName === 'subType')
         return;
-    if (!Array.isArray(componentJSON[propertyJSON])) {
-        component[propertyJSON] = componentJSON[propertyJSON];
+    if (isColour(componentJSON[propName])) {
+        const c = componentJSON[propName];
+        component[propName] = rgb(c.r, c.g, c.b, c.a);
+        return;
+    }
+    if (!Array.isArray(componentJSON[propName])) {
+        component[propName] = componentJSON[propName];
         return;
     }
     // checks arrays two layers deep
-    if (isV2(componentJSON[propertyJSON])) {
-        component[propertyJSON] = v2.fromArray(componentJSON[propertyJSON]);
+    if (isV2(componentJSON[propName])) {
+        component[propName] = v2.fromArray(componentJSON[propName]);
         return;
     }
-    else if (isV3(componentJSON[propertyJSON])) {
-        component[propertyJSON] = v3.fromArray(componentJSON[propertyJSON]);
+    else if (isV3(componentJSON[propName])) {
+        component[propName] = v3.fromArray(componentJSON[propName]);
         return;
     }
-    else if (isColour(componentJSON[propertyJSON])) {
-        const c = componentJSON[propertyJSON];
-        component[propertyJSON] = rgb(c.r, c.g, c.b);
-        return;
-    }
-    let componentProperties = [];
-    for (let componentInArray of componentJSON[propertyJSON]) {
-        if (isV2(componentInArray))
-            // array of points
-            componentProperties.push(new v2(componentJSON[propertyJSON][0], componentJSON[propertyJSON][1]));
-        else
-            // no clue what it is, just an array
-            componentProperties.push(componentJSON[propertyJSON]);
-    }
-    component[propertyJSON] = componentProperties;
+    component[propName] = componentJSON[propName];
 }
-function dealWithTranform(transformJSON) {
-    let parentInfo = {
-        type: '',
-        name: ''
-    };
+function dealWithTransform(transformJSON) {
+    let parentInfo = transformJSON['parent'];
     const transform = new Transform({});
-    for (let transformPropertyJSON in transformJSON) {
-        switch (transformPropertyJSON) {
-            case 'position':
-            case 'scale':
-                if (!isV3(transformJSON[transformPropertyJSON])) {
-                    console.error(`transform component '${transformPropertyJSON}' number be a v3. Sprite ${name}`);
-                    break;
-                }
-                // either position or scale
-                transform[transformPropertyJSON] = v3.fromArray(transformJSON[transformPropertyJSON]);
-                break;
-            case 'rotation':
-                transform.rotation = transformJSON[transformPropertyJSON];
-                break;
-            case 'parent':
-                parentInfo = transformJSON[transformPropertyJSON];
-                break;
-        }
-    }
+    transform.position = v3.fromArray(transformJSON['position']);
+    transform.scale = v3.fromArray(transformJSON['scale']);
+    transform.rotation = v3.fromArray(transformJSON['rotation']);
     return { parentInfo, transform };
 }
 function dealWithScriptComponent(componentJSON) {
@@ -189,10 +162,10 @@ function componentProccessor(componentJSON) {
             console.error(`Couldn't create component ${componentJSON}: ${E}`);
             return;
         }
-        for (let propertyJSON in componentJSON) {
-            if (!componentJSON.hasOwnProperty(propertyJSON))
+        for (let prop in componentJSON) {
+            if (!componentJSON.hasOwnProperty(prop))
                 continue;
-            componentPropProccessor(propertyJSON, componentJSON, component);
+            componentPropProcessor(prop, componentJSON, component);
         }
         return component;
     });
@@ -209,7 +182,7 @@ export function getSpriteFromJSON(JSON) {
         const componentsJSON = (_d = JSON['components']) !== null && _d !== void 0 ? _d : [];
         let components = [];
         const transformJSON = JSON['transform'];
-        const { parentInfo, transform } = dealWithTranform(transformJSON);
+        const { parentInfo, transform } = dealWithTransform(transformJSON);
         // components
         for (let componentJSON of componentsJSON) {
             const component = yield componentProccessor(componentJSON);
@@ -251,7 +224,7 @@ export function spritesFromJSON(JSON) {
             parentPairs[sprite.sprite.name] = sprite.parentInfo;
             Sprite.sprites.push(sprite.sprite);
         }
-        // deal with parent-child stuff
+        // deal with parent-child stuff once all sprites have been initialised
         for (let childName in parentPairs) {
             setParentFromInfo(parentPairs[childName], (_a = Sprite.find(childName)) === null || _a === void 0 ? void 0 : _a.transform);
         }

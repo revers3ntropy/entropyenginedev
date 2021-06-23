@@ -1,7 +1,7 @@
 import {circle, image, polygon, roundedRect, text} from '../../render/renderer.js'
 import {polygonCollidingWithPoint, v2} from "../../util/maths/maths.js"
 import {Component} from "../component.js"
-import {JSONifyComponent, scaleMesh} from "../../util/util.js";
+import {JSONifyComponent, scaleMeshV2} from "../../util/util.js";
 import { Transform } from '../transform.js';
 import { rgb } from '../../index.js';
 
@@ -431,7 +431,7 @@ export class GUIPolygon extends GUIElement {
     draw(ctx: CanvasRenderingContext2D, transform: Transform): void {
         if (this.points.length <= 1) return;
 
-        polygon(ctx, scaleMesh(this.points, transform.scale.v2), this.colour);
+        polygon(ctx, scaleMeshV2(this.points, transform.scale.v2), this.colour);
     }
 
     tick(): void {}

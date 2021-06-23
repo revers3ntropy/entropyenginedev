@@ -67,6 +67,11 @@ export class RectRenderer extends Renderer2D {
                     this.setPublic('colour', parseColour(value));
                     return;
                 }
+                else if (typeof value.r === 'number') {
+                    // raw json, so do last step of parsing it
+                    this.setPublic('colour', rgb(value.r, value.g, value.b, value.a));
+                    return;
+                }
                 this.setPublic('colour', value);
             }
         });

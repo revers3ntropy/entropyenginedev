@@ -28,7 +28,7 @@ export const rgb = (red: number, green: number, blue: number, alpha = 1) => ({
     },
 
     get rgba () {
-        return `rgba(${this.red}, ${this.green}, ${this.blue}, ${this.alpha.toString()})`;
+        return `rgba(${this.red}, ${this.green}, ${this.blue}, ${this.alpha})`;
     },
 
     get clone () {
@@ -40,6 +40,7 @@ export const rgb = (red: number, green: number, blue: number, alpha = 1) => ({
             r: this.red,
             g: this.green,
             b: this.blue,
+            a: this.alpha
         }
     }
 });

@@ -8,7 +8,7 @@ export const rgb = (red, green, blue, alpha = 1) => ({
         return `rgb(${this.red}, ${this.green}, ${this.blue})`;
     },
     get rgba() {
-        return `rgba(${this.red}, ${this.green}, ${this.blue}, ${this.alpha.toString()})`;
+        return `rgba(${this.red}, ${this.green}, ${this.blue}, ${this.alpha})`;
     },
     get clone() {
         return rgb(this.red, this.green, this.blue, this.alpha);
@@ -18,6 +18,7 @@ export const rgb = (red, green, blue, alpha = 1) => ({
             r: this.red,
             g: this.green,
             b: this.blue,
+            a: this.alpha
         };
     }
 });

@@ -85,7 +85,7 @@ export class RectRenderer extends Renderer2D {
          offset = new v2(0, 0),
          width= 1,
          colour = rgb(0, 0, 0),
-     }) {
+    }) {
         super("RectRenderer", offset);
 
         this.addPublic({
@@ -102,11 +102,16 @@ export class RectRenderer extends Renderer2D {
             name: 'colour',
             value: colour,
             type: 'rgb',
-            overrideSet: (value) => {
+            overrideSet: (value: string | colour | any) => {
                 if (typeof value === 'string') {
                     this.setPublic('colour', parseColour(value));
                     return;
+                } else if (typeof value.r === 'number') {
+                    // raw json, so do last step of parsing it
+                    this.setPublic('colour', rgb(value.r, value.g, value.b, value.a));
+                    return;
                 }
+
                 this.setPublic('colour', value);
             }
         });
@@ -120,6 +125,7 @@ export class RectRenderer extends Renderer2D {
 
         let renderPos = this.offset.clone
             .add(arg.position);
+
 
         rect (arg.ctx, getZoomScaledPosition(renderPos, arg.zoom, arg.center), width, height, this.colour.rgb);
     }

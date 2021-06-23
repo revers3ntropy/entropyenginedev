@@ -1,7 +1,7 @@
-import {v3} from "../util/maths/maths.js";
-import {Component} from "../ECS/component.js";
-import {JSONifyComponent} from "../util/util.js";
-import {Transform } from "../index.js";
+import {v3} from "../../util/maths/maths.js";
+import {Component} from "../component.js";
+import {JSONifyComponent} from "../../util/util.js";
+import {Scene, Transform} from "../../index.js";
 
 export class Body extends Component {
 
@@ -53,7 +53,7 @@ export class Body extends Component {
         this.addPublic({
             name: 'bounciness',
             value: bounciness,
-            description: 'When dynamically colliding, the velocity is reversed and mutliplied by this. Higher values give a higher bounce.'
+            description: 'When dynamically colliding, the velocity is reversed and multiplied by this. Higher values give a higher bounce.'
         });
     }
     
@@ -61,10 +61,15 @@ export class Body extends Component {
         return JSONifyComponent(this, 'Body');
     }
 
-    tick (transform: Transform, timeScale = 1): void {
+    tick (transform: Transform): void {
+
+        const settings = Scene.activeScene.settings;
+
+        // update gravity
+        this.velocity.add(settings.globalGravity.clone.scale(settings.G));
 
         // update the position for new velocity
-        transform.position.add(this.velocity.clone.scale(timeScale));
+        transform.position.add(this.velocity.clone.scale(settings.timeScale));
 
         // apply air resistance
         this.velocity.scale(1 - this.airResistance);

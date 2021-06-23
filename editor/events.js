@@ -130,7 +130,7 @@ document.getElementById('myCanvas').onwheel = event => {
 
 export function setSelectedSpriteFromClick (pos) {
     let touching = [];
-    Sprite.loop(sprite => {
+    for (let sprite of Scene.activeScene.sprites) {
         for (const component of sprite.components) {
             if (component.type === 'GUIElement')
                 if (component.touchingPoint(pos, ctx, sprite.transform))
@@ -140,7 +140,7 @@ export function setSelectedSpriteFromClick (pos) {
                 if (component.overlapsPoint(sprite.transform, pos))
                     touching.push(sprite);
         }
-    });
+    }
 
     if (touching.length === 0) {
         setSelected(null);

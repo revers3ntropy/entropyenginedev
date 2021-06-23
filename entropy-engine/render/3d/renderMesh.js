@@ -1,13 +1,10 @@
-import {MeshV3} from "../../util/maths/maths3D.js";
 import * as drawTri from './drawTriangle.js';
-import {Sprite} from "../../ECS/sprite";
-
-export enum renderMode {
-    WIREFRAME,
-    TEXTURE
-}
-
-export function drawMesh (mesh: MeshV3, mode: renderMode, ctx: CanvasRenderingContext2D, camera: Sprite) {
+export var renderMode;
+(function (renderMode) {
+    renderMode[renderMode["WIREFRAME"] = 0] = "WIREFRAME";
+    renderMode[renderMode["TEXTURE"] = 1] = "TEXTURE";
+})(renderMode || (renderMode = {}));
+export function drawMesh(mesh, mode, ctx, camera) {
     for (let tri of mesh.triangles) {
         switch (mode) {
             case renderMode.WIREFRAME:

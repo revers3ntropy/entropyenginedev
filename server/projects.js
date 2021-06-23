@@ -81,7 +81,7 @@ exports.createProject = (url, req, res, body) => {
         exports.shareProject(url, req, res, {
             userID: body.userID,
             projectID: id,
-            level: 2
+            level: 3
         });
     });
 };
@@ -323,7 +323,7 @@ exports.build = (url, req, res, body) => {
     
     UPDATE projects
     SET projects.hasBuild = 1
-    WHERE projects._id = ${projectID}
+    WHERE projects._id = ${body.projectID}
     
     `, () => {
         res.end("{}");
@@ -447,7 +447,7 @@ exports.projectOwner = (url, req, res, body) => {
           users._id=projectAccess.userID
         AND projectAccess.projectID=projects._id
         AND projects._id=${body.projectID}
-        AND projectAccess.level>=2
+        AND projectAccess.level>=3
     
     LIMIT 1
     

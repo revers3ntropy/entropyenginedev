@@ -32,8 +32,8 @@ html {
     margin: 0;
     padding: 0;
     height: 99vh;
-    overflow-y: hidden;
     grid-template-columns: 20vw auto auto 20vw;
+    overflow: hidden;
 }
 
 #inspector {
@@ -44,6 +44,7 @@ html {
     overflow-y: scroll;
     height: calc(100vh - 30px);
     padding: 2px 0 5px 0;
+    overflow-x: hidden;
 }
 
 #scene-toolbar {
@@ -296,6 +297,44 @@ input[type=checkbox]:checked {
     background-color: rgba(0,0,0,0);
     width: 90%;
     border-radius: 0;
+}
+
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip-container .tooltip {
+    visibility: hidden;
+    width: 16vw;
+    background-color: var(--input-bg);
+    color: var(--text-colour);
+    border: 1px solid var(--input-hover-bg);
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1000;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -50px; /* Magic number */
+}
+
+.tooltip-container:hover .tooltip {
+    visibility: visible;
+}
+
+.tooltip-container .tooltip::after {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    left: 100%; /* To the right of the tooltip */
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent transparent black;
 }
 
 .CodeMirror {

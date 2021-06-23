@@ -4,8 +4,8 @@ import {Component} from "../ECS/component.js";
 import {Script} from "../ECS/components/scriptComponent.js"
 // all components
 import {CircleCollider, RectCollider} from '../ECS/components/colliders.js';
-import {Body} from '../physics/body.js';
-import {CircleRenderer, ImageRenderer2D, RectRenderer} from '../ECS/components/renderComponents.js'
+import {Body} from '../ECS/components/body.js';
+import {CircleRenderer, ImageRenderer2D, RectRenderer, MeshRenderer} from '../ECS/components/renderComponents.js'
 import {GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox} from '../ECS/components/gui.js'
 import {Camera} from '../ECS/components/camera.js'
 import {rgb, Transform } from '../index.js';
@@ -14,7 +14,7 @@ import { Scene } from '../ECS/scene.js';
 // reference everything so the ts compiler will think that it is being used and wont delete the import
 CircleCollider; RectCollider;
 Body;
-CircleRenderer; RectRenderer; ImageRenderer2D;
+CircleRenderer; RectRenderer; ImageRenderer2D; MeshRenderer;
 GUIBox; GUIText; GUITextBox; GUIRect; GUICircle; GUIPolygon; GUIImage;
 Camera;
 
@@ -50,70 +50,42 @@ function isColour (o: any) {
     return typeof o.b === 'number';
 }
 
-function componentPropProccessor (propertyJSON: any, componentJSON: any, component: any) {
+function componentPropProcessor (propName: any, componentJSON: any, component: Component | any) {
     // stop it overriding 'type'
-    if (propertyJSON === 'type' || propertyJSON === 'subType') return;
+    if (propName === 'type' || propName === 'subType') return;
 
-    if (!Array.isArray(componentJSON[propertyJSON])) {
-        component[propertyJSON] = componentJSON[propertyJSON];
+    if (isColour(componentJSON[propName])) {
+        const c = componentJSON[propName];
+        component[propName] = rgb(c.r, c.g, c.b, c.a);
+        return;
+    }
+
+    if (!Array.isArray(componentJSON[propName])) {
+        component[propName] = componentJSON[propName];
         return;
     }
 
     // checks arrays two layers deep
-    if (isV2(componentJSON[propertyJSON])) {
-        component[propertyJSON] = v2.fromArray(componentJSON[propertyJSON]);
+    if (isV2(componentJSON[propName])) {
+        component[propName] = v2.fromArray(componentJSON[propName]);
         return;
     }
-    else if (isV3(componentJSON[propertyJSON])) {
-        component[propertyJSON] = v3.fromArray(componentJSON[propertyJSON]);
-        return;
-    }
-
-    else if (isColour(componentJSON[propertyJSON])) {
-        const c = componentJSON[propertyJSON];
-        component[propertyJSON] = rgb(c.r, c.g, c.b);
+    else if (isV3(componentJSON[propName])) {
+        component[propName] = v3.fromArray(componentJSON[propName]);
         return;
     }
 
-    let componentProperties = [];
-    for (let componentInArray of componentJSON[propertyJSON]) {
-        if (isV2(componentInArray))
-            // array of points
-            componentProperties.push(new v2(componentJSON[propertyJSON][0], componentJSON[propertyJSON][1]));
-        else
-            // no clue what it is, just an array
-            componentProperties.push(componentJSON[propertyJSON]);
-    }
-
-    component[propertyJSON] = componentProperties;
+    component[propName] = componentJSON[propName];
 }
 
 function dealWithTransform (transformJSON: any) {
-    let parentInfo = {
-        type: '',
-        name: ''
-    };
+    let parentInfo = transformJSON['parent'];
+
     const transform = new Transform({});
 
-    for (let transformPropertyJSON in transformJSON) {
-        switch (transformPropertyJSON) {
-            case 'position':
-            case 'scale':
-                if (!isV3(transformJSON[transformPropertyJSON])) {
-                    console.error(`transform component '${transformPropertyJSON}' number be a v3. Sprite ${name}`);
-                    break;
-                }
-                // either position or scale
-                transform[transformPropertyJSON] = v3.fromArray(transformJSON[transformPropertyJSON]);
-                break;
-            case 'rotation':
-                transform.rotation = transformJSON[transformPropertyJSON];
-                break;
-            case 'parent':
-                parentInfo = transformJSON[transformPropertyJSON];
-                break;
-        }
-    }
+    transform.position = v3.fromArray(transformJSON['position']);
+    transform.scale = v3.fromArray(transformJSON['scale']);
+    transform.rotation = v3.fromArray(transformJSON['rotation']);
 
     return {parentInfo, transform};
 }
@@ -189,10 +161,10 @@ async function componentProccessor(componentJSON: any): Promise<Component|undefi
         return;
     }
 
-    for (let propertyJSON in componentJSON) {
-        if (!componentJSON.hasOwnProperty(propertyJSON)) continue;
+    for (let prop in componentJSON) {
+        if (!componentJSON.hasOwnProperty(prop)) continue;
 
-        componentPropProccessor(propertyJSON, componentJSON, component);
+        componentPropProcessor(prop, componentJSON, component);
     }
 
     return component;
@@ -260,7 +232,7 @@ export async function spritesFromJSON (JSON: any) {
         Sprite.sprites.push(sprite.sprite);
     }
 
-    // deal with parent-child stuff
+    // deal with parent-child stuff once all sprites have been initialised
     for (let childName in parentPairs) {
         setParentFromInfo(parentPairs[childName], Sprite.find(childName)?.transform);
     }

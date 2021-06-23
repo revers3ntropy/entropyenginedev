@@ -24,7 +24,7 @@
 
     "./src/physics/collisions.ts",
     "./src/physics/physics.ts",
-    "./src/physics/body.ts",
+    "./src/ECS/components/body.ts",
 
     "./src/render/renderer.ts",
     "./src/render/debugRenderer.ts",

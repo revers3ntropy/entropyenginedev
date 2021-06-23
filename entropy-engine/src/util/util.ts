@@ -94,7 +94,7 @@ export function JSONifyComponent (component: any, type? : string) {
     return json;
 }
 
-export function scaleMesh (mesh: v2[], factor: v2) {
+export function scaleMeshV2 (mesh: v2[], factor: v2) {
     const points = mesh.map(point => point.clone);
 
     let avPoint = v2.avPoint(points);

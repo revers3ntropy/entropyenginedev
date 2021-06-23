@@ -18,7 +18,7 @@ export { Sprite } from"./ECS/sprite.js"
 export {Script} from './ECS/components/scriptComponent.js'
 export { CircleCollider, RectCollider } from './ECS/components/colliders.js'
 export { v2, TriangleV2, MeshV2, v3, TriangleV3, MeshV3 } from './util/maths/maths.js'
-export { Body } from "./physics/body.js"
+export { Body } from "./ECS/components/body.js"
 export { CircleRenderer, RectRenderer, ImageRenderer2D, MeshRenderer } from './ECS/components/renderComponents.js'
 export { GUIBox, GUIText, GUITextBox, GUIRect, GUICircle, GUIPolygon, GUIImage } from './ECS/components/gui.js'
 export { input } from './util/input.js'

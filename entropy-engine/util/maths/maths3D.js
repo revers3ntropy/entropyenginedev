@@ -193,6 +193,13 @@ export class TriangleV3 {
         });
         return this;
     }
+    get json() {
+        let points = [];
+        for (const p of this.points) {
+            points.push(p.array);
+        }
+        return points;
+    }
 }
 export class MeshV3 {
     constructor(Triangles) {
@@ -202,6 +209,27 @@ export class MeshV3 {
         for (const tri of this.triangles) {
             tri.move(by);
         }
+    }
+    get json() {
+        let tris = [];
+        for (const tri of this.triangles) {
+            tris.push(tri.json);
+        }
+        return tris;
+    }
+    //      STATIC
+    static fromArray(arr) {
+        let mesh = new MeshV3([]);
+        // parse array of triangles into mesh
+        for (let tri of arr) {
+            const points = [];
+            for (let point of tri) {
+                points.push(v3.fromArray(point));
+            }
+            // @ts-ignore - wrong number of arguments for TriangleV3 constructor - assumed to be safe
+            mesh.triangles.push(new TriangleV3(...points));
+        }
+        return mesh;
     }
     // basic shapes
     static get cube() {

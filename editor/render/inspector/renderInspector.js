@@ -112,11 +112,12 @@ export function reRenderInspector () {
                 const component = new Script({});
                 state.selectedSprite.addComponent(component);
 
-                import(`../projects/${projectID}/scripts.js?c=${genCacheBust()}`).then (scripts => {
-                    component.script = new (scripts[scriptName])();
-                    component.subtype = component.script?.constructor?.name || 'noscript';
-                    reRender();
-                });
+                import(`../../../projects/${projectID}/scripts.js?c=${genCacheBust()}`)
+                    .then (scripts => {
+                        component.script = new (scripts[scriptName])();
+                        component.subtype = component.script?.constructor?.name || scriptName;
+                        reRender();
+                    });
 
                 // new property defined just on these Script components
                 component.scriptName = scriptName;

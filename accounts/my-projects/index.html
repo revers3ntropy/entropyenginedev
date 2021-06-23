@@ -84,7 +84,7 @@
     	})).username;
 
         for (let projectName of projectNames) {
-        	const isShared = projectName.level != 2;
+        	const isShared = projectName.level != 3;
 
             (!isShared ? myProjects : sharedWithMe).append(`
 
@@ -95,7 +95,7 @@
             <div class="projectName">
                 <img
                     src="../../projects/${projectName._id}/build/assets/COVER.png"
-                    alt="COVER.png"
+                    alt="COVER"
                     style="
                         width: 40px;
                         height:40px;
@@ -112,11 +112,11 @@
 
             ${isShared ? '' :`
 
-            <div style="background: none">
-                <a href="../delete-project?p=${projectName._id}" style="background: none">
-                    delete
-                </a>
-            </div>
+                <div style="background: none">
+                    <a href="../delete-project?p=${projectName._id}" style="background: none">
+                        delete
+                    </a>
+                </div>
             `}
              </div>
 

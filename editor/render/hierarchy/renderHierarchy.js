@@ -148,5 +148,10 @@ export function reRenderHierarchy () {
         `);
     }
 
+    $(`#create-sprite-area`).click(() => {
+        setSelected(null);
+        reRender();
+    });
+
     setRightClickAddSpriteMenu('create-sprite-area');
 }

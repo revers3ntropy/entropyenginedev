@@ -1,5 +1,7 @@
 const query = require('./sql').query;
 
+const idMax = parseInt(process.env.SEC_IDMAX);
+
 exports.report = (url, req, res, body) => {
 	query(`
 
