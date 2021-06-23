@@ -8,5 +8,4 @@
 *.png
 /projects/
 
-/entropy-engine/*
-!/entropy-engine/src
+/entropy-engine/**
