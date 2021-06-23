@@ -8,7 +8,5 @@
 *.png
 /projects/
 
-/entropy-engine/ECS
-/entropy-engine/render
-/entropy-engine/util
-/entropy-engine/index.js
+/entropy-engine/*
+!/entropy-engine/src
