@@ -5,7 +5,8 @@
 /libraries/
 *.htaccess
 *.json
-*.png
 /projects/
 
-/entropy-engine/
+/entropy-engine/*.js
+/entropy-engine/**/*.js
+!**/tsconfig.json

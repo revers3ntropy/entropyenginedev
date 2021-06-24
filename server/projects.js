@@ -429,7 +429,7 @@ exports.allContributors = (url, req, res, body) => {
          projectSaves 
     WHERE 
         users._id=projectSaves.userID
-    AND projectID=${body.projectID || url[1]}
+    AND projectID=${body?.projectID || url[1]}
     
     `, data => {
         res.end(JSON.stringify(data));

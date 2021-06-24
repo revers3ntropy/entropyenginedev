@@ -126,118 +126,116 @@
 <script type="module">
 	import {request} from '../request.js';
 	import {urlParam} from '../util.js';
-	import {runFromJSON} from "../entropy-engine";
 	import {comment as commentComponent} from '../globalComponents.js';
 
-	function urlExists (url) {
-		const http = new XMLHttpRequest();
-		http.open('HEAD', url, false);
-		http.send();
-		return http.status != 404;
-	}
-
 	const projectID = urlParam('p');
+	const cacheBust = Math.floor(Math.random() * 10**5);
 
-	if (!urlExists(`https://entropyengine.dev/projects/${projectID}/build/index.json`)) {
-		$('#game-container').html('Error - game does not exist');
-		throw Error('Project has not been built or does not exist');
+	function notAvailable (data) {
+		window.location.href = `https://entropyengine.dev/accounts/error?type=buildPlayFail&extra=${JSON.stringify(data)}`;
+    }
 
-    } else {
+    request ('/has-build', {projectID})
+    .then ( async beenBuilt => {
+        if (!beenBuilt.built) {
+            notAvailable(beenBuilt);
+            return;
+        }
 
-		document.getElementById('contributors-link').href += projectID;
-		const cacheBust = Math.floor(Math.random() * 10**5);
+        const access = await request('/get-project-access', {projectID, userID: localStorage.id});
+        if (access.accessLevel < 1) {
+			notAvailable(access);
+			return;
+        }
 
-		// run the actual game - use cache-bust to get the most recent version
-		runFromJSON(`../projects/${projectID}/build/index.json?cache-bust=${cacheBust}`);
+        document.getElementById('contributors-link').href += projectID;
 
-		request('/project-owner', {projectID})
-			.then(owner => {
-				$('#project-owner').html(`
-                ${owner.owner} and ${owner.totalContributors-1} others
-            `);
-			});
+        const ee = await import ('../entropy-engine/index.js');
 
-		request('/viewed-project', {
-			projectID,
-			userID: localStorage.id
-		});
+        // run the actual game - use cache-bust to get the most recent version
+        ee.runFromJSON(`../projects/${projectID}/build/index.json?cache-bust=${cacheBust}`);
 
-		request('/project-views', {
-			projectID,
-			userID: localStorage.id
-		}).then(data => {
-			$('#views').html(`
+        const owner = await request('/project-owner', {projectID})
+        $('#project-owner').html(`
+            ${owner.owner} and ${owner.totalContributors-1} others
+        `);
+
+        request('/viewed-project', {
+            projectID,
+            userID: localStorage.id
+        });
+
+        const projectViewsData = await request('/project-views', {
+            projectID,
+            userID: localStorage.id
+        });
+        $('#views').html(`
             <span style="margin-right: 10px">
-                ${data.unique} viewers
+                ${projectViewsData.unique} viewers
             </span>
 
             <span>
-                ${data.total} views
+                ${projectViewsData.total} views
             </span>
         `);
-		});
 
-		function refreshComments (username) {
-			request('/get-comments', {
-				public: true,
-				projectID
-			}).then(comments => {
-				$('#num-comments').html(comments.length);
+        async function refreshComments (username) {
+            const comments = await request('/get-comments', {
+                public: true,
+                projectID
+            });
+            $('#num-comments').html(comments.length);
 
-				if (!comments) return;
+            if (!comments) return;
 
-				const commentsDIV = $('#comments');
+            const commentsDIV = $('#comments');
 
-				commentsDIV.html('');
+            commentsDIV.html('');
 
-				for (let comment of comments) {
-					commentsDIV.append(
-						commentComponent(comment, comment.username === username)
-					);
+            for (let comment of comments) {
+                commentsDIV.append(
+                    commentComponent(comment, comment.username === username)
+                );
 
-					// have to do this here
-					if (comment.username !== username) continue;
+                // have to do this here
+                if (comment.username !== username) continue;
 
-					$(`#delete-comment-${comment._id}`).click(() => {
+                $(`#delete-comment-${comment._id}`).click(async () => {
 
-						$(`#comment-${comment._id}-menu`).hide();
-						$(`#comment-${comment._id}`).hide();
+                    $(`#comment-${comment._id}-menu`).hide();
+                    $(`#comment-${comment._id}`).hide();
 
-						request('/delete-comment', {
-							commentID: comment._id
-						}).then(() => {
-							refreshComments(username);
-						});
-					});
-				}
-			});
-		}
+                    await request('/delete-comment', {
+                        commentID: comment._id
+                    });
+                    refreshComments(username);
+                });
+            }
+        }
 
 
-		const addMessage = $("#add-comment");
+        const addMessage = $("#add-comment");
 
-		request('/get-username', {
-			userID: localStorage.id
-		}).then(username => {
+        const username = await request('/get-username', {
+            userID: localStorage.id
+        })
 
-			addMessage.keyup(event => {
-				if (event.keyCode !== 13) return;
+        addMessage.keyup(async event => {
+            if (event.keyCode !== 13) return;
 
-				const content = addMessage.val();
-				addMessage.val('');
+            const content = addMessage.val();
+            addMessage.val('');
 
-				request('/comment', {
-					content,
-					projectID,
-					public: true,
-					userID: localStorage.id
-				}).then(() => {
-					refreshComments(username.username);
-				});
-			});
+            await request('/comment', {
+                content,
+                projectID,
+                public: true,
+                userID: localStorage.id
+            });
+            refreshComments(username.username);
+        });
 
-			refreshComments(username.username);
-		});
-    }
+        refreshComments(username.username);
+    });
 
 </script>

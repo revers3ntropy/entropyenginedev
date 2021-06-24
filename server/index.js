@@ -24,6 +24,14 @@ const PORT = 50_001;
         data: object - the JSON passed through
  */
 const handlers = {
+    'robots.text': (url, req, res) => {
+        // block all bots from backend entirely
+        res.end(`
+            User-agent: *
+            Disallow: /
+        `);
+    },
+
     // Debug
     'ping': (m, req, res, body) => res.end('{"ok": "true"}'),
     'log': (url, req, res, body) => console.log(body),
@@ -73,19 +81,17 @@ const handlers = {
     'upload': projects.upload,
     'folder-size': util.folderSizePublic,
     'public-projects': projects.publicProjectsFromUser,
-    'robots.text': (url, req, res) => {
-        res.end(`
-            # block bots from the entire backend
-            User-agent: *
-            Disallow: /
-        `);
-    }
+    'has-build': projects.beenBuilt,
 };
 
 // goes strait to these function without any data handling
 const rawPaths = [
+    // done through forms
     'upload',
-    'robots.txt'
+    // txt file request, no body
+    'robots.txt',
+    // must use fetch API for this, easier without body so just URL
+    'all-contributions'
 ];
 
 async function serverResponse (req, res) {

@@ -47,6 +47,10 @@
         	message = "Looks like we can't connect to the server right now... Try again in a few minutes";
         	break;
 
+        case 'buildPlayFail':
+        	message = `That project either doesn't exist, hasn't been built or you don't have access to it.`;
+            break;
+
         default:
             message = 'Looks like theres been an error... try signing in again';
             break
