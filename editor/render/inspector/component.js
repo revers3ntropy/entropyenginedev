@@ -6,7 +6,7 @@ export const _component_ = (component, i) => {
 	const cName = component.subtype || component.type;
 	i.append(`
             <div id="component-${cName}">
-                <p class="subheader" style="
+                <p class="subheader" id="component-${cName}-title" style="
                     background: vaR(--input-opposite-bg);
                     margin-top: 10px;
                     border-top: 1px solid vaR(--text-colour);
@@ -18,10 +18,10 @@ export const _component_ = (component, i) => {
         `);
 
 	if (cName !== 'Transform') {
-		setRightClick(`component-${cName}`, state.selectedSprite, `
-             ${rightClickOption('remove', () => {
+		setRightClick(`component-${cName}-title`, state.selectedSprite, `
+             ${rightClickOption(`remove-${cName}`, () => {
 				let index = state.selectedSprite.components.indexOf(component);
-				if (index === -1){
+				if (index === -1) {
 					console.error('No component found to delete: ' + component);
 					return;
 				}
@@ -29,7 +29,7 @@ export const _component_ = (component, i) => {
 				delete state.selectedSprite.components.splice(index, 1)[0];
 	
 				reRender();
-			})}
+			}, 'remove')}
 		`);
 	}
 
@@ -39,7 +39,7 @@ export const _component_ = (component, i) => {
 	for (let property of component.public) {
 		let name = component.type;
 		if (name === 'Script') {
-			name = component?.scriptName || component?.name || component.subtype;
+			name += `: ${component?.scriptName || component?.name || component.subtype}`;
 		}
 		componentHTML.append(`
                 <div style="border-bottom: 1px solid vaR(--input-bg); margin-bottom: 4px">

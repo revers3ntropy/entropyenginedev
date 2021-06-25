@@ -202,7 +202,7 @@ export const _componentProperty_ = (object, key, componentName, chain=[], showNa
 			break;
 
 		default:
-			showValue = 'Sorry, that type is not supported in the editor';
+			showValue = `That type ('${type}') is not supported in the editor`;
 	}
 
 	return (`
@@ -215,7 +215,7 @@ export const _componentProperty_ = (object, key, componentName, chain=[], showNa
 			<span style="grid-column: 1/1; font-size: 14px" class="tooltip-container">
 				${showName}
 				${!(description || defaultVal)? '' : `
-					<span class="tooltip">
+					<span class="tooltip-fleeting">
 						${description ? description: ''}
 						
 						${showDefault ? `
@@ -232,7 +232,6 @@ export const _componentProperty_ = (object, key, componentName, chain=[], showNa
 				${showValue}
 			</span>
 		</div>
-	
 
 	`);
 };

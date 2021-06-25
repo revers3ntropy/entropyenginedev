@@ -304,7 +304,7 @@ input[type=checkbox]:checked {
     display: inline-block;
 }
 
-.tooltip-container .tooltip {
+.tooltip-container .tooltip, .tooltip-container .tooltip-fleeting {
     visibility: hidden;
     width: 16vw;
     background-color: var(--input-bg);
@@ -322,19 +322,22 @@ input[type=checkbox]:checked {
     margin-left: -50px; /* Magic number */
 }
 
+.tooltip-container:hover .tooltip-fleeting:not(:hover) {
+    visibility: visible;
+}
 .tooltip-container:hover .tooltip {
     visibility: visible;
 }
 
-.tooltip-container .tooltip::after {
+.tooltip-container .tooltip::after, .tooltip-container .tooltip-fleeting::after {
     content: " ";
     position: absolute;
-    top: 50%;
-    left: 100%; /* To the right of the tooltip */
-    margin-top: -5px;
+    top: 100%; /* At the bottom of the tooltip */
+    left: 10%;
+    margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: transparent transparent transparent black;
+    border-color: var(--input-bg) transparent transparent transparent;
 }
 
 .CodeMirror {
@@ -342,5 +345,5 @@ input[type=checkbox]:checked {
 }
 
 .CodeMirror-scroll, .CodeMirror, .cm-s-darcula {
-    height: calc(100vh - 190px);
+    height: 100%;
 }

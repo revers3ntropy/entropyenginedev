@@ -94,7 +94,7 @@ export function reRenderHierarchy () {
         <ul id="hierarchy-draggable-area">
             ${sprites}
         </ul>
-        <div id="create-sprite-area" style="height: 100%"></div>
+        <div id="create-sprite-area" style="height: 100%; max-height: 100vw"></div>
     `);
 
 
