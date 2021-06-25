@@ -65,7 +65,7 @@ Where:
 - width is the desired width
 - height is the desired height
 - performanceDebug is if you want a breakdown of how long various things take to run. 
-  1 gives you just total tick time, 2 givers you more detail.
+  1 gives you just total Update time, 2 givers you more detail.
 - sprites is a list of all sprite objects (see below)
 
 

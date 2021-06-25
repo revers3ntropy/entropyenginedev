@@ -1,7 +1,7 @@
-import { Component } from "../component.js"
-import {v2} from "../../util/maths/maths.js"
-import {JSONifyComponent} from "../../util/util.js";
-import { Transform } from "../../index.js";
+import { Component } from "../ECS/component.js"
+import {v2} from "../util/maths/maths.js"
+import {JSONifyComponent} from "../util/general.js";
+import { Transform } from "../index.js";
 
 export abstract class Collider extends Component {
     // @ts-ignore
@@ -36,6 +36,8 @@ export abstract class Collider extends Component {
 }
 
 export class CircleCollider extends Collider {
+    Start(transform: Transform): void {
+    }
     // @ts-ignore
     radius: number;
 
@@ -53,7 +55,7 @@ export class CircleCollider extends Collider {
         });
     }
 
-    tick () {}
+    Update () {}
 
     overlapsPoint(transform: Transform, point: v2): boolean {
         return point.distTo(
@@ -64,6 +66,8 @@ export class CircleCollider extends Collider {
 }
 
 export class RectCollider extends Collider {
+    Start(transform: Transform): void {
+    }
     // @ts-ignore
     width: number;
     // @ts-ignore
@@ -82,7 +86,7 @@ export class RectCollider extends Collider {
         });
     }
 
-    tick () {}
+    Update () {}
 
     overlapsPoint(transform: Transform, point: v2): boolean {
         return point.isInRect(

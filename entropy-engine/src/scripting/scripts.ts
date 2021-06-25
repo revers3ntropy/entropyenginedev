@@ -1,15 +1,14 @@
-import { publicField, publicFieldConfig } from '../ECS/component.js'
+import {Component, publicField, publicFieldConfig} from '../ECS/component.js'
 import {Sprite} from "../ECS/sprite.js";
-import {loopThroughScripts} from "../util/util.js";
-import { Script } from '../ECS/components/scriptComponent.js';
+import { Script } from '../components/scriptComponent.js';
 import { Transform } from '../index.js';
 
 export abstract class JSBehaviour {
-    protected name: string | undefined;
-    protected sprite: Sprite | undefined;
-    protected transform: Transform | undefined;
-    protected component: Script | undefined;
-    protected started: boolean;
+    name: string | undefined;
+    sprite: Sprite | undefined;
+    transform: Transform | undefined;
+    component: Script | undefined;
+    started: boolean;
 
     tempPublic: publicField<any>[];
 
@@ -113,25 +112,4 @@ export abstract class JSBehaviour {
     abstract onMouseDown: () => void;
     abstract onMouseUp: () => void;
     abstract onClick: () => void;
-
-    Start_(sprite: Sprite) {
-        // assign properties from a Sprite instance to be accessible by 'this' in scripts
-        this.sprite = sprite;
-        this.name = sprite.name;
-        this.transform = sprite.transform;
-
-        let thisComponent: any = null;
-
-        loopThroughScripts((script, sprite) => {
-            if (Object.is(this, script.script))
-                thisComponent = script;
-        });
-
-        if (!(thisComponent instanceof Script))
-            throw `Cannot find self on script with name ${this.name}!`;
-
-        this.component = thisComponent;
-        
-        this.started = true;
-    }
 }

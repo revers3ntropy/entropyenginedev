@@ -1,9 +1,11 @@
-import {v3} from "../../util/maths/maths.js";
-import {Component} from "../component.js";
-import {JSONifyComponent} from "../../util/util.js";
-import {Scene, Transform} from "../../index.js";
+import {v3} from "../util/maths/maths.js";
+import {Component} from "../ECS/component.js";
+import {JSONifyComponent} from "../util/general.js";
+import {Scene, Transform} from "../index.js";
 
 export class Body extends Component {
+    Start(transform: Transform): void {
+    }
 
     // @ts-ignore
     velocity: v3;
@@ -47,7 +49,7 @@ export class Body extends Component {
         this.addPublic({
             name: 'airResistance',
             value: airResistance,
-            description: 'Velocity is scaled by this every tick. Larger values give higher resistance and more slowing'
+            description: 'Velocity is scaled by this every Update. Larger values give higher resistance and more slowing'
         });
 
         this.addPublic({
@@ -61,7 +63,7 @@ export class Body extends Component {
         return JSONifyComponent(this, 'Body');
     }
 
-    tick (transform: Transform): void {
+    Update (transform: Transform): void {
 
         const settings = Scene.activeScene.settings;
 

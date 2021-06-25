@@ -1,4 +1,4 @@
-import {Camera} from "../../ECS/components/camera.js";
+import {v3} from "./maths3D.js";
 
 export class Matrix {
     m: number[][];
@@ -28,21 +28,12 @@ export class Matrix {
         this.m[y][x] = to;
     }
 
-
-
-    static projection (camera: Camera, aspectRatio: number) {
-        const fovRad = 1 / Math.tan(camera.fov * 0.5 / 180 * 3.14159);
-
-        const m = new Mat4();
-
-        m.m[0][0] = aspectRatio * fovRad;
-        m.m[1][1] = fovRad;
-        m.m[2][2] = camera.far / (camera.far - camera.near);
-        m.m[3][2] = (-camera.far * camera.near) / (camera.far - camera.near);
-        m.m[2][3] = 1;
-        m.m[3][3] = 0;
-
-        return m;
+    transformV3 (v: v3) {
+        return new v3(
+            v.x * this.m[0][0] + v.y * this.m[1][0] + v.z * this.m[2][0] + this.m[3][0],
+            v.x * this.m[0][1] + v.y * this.m[1][1] + v.z * this.m[2][1] + this.m[3][1],
+            v.x * this.m[0][2] + v.y * this.m[1][2] + v.z * this.m[2][2] + this.m[3][2]
+        );
     }
 
     static rotationX (theta: number) {

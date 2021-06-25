@@ -1,7 +1,9 @@
-import {Component} from "../component";
-import {Transform} from "../transform";
+import {Component} from "../ECS/component";
+import {Transform} from "./transform";
 
 export class soundEmitter extends Component {
+    Start(transform: Transform): void {
+    }
     // @ts-ignore
     src: string;
 
@@ -29,7 +31,7 @@ export class soundEmitter extends Component {
 
     }
 
-    tick (transform: Transform): void {
+    Update (transform: Transform): void {
 
     }
 

@@ -1,7 +1,8 @@
 import {Sprite} from './sprite.js';
-import {Camera} from "./components/camera.js";
+import {Camera} from "../components/camera.js";
 import {v3} from "../util/maths/maths3D.js";
 import {colour, parseColour, rgb} from "../util/colour.js";
+import {Script} from "../components/scriptComponent";
 
 export type background = {
     tint?: colour,
@@ -105,6 +106,39 @@ export class Scene {
         return sprites;
     }
 
+    findMainCamera () {
+        for (const sprite of this.sprites) {
+            if (!sprite.hasComponent('Camera')) continue;
+
+            Camera.main = sprite;
+            return;
+        }
+        console.error(`
+            No sprites with component of type 'camera' can be found. 
+            Make sure that there is at least one sprite in the scene '${Scene.activeScene.name}' with a 'Camera' component attached
+        `);
+    }
+
+    loopThroughScripts (handler: (script: Script, sprite: Sprite) => void) {
+        for (const sprite of this.sprites) {
+            for (const script of sprite.getComponents('Script'))
+                handler(script as Script, sprite as Sprite);
+        }
+    }
+    broadcast (funcName: string, params: any[]) {
+        this.loopThroughScripts((script: Script, sprite: Sprite) => {
+            script.runMethod(funcName, params);
+        });
+    }
+
+    static loopThroughAllScripts (handler: (script: Script, sprite: Sprite) => void) {
+        Sprite.loop(sprite => {
+            for (const script of sprite.getComponents('Script'))
+                handler(script as Script, sprite as Sprite);
+        });
+    }
+
+
 
     //      STATIC
 
@@ -134,6 +168,14 @@ export class Scene {
         }
         
         return scene[0];
+    }
+
+    static sceneExistsWithID (id: number) {
+        const scene = Scene.scenes.filter(scene =>
+            scene.id === id
+        )[0];
+
+        return scene !== undefined;
     }
 
     static sceneByID (id: number): Scene {
@@ -173,7 +215,7 @@ export class Scene {
             }
         }
 
-        Camera.findMain();
+        Scene.activeScene.findMainCamera();
     }
 
     static previous (persists: Sprite[]) {
@@ -190,7 +232,7 @@ export class Scene {
             }
         }
 
-        Camera.findMain();
+        Scene.activeScene.findMainCamera();
     }
 
     static get sceneCount () {

@@ -1,14 +1,15 @@
-import {Camera} from '../ECS/components/camera.js';
+import {Camera} from '../components/camera.js';
 import {Sprite} from '../ECS/sprite.js';
-import {worldSpaceToScreenSpace, screenSpaceToWorldSpace, getCanvasSize} from '../util/util.js';
+import {getCanvasSize} from '../util/general.js';
 import {circle, rect, image} from './renderer.js';
 import {v2} from '../util/maths/maths.js';
-import {CircleCollider, RectCollider, Collider } from '../ECS/components/colliders.js';
+import {CircleCollider, RectCollider, Collider } from '../components/colliders.js';
 
-import { Transform } from '../ECS/transform.js';
+import { Transform } from '../components/transform.js';
 
 function getGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite) {
-    const zoom = camera.getComponent<Camera>('Camera').zoom;
+    const cameraC = camera.getComponent<Camera>('Camera');
+    const zoom = cameraC.zoom;
     const canvasSize = getCanvasSize(canvas);
 
     // find nearest order of magnitude
@@ -17,8 +18,8 @@ function getGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement
     const zoomToNearestPow = Math.pow(10,order);
     let step = (1/zoomToNearestPow) * 50;
 
-    const min = screenSpaceToWorldSpace(new v2(0, 0), camera, canvas);
-    const max = screenSpaceToWorldSpace(canvasSize, camera, canvas);
+    const min = cameraC.screenSpaceToWorldSpace(new v2(0, 0), canvas, camera.transform.position);
+    const max = cameraC.screenSpaceToWorldSpace(canvasSize, canvas, camera.transform.position);
 
     if ((max.x - min.x) / step < 5)
         step /= 2;
@@ -38,17 +39,18 @@ function getGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement
 function renderGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, colour: string) {
     const {step, min, max} = getGlobalGrid(ctx, canvas, camera);
     const canvasSize = getCanvasSize(canvas);
+    const cameraC = camera.getComponent<Camera>('Camera');
     
     // horizontal
     for (let y = min.y; y < max.y; y += step) {
-        const pos = worldSpaceToScreenSpace(new v2(0, y), camera, canvas);
+        const pos = cameraC.worldSpaceToScreenSpace(new v2(0, y), canvas, camera.transform.position);
         pos.x = -1;
         rect(ctx, pos, canvasSize.x+2, 1, colour);
     }
 
     // vertical
     for (let x = min.x; x < max.x; x += step) {
-        const pos = worldSpaceToScreenSpace(new v2(x, 0), camera, canvas);
+        const pos = cameraC.worldSpaceToScreenSpace(new v2(x, 0), canvas, camera.transform.position);
         pos.y = -1;
         rect(ctx, pos, 1, canvasSize.y+2, colour);
     }
@@ -56,30 +58,33 @@ function renderGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
 
 function renderGridDots (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, colour: string, r: number) {
     const {step, min, max} = getGlobalGrid(ctx, canvas, camera);
+    const cameraC = camera.getComponent<Camera>('Camera');
     
     for (let x = min.x; x < max.x; x += step) {
         for (let y = min.y; y < max.y; y += step) {
-            const pos = worldSpaceToScreenSpace(new v2(x, y), camera, canvas);
+            const pos = cameraC.worldSpaceToScreenSpace(new v2(x, y), canvas, camera.transform.position);
             circle(ctx, pos, r, colour);
         }
     }
 }
 
 function renderCenterDot (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, colour: string, r: number) {
-    const pos = worldSpaceToScreenSpace(v2.zero, camera, canvas);
+    const cameraC = camera.getComponent<Camera>('Camera');
+    const pos = cameraC.worldSpaceToScreenSpace(v2.zero, canvas, camera.transform.position);
     circle(ctx, pos, r, colour);
 }
 
 function renderCollider (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, colour: string, collider: Collider, transform: Transform) {
+    const cameraC = camera.getComponent<Camera>('Camera');
     const zoom = camera.getComponent<Camera>('Camera').zoom;
 
     ctx.beginPath();
     ctx.strokeStyle = colour;
     
-    const pos = worldSpaceToScreenSpace(
+    const pos = cameraC.worldSpaceToScreenSpace(
         transform.position.clone.v2
             .add(collider.offset),
-        camera, canvas
+        canvas, camera.transform.position
     );
 
     if (collider instanceof RectCollider) {
@@ -102,21 +107,24 @@ function renderColliders (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
 }
 
 export function drawCameras (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, sprites: Sprite[]) {
+    const cameraC = camera.getComponent<Camera>('Camera');
     for (const sprite of sprites) {
         if (!sprite.hasComponent('Camera')) continue;
-        let pos = worldSpaceToScreenSpace(sprite.transform.position.v2, camera, canvas);
+        let pos = cameraC.worldSpaceToScreenSpace(sprite.transform.position.v2, canvas, camera.transform.position);
         image(ctx, pos, new v2(80, 40), 'https://entropyengine.dev/svg/camera.png');
     }
 }
 
 export function drawCameraViewArea (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, cameraToDraw: Sprite, colour: string) {
     const canvasSize = getCanvasSize(canvas);
+    const cameraC = camera.getComponent<Camera>('Camera');
+    const cameraToDrawC = cameraToDraw.getComponent<Camera>('Camera');
 
-    const min = screenSpaceToWorldSpace(new v2(0, 0), cameraToDraw, canvas);
-    const max = screenSpaceToWorldSpace(canvasSize, cameraToDraw, canvas);
+    const min = cameraToDrawC.screenSpaceToWorldSpace(new v2(0, 0), canvas, cameraToDraw.transform.position);
+    const max = cameraToDrawC.screenSpaceToWorldSpace(canvasSize, canvas, cameraToDraw.transform.position);
     
-    const minScreenSpace = worldSpaceToScreenSpace(min, camera, canvas);
-    const maxScreenSpace = worldSpaceToScreenSpace(max, camera, canvas);
+    const minScreenSpace = cameraC.worldSpaceToScreenSpace(min, canvas, camera.transform.position);
+    const maxScreenSpace = cameraC.worldSpaceToScreenSpace(max, canvas, camera.transform.position);
 
     const ySize = Math.abs(minScreenSpace.y - maxScreenSpace.y);
     const xSize = Math.abs(minScreenSpace.x - maxScreenSpace.x);

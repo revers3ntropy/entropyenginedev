@@ -1,4 +1,4 @@
-import {Component} from '../component.js';
+import {Component} from '../ECS/component.js';
 
 export interface webAPIToken {
     projectID: number;
@@ -9,7 +9,6 @@ export interface webAPIToken {
 export type eventCallback = () => void;
 
 export class multiplayer extends Component {
-
     token: webAPIToken;
     globalState: any;
     fetching: boolean;
@@ -54,7 +53,7 @@ export class multiplayer extends Component {
             });
     }
 
-    tick () {
+    Update () {
         this.updateState();
     }
 

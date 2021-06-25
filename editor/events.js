@@ -116,6 +116,8 @@ window.run = async () => {
 
 document.getElementById('myCanvas').onwheel = event => {
     event.preventDefault();
+    if (state.window !== sceneView) return;
+
     const cam = state.sceneCamera.getComponent('Camera');
     cam.zoom *= 1 + (event.deltaY * -0.0001);
 

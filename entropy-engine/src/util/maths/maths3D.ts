@@ -1,7 +1,4 @@
 import {TriangleV2, v2} from './maths2D.js';
-import {Mat4} from "./matrix.js";
-import {Camera} from "../../ECS/components/camera";
-import {Sprite} from "../../ECS/sprite";
 
 export class v3 {
     x: number;
@@ -168,13 +165,6 @@ export class v3 {
         return [this.x, this.y, this.z];
     }
 
-    transform (m: Mat4) {
-        this.x = this.x * m.m[0][0] + this.y * m.m[1][0] + this.z * m.m[2][0] + m.m[3][0];
-        this.y = this.x * m.m[0][1] + this.y * m.m[1][1] + this.z * m.m[2][1] + m.m[3][1];
-        this.z = this.x * m.m[0][2] + this.y * m.m[1][2] + this.z * m.m[2][2] + m.m[3][2];
-        return this;
-    }
-
     //      STATIC
 
     static get up () {
@@ -248,29 +238,6 @@ export class TriangleV3 {
             this.points[1].v2,
             this.points[2].v2
         ]);
-    }
-
-    project3D (ctx: CanvasRenderingContext2D, camera: Sprite) {
-        const canvas = ctx.canvas;
-        const aspectRatio = canvas.height / canvas.width;
-
-        const camComponent = camera.getComponent<Camera>('Camera');
-
-        // transform position
-        this.move(camera.transform.position);
-        //this.move(new v3(3, 3, 3));
-
-        // project to 3D
-        this.apply (p => p.transform(Mat4.projection(camComponent, aspectRatio)));
-
-        // scale into view
-        this.apply(p => {
-            p.add(new v3(1, 1, 0));
-            p.mul(new v3(canvas.width / 2, canvas.height / 2, 1));
-            return p;
-        });
-
-        return this;
     }
 
     get json () {

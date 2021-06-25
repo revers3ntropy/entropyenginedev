@@ -1,8 +1,7 @@
 import {v2} from "./maths/maths.js";
 import {Sprite} from "../ECS/sprite.js";
-import {GUIElement, GUITextBox} from "../ECS/components/gui.js";
-import {Camera} from "../ECS/components/camera.js";
-import {screenSpaceToWorldSpace} from "./util.js";
+import {GUIElement, GUITextBox} from "../components/gui/gui.js";
+import {Camera} from "../components/camera.js";
 
 export function getMousePos(canvas: HTMLCanvasElement, event: MouseEvent) {
     let rect = canvas.getBoundingClientRect();
@@ -27,7 +26,9 @@ export function getMousePos(canvas: HTMLCanvasElement, event: MouseEvent) {
 
 export function getMousePosWorldSpace (canvas: HTMLCanvasElement, event: MouseEvent) {
     const mousePos = getMousePos(canvas, event);
-    return screenSpaceToWorldSpace(mousePos, Camera.main, canvas);
+    return (<Sprite>Camera.main)
+        .getComponent<Camera>('Camera')
+        .screenSpaceToWorldSpace(mousePos, canvas, Camera.main.transform.position);
 }
 
 export const input: any = {

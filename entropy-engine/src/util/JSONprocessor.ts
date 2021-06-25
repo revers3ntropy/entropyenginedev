@@ -1,13 +1,13 @@
 import { Sprite } from '../ECS/sprite.js'
 import {v2, v3} from "./maths/maths.js";
 import {Component} from "../ECS/component.js";
-import {Script} from "../ECS/components/scriptComponent.js"
+import {Script} from "../components/scriptComponent.js"
 // all components
-import {CircleCollider, RectCollider} from '../ECS/components/colliders.js';
-import {Body} from '../ECS/components/body.js';
-import {CircleRenderer, ImageRenderer2D, RectRenderer, MeshRenderer} from '../ECS/components/renderComponents.js'
-import {GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox} from '../ECS/components/gui.js'
-import {Camera} from '../ECS/components/camera.js'
+import {CircleCollider, RectCollider} from '../components/colliders.js';
+import {Body} from '../components/body.js';
+import {CircleRenderer, ImageRenderer2D, RectRenderer, MeshRenderer} from '../components/renderComponents.js'
+import {GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox} from '../components/gui/gui.js'
+import {Camera} from '../components/camera.js'
 import {rgb, Transform } from '../index.js';
 import { Scene } from '../ECS/scene.js';
 

@@ -1,9 +1,9 @@
 import {v2} from "../util/maths/maths.js"
-import {sleep, getCanvasStuff, getCanvasSize} from "../util/util.js";
+import {sleep, getCanvasStuff, getCanvasSize} from "../util/general.js";
 import {Sprite} from "../ECS/sprite.js";
-import {GUIElement} from "../ECS/components/gui.js";
-import {Camera} from "../ECS/components/camera.js";
-import { Renderer } from "../ECS/components/renderComponents.js";
+import {GUIElement} from "../components/gui/gui.js";
+import {Camera} from "../components/camera.js";
+import { Renderer } from "../components/renderComponents.js";
 import {parseColour} from "../util/colour.js";
 import {background} from "../ECS/scene.js";
 
@@ -61,7 +61,7 @@ export function renderBackground (ctx: CanvasRenderingContext2D, canvasSize: v2,
 }
 
 
-export function renderAll (sprites: Sprite[], canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, background: background, cameraSprite: Sprite) {
+export function renderAll (sprites: Sprite[], canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, background: background, cameraSprite: Sprite = Camera.main) {
 
     // background
     const canvasSize = getCanvasSize(canvas);
@@ -81,7 +81,7 @@ export function renderAll (sprites: Sprite[], canvas: HTMLCanvasElement, ctx: Ca
 
     if (!camera) return;
 
-    const cameraPos = Camera.main.transform.position.clone
+    const cameraPos = cameraSprite.transform.position.clone
         .sub(
             canvasSize
                 .clone

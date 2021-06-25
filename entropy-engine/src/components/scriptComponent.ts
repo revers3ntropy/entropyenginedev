@@ -1,10 +1,8 @@
-import {Component} from '../component.js';
-import {JSBehaviour} from '../../scripting/scripts.js';
-import { loopThroughScripts } from '../../util/util.js';
-import { v2, v3 } from '../../util/maths/maths.js';
+import {Component} from '../ECS/component.js';
+import {JSBehaviour} from '../scripting/scripts.js';
+import { v2, v3 } from '../util/maths/maths.js';
 
 export class Script extends Component {
-
     static runStartMethodOnInit = false;
 
     script: JSBehaviour | undefined;
@@ -21,10 +19,8 @@ export class Script extends Component {
         this.public = this?.script?.public || [];
 
         if (Script.runStartMethodOnInit){
-            this.runMethod('Start_', [this.sprite]);
             this.runMethod('Start', []);
         }
-
     }
 
     public jsonPublic (): object[] {
@@ -90,11 +86,5 @@ export class Script extends Component {
 
     }
 
-    tick () {}
-
-    static broadcast(funcName: string, params: any[]) {
-        loopThroughScripts((script, sprite) => {
-            script.runMethod(funcName, params);
-        });
-    }
+    Update () {}
 }

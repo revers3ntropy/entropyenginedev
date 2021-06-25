@@ -1,5 +1,6 @@
-import {Sprite} from "./sprite.js";
-import { Transform } from "./transform.js";
+import {parseColour} from "../util/colour.js";
+import {v2, v3} from "../util/maths/maths.js";
+import {Transform} from "../components/transform.js";
 
 export type publicFieldType = 'string' | 'number' | 'Asset' | 'Transform' | 'boolean' | 'json' | 'rgb' | 'v2' | 'v3';
 
@@ -61,13 +62,13 @@ export abstract class Component {
 
     public public: publicField<any>[];
 
-    protected constructor(type: string, subtype = "") {
+    protected constructor (type: string, subtype = "") {
         this.type = type;
         this.subtype = subtype;
         this.public = [];
     }
 
-    abstract tick (transform: Transform): void;
+    abstract Update (transform: Transform): void;
 
     // returns what is required to build it from the JSON processor
     // used especially for building the game as a html file
@@ -109,7 +110,7 @@ export abstract class Component {
             },
             set (value) {
                 if (config.overrideSet === undefined) {
-                    this.setPublic(config.name, value);
+                    this.setPublicTypeCheck(config.name, value);
                     return;
                 }
 
@@ -130,6 +131,16 @@ export abstract class Component {
         return undefined;
     }
 
+    public getPublicField <T>(name: string): publicField<T> | undefined {
+        for (let field of this.public) {
+            if (field.name === name) {
+                return field;
+            }
+        }
+
+        return undefined;
+    }
+
     public hasPublic (name: string): boolean {
         for (let field of this.public) {
             if (field.name === name) {
@@ -147,14 +158,76 @@ export abstract class Component {
             }
         }
     }
-    
-    get sprite (): Sprite {
-        Sprite.loop(sprite => {
-            for (let component of sprite.components)
-                if (Object.is(component, this))
-                    return sprite;
-        });
-        
-        throw `No sprite found for component ${this.type}, ${this.subtype}`;
+
+    public setPublicTypeCheck (name: string, value: any) {
+        if (!this.hasPublic(name)) {
+            console.log(`No public variable found  with name ${name}`)
+            return;
+        }
+        const type = typeof value;
+
+        const current = this.getPublicField(name);
+
+        if (current === undefined) {
+            console.log(`No public variable found  with name ${name}`)
+            return;
+        }
+
+        switch(current.type) {
+            case 'rgb':
+                if (typeof value === 'string') {
+                    this.setPublic(name, parseColour(value));
+                    break;
+                }
+                if (value && value?.isColour) {
+                    this.setPublic(name, value);
+                    break;
+                }
+                console.error(`Cannot set property '${name}' of type '${type}' to:`, value);
+                break;
+
+            case 'Transform':
+                this.setPublic(name, value);
+                break;
+
+            case 'v2':
+                if (value instanceof v2) {
+                    this.setPublic(name, value);
+                    break;
+                }
+                if (Array.isArray(value) && value.length === 2) {
+                    this.setPublic(name, v2.fromArray(value));
+                    break;
+                }
+                if (typeof value.x === 'number' && typeof value.y === 'number') {
+                    this.setPublic(name, new v2(value.x, value.y));
+                    break;
+                }
+                console.error(`Cannot set public property '${name}' of type v2 to value '${value}' of type '${type}'`)
+                break;
+            case 'v3':
+                if (value instanceof v3) {
+                    this.setPublic(name, value);
+                    break;
+                }
+                if (Array.isArray(value) && (value.length === 3 || value.length === 4) ) {
+                    this.setPublic(name, v3.fromArray(value));
+                    break;
+                }
+                if (typeof value.x === 'number' && typeof value.y === 'number' && typeof value.z === 'number') {
+                    this.setPublic(name, new v3(value.x, value.y, value.z, value.w));
+                    break;
+                }
+                console.error(`Cannot set public property '${name}' of type v3 to value '${value}' of type '${type}'`)
+                break;
+
+            default:
+                if (type !== current.type) {
+                    console.error(`Tried to set public variable '${name}' of type '${current.type}' to '${value}' of type '${type}'`)
+                    return;
+                }
+                this.setPublic(name, value);
+                break;
+        }
     }
 }

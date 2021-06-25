@@ -151,7 +151,7 @@ export function reRender () {
             break;
 
         case gameView:
-            Camera.findMain();
+            Scene.activeScene.findMainCamera();
 
             setTabNotActive(sceneButton, canvasDIV);
             setTabNotActive(scriptsButton, scriptsDIV);

@@ -1,5 +1,5 @@
-import { JSONifyComponent } from '../../util/util.js';
-import {Component} from '../component.js';
+import { JSONifyComponent } from '../util/general.js';
+import {Component} from '../ECS/component.js';
 
 export abstract class Renderer extends Component {
     abstract draw (...args: any[]): any;
@@ -8,7 +8,7 @@ export abstract class Renderer extends Component {
         super(`Renderer`, type);
     }
 
-    tick () {}
+    Update () {}
 
     json () {
         return JSONifyComponent(this);

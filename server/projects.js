@@ -421,13 +421,13 @@ exports.latestContributor = (url, req, res, body) => {
 exports.allContributors = (url, req, res, body) => {
     query(`
     
-    SELECT 
+    SELECT
            users.username,
            UNIX_TIMESTAMP(projectSaves.date) as date
-    FROM 
-         users, 
-         projectSaves 
-    WHERE 
+    FROM
+         users,
+         projectSaves
+    WHERE
         users._id=projectSaves.userID
     AND projectID=${body?.projectID || url[1]}
     

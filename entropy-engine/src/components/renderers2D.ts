@@ -1,8 +1,8 @@
-import {v2} from "../../util/maths/maths.js";
-import {circle, image, rect} from "../../render/renderer.js";
-import {getZoomScaledPosition, JSONifyComponent} from '../../util/util.js'
-import {colour, parseColour, rgb } from "../../util/colour.js";
-import { Transform } from "../transform.js";
+import {v2} from "../util/maths/maths.js";
+import {circle, image, rect} from "../render/renderer.js";
+import {getZoomScaledPosition, JSONifyComponent} from '../util/general.js'
+import {colour, parseColour, rgb } from "../util/colour.js";
+import { Transform } from "./transform.js";
 import { Renderer } from "./renderer.js";
 
 export abstract class Renderer2D extends Renderer {
@@ -22,7 +22,7 @@ export abstract class Renderer2D extends Renderer {
         });
     }
 
-    tick () {}
+    Update () {}
 
     json () {
         return JSONifyComponent(this);
@@ -30,6 +30,8 @@ export abstract class Renderer2D extends Renderer {
 }
 
 export class CircleRenderer extends Renderer2D {
+    Start(transform: Transform): void {
+    }
     // @ts-ignore
     radius: number;
     // @ts-ignore
@@ -72,6 +74,8 @@ export class CircleRenderer extends Renderer2D {
 }
 
 export class RectRenderer extends Renderer2D {
+    Start(transform: Transform): void {
+    }
 
     // @ts-ignore
     height: number;
@@ -132,6 +136,8 @@ export class RectRenderer extends Renderer2D {
 }
 
 export class ImageRenderer2D extends Renderer2D {
+    Start(transform: Transform): void {
+    }
 
     // @ts-ignore
     height: number;

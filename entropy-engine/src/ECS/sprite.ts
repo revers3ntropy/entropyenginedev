@@ -1,24 +1,8 @@
 ﻿import { Component } from './component.js'
-import { Body} from "./components/body.js"
-import {CircleRenderer} from "./components/renderComponents.js";
-
-// all components
-import {RectCollider, CircleCollider} from '../ECS/components/colliders.js'
-import {ImageRenderer2D, RectRenderer} from './components/renderComponents.js'
-import {GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox} from './components/gui.js'
-import {Camera} from './components/camera.js'
-import {Script} from "./components/scriptComponent.js"
+import { Body} from "../components/body.js"
+import {Script} from "../components/scriptComponent.js"
 import {getSpriteFromJSON, setParentFromInfo} from "../util/JSONprocessor.js";
-import { Transform } from './transform.js';
-import { Scene } from './scene.js';
-
-// reference everything so the ts compiler will think that it is being used and wont delete the import
-CircleCollider; RectCollider;
-Body;
-CircleRenderer; RectRenderer; ImageRenderer2D;
-GUIBox; GUIText; GUITextBox; GUIRect; GUICircle; GUIPolygon; GUIImage;
-Camera;
-Script;
+import { Transform } from '../components/transform.js';
 
 export type spriteConfig = {
     name: string
@@ -45,19 +29,18 @@ export class Sprite {
 
         this.id = this.generateID();
     }
-    
-    get active (): boolean {
+
+    get sceneID (): number {
         let root: Transform | number = this.transform;
-        let found = false;
-        
-        while (!found) {
+
+        while (true) {
             if (typeof root == 'number') {
                 break;
             }
             root = root.parent;
         }
-        
-        return root === Scene.active;
+
+        return <number> root;
     }
 
     generateID (): number {
@@ -77,7 +60,7 @@ export class Sprite {
 
     tick () {
         for (let component of this.components)
-            component.tick(this.transform);
+            component.Update(this.transform);
     }
 
     addComponent (toAdd: Component) {

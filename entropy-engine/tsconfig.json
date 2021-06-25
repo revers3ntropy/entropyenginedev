@@ -6,28 +6,40 @@
     "outDir": "./",
     "lib": [ "es2016", "dom" ],
     "strict": true,
+    "emitDecoratorMetadata": false
   },
   "files": [
-    "./src/ECS/components/camera.ts",
-    "./src/ECS/components/gui.ts",
-    "./src/ECS/components/renderComponents.ts",
-    "./src/ECS/components/renderer.ts",
-    "./src/ECS/components/renderers2D.ts",
-    "./src/ECS/components/renderers3D.ts",
-    "./src/ECS/components/scriptComponent.ts",
-    "./src/ECS/components/colliders.ts",
+    "./src/components/camera.ts",
+    "./src/components/renderComponents.ts",
+    "./src/components/renderer.ts",
+    "./src/components/renderers2D.ts",
+    "./src/components/renderers3D.ts",
+    "./src/components/scriptComponent.ts",
+    "./src/components/colliders.ts",
+    "./src/components/gui/gui.ts",
+    "./src/components/gui/box.ts",
+    "./src/components/gui/circle.ts",
+    "./src/components/gui/image.ts",
+    "./src/components/gui/polygon.ts",
+    "./src/components/gui/text.ts",
+    "./src/components/gui/textbox.ts",
+    "./src/components/gui/rect.ts",
 
     "./src/ECS/component.ts",
     "./src/ECS/sprite.ts",
-    "./src/ECS/transform.ts",
+    "./src/components/transform.ts",
     "./src/ECS/scene.ts",
 
     "./src/physics/collisions.ts",
     "./src/physics/physics.ts",
-    "./src/ECS/components/body.ts",
+    "./src/components/body.ts",
 
     "./src/render/renderer.ts",
     "./src/render/debugRenderer.ts",
+
+    "./src/render/3d/drawTriangle.ts",
+    "./src/render/3d/renderMesh.ts",
+
 
     "./src/scripting/scripts.ts",
 
@@ -36,12 +48,13 @@
     "./src/util/JSONprocessor.ts",
     "./src/util/license.ts",
     "./src/util/maths.ts",
-    "./src/ECS/components/multiplayer.ts",
-    "./src/util/util.ts",
+    "./src/components/multiplayer.ts",
+    "./src/util/general.ts",
 
     "./src/util/maths/maths.ts",
     "./src/util/maths/maths2D.ts",
     "./src/util/maths/maths3D.ts",
+    "./src/util/maths/matrix.ts",
 
     "./src/index.ts"
   ]

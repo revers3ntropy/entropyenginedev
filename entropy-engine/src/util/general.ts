@@ -1,7 +1,4 @@
 import {v2, v3} from "./maths/maths.js";
-import { Camera } from "../ECS/components/camera.js";
-import { Sprite } from "../ECS/sprite.js";
-import { Script } from "../index.js";
 
 export function sleep(ms: number) {
     // @ts-ignore
@@ -15,29 +12,6 @@ export function getCanvasSize (canvas: HTMLCanvasElement): v2 {
 export function getZoomScaledPosition (pos: v2, zoom: number, center: v2): v2 {
     // scales the position from the center
     return pos.sub(center).scale(zoom).add(center);
-}
-
-export function screenSpaceToWorldSpace (point: v2, camera: Sprite, canvas: HTMLCanvasElement) {
-    point = point.clone;
-    const center = getCanvasSize(canvas).scale(0.5);
-
-    point.set(getZoomScaledPosition(point, 1/camera.getComponent<Camera>('Camera').zoom, center));
-    point.add(camera.transform.position.v2);
-    point.sub(center);
-
-    return point;
-}
-
-export function worldSpaceToScreenSpace (point: v2, camera: Sprite, canvas: HTMLCanvasElement) {
-    const canvasSize = getCanvasSize(canvas);
-    const mid = canvasSize.clone.scale(0.5);
-
-    const cameraPos = camera.transform.position.clone
-        .sub(mid.v3);
-
-    const renderPos = point.clone.sub(cameraPos.v2);
-    
-    return getZoomScaledPosition(renderPos, camera.getComponent<Camera>('Camera').zoom, mid);
 }
 
 export function getCanvasStuff(id: string) {
@@ -109,13 +83,6 @@ export function scaleMeshV2 (mesh: v2[], factor: v2) {
         point.set(finalLocation);
     }
     return points;
-}
-
-export function loopThroughScripts (handler: (script: Script, sprite: Sprite) => void) {
-    Sprite.loop(sprite => {
-        for (const script of sprite.getComponents('Script'))
-            handler(script as Script, sprite as Sprite);
-    });
 }
 
 export function cullString (str: string, cutoff: number) {

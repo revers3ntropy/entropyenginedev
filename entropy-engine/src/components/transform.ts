@@ -1,7 +1,7 @@
 import {v2, v3 } from "../util/maths/maths.js";
-import { Component } from "./component.js";
-import { Scene } from "./scene.js";
-import { Sprite } from "./sprite.js";
+import { Component } from "../ECS/component.js";
+import { Scene } from "../ECS/scene.js";
+import { Sprite } from "../ECS/sprite.js";
 
 export class Transform extends Component {
     // @ts-ignore
@@ -132,7 +132,7 @@ export class Transform extends Component {
         }
     }
 
-    tick() {}
+    Update() {}
     
 
     get localRotation () {
