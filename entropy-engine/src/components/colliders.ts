@@ -1,5 +1,5 @@
 import { Component } from "../ECS/component.js"
-import {v2} from "../util/maths/maths.js"
+import {v2} from "../maths/maths.js"
 import {JSONifyComponent} from "../util/general.js";
 import { Transform } from "../index.js";
 
@@ -23,7 +23,7 @@ export abstract class Collider extends Component {
             name: 'offset',
             value: offset,
             type: 'v2',
-            description: 'Offsets the renderer from the transform of the sprite',
+            description: 'Offsets the renderer from the transform of the entity',
             default: v2.zero
         });
     }
@@ -36,8 +36,6 @@ export abstract class Collider extends Component {
 }
 
 export class CircleCollider extends Collider {
-    Start(transform: Transform): void {
-    }
     // @ts-ignore
     radius: number;
 
@@ -55,8 +53,6 @@ export class CircleCollider extends Collider {
         });
     }
 
-    Update () {}
-
     overlapsPoint(transform: Transform, point: v2): boolean {
         return point.distTo(
             transform.position.clone.v2
@@ -66,8 +62,6 @@ export class CircleCollider extends Collider {
 }
 
 export class RectCollider extends Collider {
-    Start(transform: Transform): void {
-    }
     // @ts-ignore
     width: number;
     // @ts-ignore
@@ -85,8 +79,6 @@ export class RectCollider extends Collider {
             value: width
         });
     }
-
-    Update () {}
 
     overlapsPoint(transform: Transform, point: v2): boolean {
         return point.isInRect(

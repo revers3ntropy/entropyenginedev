@@ -53,10 +53,6 @@ export class multiplayer extends Component {
             });
     }
 
-    Update () {
-        this.updateState();
-    }
-
     setGlobalState (prop: string, replace: any) {
         if (!this.token.valid) return;
 

@@ -1,7 +1,7 @@
-import {v2} from "../util/maths/maths.js";
-import {circle, image, rect} from "../render/renderer.js";
+import {v2} from "../maths/maths.js";
+import {circle, image, rect} from "../systems/rendering/basicShapes.js";
 import {getZoomScaledPosition, JSONifyComponent} from '../util/general.js'
-import {colour, parseColour, rgb } from "../util/colour.js";
+import {colour, rgb, rgba} from "../util/colour.js";
 import { Transform } from "./transform.js";
 import { Renderer } from "./renderer.js";
 
@@ -18,7 +18,7 @@ export abstract class Renderer2D extends Renderer {
             name: 'offset',
             value: offset,
             type: 'v2',
-            description: 'offset from sprites transform'
+            description: 'offset from entities transform'
         });
     }
 
@@ -30,8 +30,6 @@ export abstract class Renderer2D extends Renderer {
 }
 
 export class CircleRenderer extends Renderer2D {
-    Start(transform: Transform): void {
-    }
     // @ts-ignore
     radius: number;
     // @ts-ignore
@@ -57,7 +55,7 @@ export class CircleRenderer extends Renderer2D {
             type: 'rgb',
             overrideSet: (value) => {
                 if (typeof value === 'string') {
-                    this.setPublic('colour', parseColour(value));
+                    this.setPublic('colour', rgb.parse(value));
                     return;
                 }
                 this.setPublic('colour', value);
@@ -108,11 +106,11 @@ export class RectRenderer extends Renderer2D {
             type: 'rgb',
             overrideSet: (value: string | colour | any) => {
                 if (typeof value === 'string') {
-                    this.setPublic('colour', parseColour(value));
+                    this.setPublic('colour', rgb.parse(value));
                     return;
                 } else if (typeof value.r === 'number') {
                     // raw json, so do last step of parsing it
-                    this.setPublic('colour', rgb(value.r, value.g, value.b, value.a));
+                    this.setPublic('colour', rgba(value.r, value.g, value.b, value.a));
                     return;
                 }
 

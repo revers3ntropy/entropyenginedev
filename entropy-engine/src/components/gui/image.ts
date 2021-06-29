@@ -1,7 +1,7 @@
 import {Transform} from "../transform.js";
-import {image} from "../../render/renderer.js";
-import {v2} from "../../util/maths/maths2D.js";
+import {image} from "../../systems/rendering/basicShapes.js";
 import {GUIElement} from "./gui.js";
+import {v2} from "../../maths/v2.js";
 
 export class GUIImage extends GUIElement {
     Start(transform: Transform): void {

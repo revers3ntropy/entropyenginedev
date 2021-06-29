@@ -1,7 +1,7 @@
 import {projectID, state} from '../../state.js';
 import {request} from '../../../request.js';
 import {reRender, rightClickOption, setRightClick} from "../renderer.js";
-import {cullString} from '../../../entropy-engine/util/util.js';
+import {cullString} from '../../../entropy-engine/util/general.js';
 
 const _asset_ = (fileName) => `
 			<div id="asset${fileName}" class="asset-container">
@@ -85,7 +85,7 @@ export const renderAssets = async div => {
 	for (const asset of projectAssets) {
 		const file = asset.fileName;
 
-		setRightClick(`asset${file}`, state.selectedSprite, `
+		setRightClick(`asset${file}`, state.selectedEntity, `
 			${rightClickOption(`delete_asset_${file}`, () => {
 				request('/delete-asset', {
 					projectID,

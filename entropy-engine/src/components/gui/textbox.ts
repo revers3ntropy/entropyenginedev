@@ -1,12 +1,10 @@
 import {rgb} from "../../util/colour.js";
 import {Transform} from "../transform.js";
-import {v2} from "../../util/maths/maths2D.js";
 import {GUIElement} from "./gui.js";
 import {GUIText} from "./text.js";
+import {v2} from "../../maths/v2.js";
 
 export class GUITextBox extends GUIElement {
-    Start(transform: Transform): void {
-    }
     text: GUIText;
     selected: boolean;
     limiter: (val: string) => string;
@@ -14,16 +12,16 @@ export class GUITextBox extends GUIElement {
     maxLength: number;
 
     constructor ({
-                     zLayer = 1,
-                     initialText = 'text',
-                     fontSize = 12,
-                     font = 'Arial',
-                     textColour = rgb(0, 0, 0),
-                     textAlignment = 'center',
-                     fillText = true,
-                     limiter = (val: string) => val,
-                     maxLength = 100
-                 }) {
+     zLayer = 1,
+     initialText = 'text',
+     fontSize = 12,
+     font = 'Arial',
+     textColour = rgb(0, 0, 0),
+     textAlignment = 'center',
+     fillText = true,
+     limiter = (val: string) => val,
+     maxLength = 100
+    }) {
         super('GUITextBox', zLayer);
 
         this.text = new GUIText({
@@ -46,10 +44,6 @@ export class GUITextBox extends GUIElement {
 
     draw (ctx: CanvasRenderingContext2D, transform: Transform): void {
         this.text.draw(ctx, transform);
-    }
-
-    Update (): void {
-        this.text.Update();
     }
 
     touchingPoint(point: v2, ctx: CanvasRenderingContext2D, transform: Transform): boolean {

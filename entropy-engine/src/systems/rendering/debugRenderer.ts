@@ -1,13 +1,13 @@
-import {Camera} from '../components/camera.js';
-import {Sprite} from '../ECS/sprite.js';
-import {getCanvasSize} from '../util/general.js';
-import {circle, rect, image} from './renderer.js';
-import {v2} from '../util/maths/maths.js';
-import {CircleCollider, RectCollider, Collider } from '../components/colliders.js';
+import {Camera} from '../../components/camera.js';
+import {Entity} from '../../ECS/entity.js';
+import {getCanvasSize} from '../../util/general.js';
+import {circle, rect, image} from './basicShapes.js';
+import {v2} from '../../maths/maths.js';
+import {CircleCollider, RectCollider, Collider } from '../../components/colliders.js';
 
-import { Transform } from '../components/transform.js';
+import { Transform } from '../../components/transform.js';
 
-function getGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite) {
+function getGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Entity) {
     const cameraC = camera.getComponent<Camera>('Camera');
     const zoom = cameraC.zoom;
     const canvasSize = getCanvasSize(canvas);
@@ -36,7 +36,7 @@ function getGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement
     }
 }
 
-function renderGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, colour: string) {
+function renderGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Entity, colour: string) {
     const {step, min, max} = getGlobalGrid(ctx, canvas, camera);
     const canvasSize = getCanvasSize(canvas);
     const cameraC = camera.getComponent<Camera>('Camera');
@@ -56,7 +56,7 @@ function renderGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
     }
 }
 
-function renderGridDots (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, colour: string, r: number) {
+function renderGridDots (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Entity, colour: string, r: number) {
     const {step, min, max} = getGlobalGrid(ctx, canvas, camera);
     const cameraC = camera.getComponent<Camera>('Camera');
     
@@ -68,13 +68,13 @@ function renderGridDots (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElemen
     }
 }
 
-function renderCenterDot (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, colour: string, r: number) {
+function renderCenterDot (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Entity, colour: string, r: number) {
     const cameraC = camera.getComponent<Camera>('Camera');
     const pos = cameraC.worldSpaceToScreenSpace(v2.zero, canvas, camera.transform.position);
     circle(ctx, pos, r, colour);
 }
 
-function renderCollider (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, colour: string, collider: Collider, transform: Transform) {
+function renderCollider (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Entity, colour: string, collider: Collider, transform: Transform) {
     const cameraC = camera.getComponent<Camera>('Camera');
     const zoom = camera.getComponent<Camera>('Camera').zoom;
 
@@ -98,7 +98,7 @@ function renderCollider (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElemen
     ctx.stroke();
 }
 
-function renderColliders (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, colour: string, sprites: Sprite[]) {
+function renderColliders (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Entity, colour: string, sprites: Entity[]) {
     for (const sprite of sprites) {
         if (!sprite.hasComponent('Collider')) continue;
         const collider = sprite.getComponent<Collider>('Collider');
@@ -106,7 +106,7 @@ function renderColliders (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
     }
 }
 
-export function drawCameras (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, sprites: Sprite[]) {
+export function drawCameras (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Entity, sprites: Entity[]) {
     const cameraC = camera.getComponent<Camera>('Camera');
     for (const sprite of sprites) {
         if (!sprite.hasComponent('Camera')) continue;
@@ -115,7 +115,7 @@ export function drawCameras (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEl
     }
 }
 
-export function drawCameraViewArea (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Sprite, cameraToDraw: Sprite, colour: string) {
+export function drawCameraViewArea (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Entity, cameraToDraw: Entity, colour: string) {
     const canvasSize = getCanvasSize(canvas);
     const cameraC = camera.getComponent<Camera>('Camera');
     const cameraToDrawC = cameraToDraw.getComponent<Camera>('Camera');
@@ -138,15 +138,15 @@ export function drawCameraViewArea (ctx: CanvasRenderingContext2D, canvas: HTMLC
     rect(ctx, new v2(minScreenSpace.x, maxScreenSpace.y), xSize, 1, colour);
 }
 
-export function renderDebug (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, camera: Sprite, sprites: Sprite[]) {
+export function renderDebug (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, camera: Entity, entities: Entity[]) {
     renderGlobalGrid(ctx, canvas, camera,  `rgba(150, 150, 150, 0.3)`);
     renderGridDots(ctx, canvas, camera,  `rgba(150, 150, 150, 0.4)`, 1);
     renderCenterDot(ctx, canvas, camera,  `rgba(150, 150, 150, 0.6)`, 2);
-    renderColliders(ctx, canvas, camera, `rgba(255, 230, 0, 0.6)`, sprites);
-    drawCameras(ctx, canvas, camera, sprites);
+    renderColliders(ctx, canvas, camera, `rgba(255, 230, 0, 0.6)`, entities);
+    drawCameras(ctx, canvas, camera, entities);
 }
 
-export function renderSelectedOutline (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, camera: Sprite, selected: Sprite) {
+export function renderSelectedOutline (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, camera: Entity, selected: Entity) {
     if (!selected.hasComponent('Collider')) return;
     const collider = selected.getComponent<Collider>('Collider');
     renderCollider(ctx, canvas, camera, 'rgba(21,229,21,0.76)', collider, selected.transform);

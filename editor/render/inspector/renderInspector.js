@@ -45,7 +45,7 @@ export function reRenderInspector () {
     // div that everything is put into
     const i = $('#inspector');
 
-    if (!state.selectedSprite) {
+    if (!state.selectedEntity) {
         i.html(`
 
         <p style="text-align: center">
@@ -62,7 +62,7 @@ export function reRenderInspector () {
             <input
                 type="text" 
                 id="input-name" 
-                value="${state.selectedSprite.name}" 
+                value="${state.selectedEntity.name}" 
                 onchange="window.onPropertyChange('input-name', 'nocomponent', ['name'])" 
                 style="
                     font-size: 20px;
@@ -73,14 +73,14 @@ export function reRenderInspector () {
         </div>
     `);
 
-    for (let p in state.selectedSprite) {
-        if (!state.selectedSprite.hasOwnProperty(p)) continue;
+    for (let p in state.selectedEntity) {
+        if (!state.selectedEntity.hasOwnProperty(p)) continue;
         if (['components', 'transform', 'name', 'id'].includes(p)) continue;
 
-        i.append(_componentProperty_(state.selectedSprite, p, 'nocomponent'));
+        i.append(_componentProperty_(state.selectedEntity, p, 'nocomponent'));
     }
 
-    for (let c of [state.selectedSprite.transform, ...state.selectedSprite.components])
+    for (let c of [state.selectedEntity.transform, ...state.selectedEntity.components])
         _component_(c, i);
 
     i.append(`
@@ -103,14 +103,14 @@ export function reRenderInspector () {
 
             // normal
             if (type.length === 1)
-                state.selectedSprite.addComponent(new (eval(type[0]))({}));
+                state.selectedEntity.addComponent(new (eval(type[0]))({}));
 
             // scripts
             else if (type[0] === 'Script') {
                 // slice off the surrounding ''
                 const scriptName = type[1].slice(2, type[1].length-1);
                 const component = new Script({});
-                state.selectedSprite.addComponent(component);
+                state.selectedEntity.addComponent(component);
 
                 import(`../../../projects/${projectID}/scripts.js?c=${genCacheBust()}`)
                     .then (scripts => {

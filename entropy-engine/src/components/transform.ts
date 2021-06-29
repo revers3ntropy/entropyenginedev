@@ -1,7 +1,7 @@
-import {v2, v3 } from "../util/maths/maths.js";
+import {v2, v3 } from "../maths/maths.js";
 import { Component } from "../ECS/component.js";
-import { Scene } from "../ECS/scene.js";
-import { Sprite } from "../ECS/sprite.js";
+import { Entity } from "../ECS/entity.js";
+import {Scene} from "../ECS/scene.js";
 
 export class Transform extends Component {
     // @ts-ignore
@@ -103,7 +103,7 @@ export class Transform extends Component {
         if (this.recursiveChildren.includes(val.sprite)) {
             for (const child of this.children)
                 // shift children up one level if any of the
-                // children are becoming the parent of this sprite
+                // children are becoming the parent of this entity
                 child.transform.parent = this.parent;
         }
 
@@ -163,19 +163,19 @@ export class Transform extends Component {
         this.parent = Scene.active;
     }
 
-    get children (): Sprite[] {
+    get children (): Entity[] {
         let children = [];
 
-        for (let sprite of Sprite.sprites)
+        for (let sprite of Entity.entities)
             if (Object.is(sprite.transform.parent, this))
                 children.push(sprite);
 
         return children;
     }
 
-    get recursiveChildren (): Sprite[] {
-        const queue: Sprite[] = this.children;
-        const children: Sprite[] = [];
+    get recursiveChildren (): Entity[] {
+        const queue: Entity[] = this.children;
+        const children: Entity[] = [];
 
         while (queue.length > 0) {
             for (let child of queue[0].transform.children) {
@@ -183,7 +183,7 @@ export class Transform extends Component {
             }
 
             // there must be an element so shift can't return undefined, but ts doesn't kow that
-            children.push( <Sprite> queue.shift());
+            children.push( <Entity> queue.shift());
         }
 
         return children;
@@ -192,16 +192,11 @@ export class Transform extends Component {
     get childCount (): number {
         let count = 0;
 
-        for (let sprite of Sprite.sprites)
+        for (let sprite of Entity.entities)
             if (Object.is(sprite.transform.parent, this))
                 count++;
 
         return count;
-    }
-
-    detachChildren (): void {
-        for (let child of this.children)
-            child.transform.parent = Scene.active;
     }
 
     makeChildOf (t: Transform | number): void {
@@ -221,8 +216,8 @@ export class Transform extends Component {
         return this.parent instanceof Transform;
     }
 
-    get sprite (): Sprite {
-        return Sprite.sprites.find(sprite => Object.is(sprite.transform, this)) as Sprite;
+    get sprite (): Entity {
+        return Entity.entities.find(sprite => Object.is(sprite.transform, this)) as Entity;
     }
 
     get root (): Transform {

@@ -1,6 +1,6 @@
 import {Component} from "../../ECS/component.js";
 import {Transform} from "../transform.js";
-import {v2} from "../../util/maths/maths2D.js";
+import {v2} from "../../maths/maths.js";
 import {JSONifyComponent} from "../../util/general.js";
 
 export abstract class GUIElement extends Component {

@@ -1,8 +1,8 @@
 import {rgb} from "../../util/colour.js";
 import {Transform} from "../transform.js";
-import {roundedRect} from "../../render/renderer.js";
-import {v2} from "../../util/maths/maths2D.js";
+import {roundedRect} from "../../systems/rendering/basicShapes.js";
 import {GUIElement} from "./gui.js";
+import {v2} from "../../maths/v2.js";
 
 export class GUIBox extends GUIElement {
     Start(transform: Transform): void {
@@ -70,8 +70,6 @@ export class GUIBox extends GUIElement {
             default: 1
         });
     }
-
-    Update () {}
 
     draw (ctx: CanvasRenderingContext2D, transform: Transform) {
         if (this.width === 0 || this.height === 0) return;

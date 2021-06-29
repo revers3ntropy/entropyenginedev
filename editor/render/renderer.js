@@ -1,10 +1,9 @@
-import { Scene, v2, Camera } from "../../entropy-engine";
-import {renderAll} from "../../entropy-engine/render/renderer.js";
-import {rect} from "../../entropy-engine/render/renderer.js";
-import {renderDebug, renderSelectedOutline, drawCameraViewArea} from '../../entropy-engine/render/debugRenderer.js';
+import { Scene, v2, Camera, System } from "../../entropy-engine";
+import {rect} from "../../entropy-engine/systems/rendering/basicShapes.js";
+import {renderDebug, renderSelectedOutline, drawCameraViewArea} from '../../entropy-engine/systems/rendering/debugRenderer.js';
 
 import {
-    ctx, background, canvas,
+    ctx, canvas,
     setSelected,
     state, scriptEditor, sceneView, gameView, setState, assets, comments,
 } from "../state.js";
@@ -15,6 +14,7 @@ import {renderScripts} from "./script-editor/renderScript.js";
 import {renderAssets} from './assets/renderAssets.js';
 import {renderSceneMenu} from './renderSceneMenu.js';
 import {renderComments} from './comments/renderComments.js';
+import {renderSceneSettings} from "./sceneSettings/sceneSettings.js";
 
 export function showPopUpMenu (event, content) {
     setTimeout(() => {
@@ -61,30 +61,32 @@ export function rightClickOption (name, onclick, show=name) {
 }
 
 export function reRenderCanvas () {
-    renderAll(Scene.activeScene.sprites, canvas, ctx, Scene.activeScene.settings.background, Camera.main);;
+    System.getByName('Renderer').Update(Scene.activeScene);
 }
 
 export function reRenderCanvasDebug () {
-    renderDebug(canvas, ctx, state.sceneCamera, Scene.activeScene.sprites);
+    renderDebug(canvas, ctx, state.sceneCamera, Scene.activeScene.entities);
 
-    if (!state.selectedSprite) return;
+    if (!state.selectedEntity) return;
 
-    renderSelectedOutline(canvas, ctx, state.sceneCamera, state.selectedSprite);
+    renderSelectedOutline(canvas, ctx, state.sceneCamera, state.selectedEntity);
 
-    if (state.selectedSprite.hasComponent('Camera'))
-        drawCameraViewArea(ctx, canvas, state.sceneCamera, state.selectedSprite, `rgb(255, 0, 0)`);
+    if (state.selectedEntity.hasComponent('Camera'))
+        drawCameraViewArea(ctx, canvas, state.sceneCamera, state.selectedEntity, `rgb(255, 0, 0)`);
 }
 
 const canvasDIV = $('#canvas');
 const sceneToolbar = $('#scene-toolbar');
 const scriptsDIV = $('#scripts');
 const assetsDIV = $('#assets');
+const sceneSettingsDIV = $('#scene-settings');
 const commentsDIV = $('#comments');
 
 const scriptsButton = $(`#go-to-scripts-button`);
 const sceneButton = $(`#go-to-scene-button`);
 const gameButton = $('#go-to-game-button');
 const assetButton = $('#go-to-assets-button');
+const sceneSettingsButton = $('#go-to-scene-settings-button');
 const commentsButton = $('#go-to-comments-button');
 
 export function reRenderSceneToolbar () {
@@ -128,6 +130,7 @@ export function reRender () {
             setTabNotActive(gameButton, canvasDIV);
             setTabActive(sceneButton, canvasDIV, true);
             setTabNotActive(assetButton, assetsDIV);
+            setTabNotActive(sceneSettingsButton, sceneSettingsDIV);
             setTabNotActive(commentsButton, commentsDIV);
 
             Camera.main = state.sceneCamera;
@@ -144,6 +147,7 @@ export function reRender () {
             setTabActive(scriptsButton, scriptsDIV);
             setTabNotActive(gameButton, canvasDIV);
             setTabNotActive(assetButton, assetsDIV);
+            setTabNotActive(sceneSettingsButton, sceneSettingsDIV);
             setTabNotActive(commentsButton, commentsDIV);
 
             rect(ctx, v2.zero, canvas.width, canvas.height, `rgb(255, 255, 255)`);
@@ -157,6 +161,7 @@ export function reRender () {
             setTabNotActive(scriptsButton, scriptsDIV);
             setTabActive(gameButton, canvasDIV, true);
             setTabNotActive(assetButton, assetsDIV);
+            setTabNotActive(sceneSettingsButton, sceneSettingsDIV);
             setTabNotActive(commentsButton, commentsDIV);
 
             reRenderCanvas();
@@ -169,6 +174,7 @@ export function reRender () {
             setTabNotActive(scriptsButton, scriptsDIV);
             setTabNotActive(gameButton, canvasDIV);
             setTabActive(assetButton, assetsDIV, true);
+            setTabNotActive(sceneSettingsButton, sceneSettingsDIV);
             setTabNotActive(commentsButton, commentsDIV);
             
             renderAssets(assetsDIV);
@@ -181,9 +187,21 @@ export function reRender () {
             setTabNotActive(scriptsButton, scriptsDIV);
             setTabNotActive(gameButton, canvasDIV);
             setTabNotActive(assetButton, assetsDIV);
+            setTabNotActive(sceneSettingsButton, sceneSettingsDIV);
             setTabActive(commentsButton, commentsDIV, true);
 
             renderComments(commentsDIV);
+            break;
+
+        case sceneSettings:
+            setTabNotActive(sceneButton, canvasDIV);
+            setTabNotActive(scriptsButton, scriptsDIV);
+            setTabNotActive(gameButton, canvasDIV);
+            setTabNotActive(assetButton, assetsDIV);
+            setTabActive(sceneSettingsButton, sceneSettingsDIV, true);
+            setTabNotActive(commentsButton, commentsDIV);
+
+            renderSceneSettings(sceneSettingsDIV);
             break;
 
         default:

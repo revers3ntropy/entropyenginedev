@@ -1,4 +1,4 @@
-import {v3} from './maths3D.js';
+import {v3} from "./v3.js";
 
 export class v2 {
     x: number;
@@ -130,7 +130,7 @@ export class v2 {
         this.apply(Math.round);
         return this;
     }
-    
+
     get v3 (): v3 {
         return new v3(this.x, this.y, 0);
     }
@@ -168,35 +168,5 @@ export class v2 {
             total.add(point);
 
         return total.scale(1/points.length);
-    }
-}
-
-export class TriangleV2 {
-
-    points: [v2, v2, v2];
-
-    constructor (points: [v2, v2, v2]) {
-        this.points = points;
-    }
-
-    move (by: v2) {
-        for (const point of this.points) {
-            point.add(by);
-        }
-    }
-}
-
-export class MeshV2 {
-
-    triangles: TriangleV2[];
-
-    constructor (Triangles: TriangleV2[]) {
-        this.triangles = Triangles;
-    }
-
-    move (by: v2) {
-        for (const tri of this.triangles) {
-            tri.move(by);
-        }
     }
 }

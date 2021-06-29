@@ -2,8 +2,6 @@ import {Component} from "../ECS/component";
 import {Transform} from "./transform";
 
 export class soundEmitter extends Component {
-    Start(transform: Transform): void {
-    }
     // @ts-ignore
     src: string;
 
@@ -20,7 +18,7 @@ export class soundEmitter extends Component {
         });
 
         this.sound = document.createElement("audio");
-        this.sound.src = this.src;
+        this.sound.src = config.src;
         this.sound.setAttribute("preload", "auto");
         this.sound.setAttribute("controls", "none");
         this.sound.style.display = "none";

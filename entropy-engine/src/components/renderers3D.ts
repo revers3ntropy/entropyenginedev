@@ -1,16 +1,16 @@
 import {Transform} from "./transform.js";
 import {Renderer} from "./renderComponents.js";
-import {MeshV3} from '../util/maths/maths.js';
-import {Sprite} from "../ECS/sprite.js";
-import {drawMesh, renderMode} from "../render/3d/renderMesh.js";
-import {Mat4} from "../util/maths/matrix.js";
-import {MeshArr} from "../util/maths/maths3D.js";
+import {MeshV3} from '../maths/maths.js';
+import {Entity} from "../ECS/entity.js";
+import {drawMesh, renderMode} from "../systems/rendering/3d/renderMesh.js";
+import {Mat4} from "../maths/matrix.js";
+import {MeshArr} from "../maths/maths.js";
 
 export abstract class Renderer3D extends Renderer {
     abstract draw (arg: {
        transform: Transform,
        ctx: CanvasRenderingContext2D,
-       cameraSprite: Sprite
+       cameraSprite: Entity
    }): void;
     
     protected constructor(type: string) {
@@ -21,8 +21,6 @@ export abstract class Renderer3D extends Renderer {
 }
 
 export class MeshRenderer extends Renderer3D {
-    Start(transform: Transform): void {
-    }
     _mesh: MeshV3;
 
     constructor ({
@@ -62,19 +60,9 @@ export class MeshRenderer extends Renderer3D {
     draw (arg: {
         transform: Transform,
         ctx: CanvasRenderingContext2D,
-        cameraSprite: Sprite
+        cameraSprite: Entity
     }): void {
-        let mesh = new MeshV3([]);
-        const rot = arg.transform.rotation;
-        const rotMat = Mat4.rotation(rot.x, rot.y, rot.z);
-
-        for (let tri of this.mesh.triangles) {
-            tri = tri.clone;
-            tri.apply (p => rotMat.transformV3(p));
-            mesh.triangles.push(tri);
-        }
-
-        drawMesh(mesh, renderMode.WIREFRAME, arg.ctx, arg.cameraSprite);
+        drawMesh(this.mesh, renderMode.WIREFRAME, arg.ctx, arg.cameraSprite, arg.transform);
     }
 
     json () {

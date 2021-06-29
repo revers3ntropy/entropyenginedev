@@ -18,15 +18,15 @@ export const _component_ = (component, i) => {
         `);
 
 	if (cName !== 'Transform') {
-		setRightClick(`component-${cName}-title`, state.selectedSprite, `
+		setRightClick(`component-${cName}-title`, state.selectedEntity, `
              ${rightClickOption(`remove-${cName}`, () => {
-				let index = state.selectedSprite.components.indexOf(component);
+				let index = state.selectedEntity.components.indexOf(component);
 				if (index === -1) {
 					console.error('No component found to delete: ' + component);
 					return;
 				}
 				
-				delete state.selectedSprite.components.splice(index, 1)[0];
+				delete state.selectedEntity.components.splice(index, 1)[0];
 	
 				reRender();
 			}, 'remove')}

@@ -1,57 +1,15 @@
-import {parseColour} from "../util/colour.js";
-import {v2, v3} from "../util/maths/maths.js";
+import {rgb} from "../util/colour.js";
+import {v2, v3} from "../maths/maths.js";
 import {Transform} from "../components/transform.js";
+import {publicField, publicFieldConfig} from "../publicField.js";
 
-export type publicFieldType = 'string' | 'number' | 'Asset' | 'Transform' | 'boolean' | 'json' | 'rgb' | 'v2' | 'v3';
-
-export interface publicFieldConfig <T> {
-    name: string,
-
-    value?: T,
-    
-    type?: publicFieldType,
-    array?: boolean,
-    
-    description?: string,
-    default?: T,
-    
-    overrideGet?: () => T,
-    overrideSet?: (val: T) => void
-}
-
-export class publicField<T> {
-
-    type: publicFieldType;
-    value: any;
-    name: string;
-    description: string;
-    array: boolean;
-    default: any;
-
-    constructor(config: publicFieldConfig<T>) {
-        this.array = config.array || false;
-        this.type = config.type || <publicFieldType> typeof config.value || 'string';
-        this.value = config.value;
-        this.name = config.name;
-        this.description = config.description || '';
-        this.default = config.default;
-
-        if (this.array) {
-            if (this.value)
-                if (!Array.isArray(this.value))
-                    this.value = [this.value];
-                else
-                    this.value = [];
-        }
-    }
-}
 
 export abstract class Component {
     /*
         subtype so you can have three-level inheritance for components, e.g. Component ==> Renderer ==> RectRenderer
         subtype is RectRenderer, type is Renderer
-        as sprites can only have a single of each type, can use 'getComponent(type)' without worrying about what type of that it is
-        e.g. sprite.getComponent('Renderer').draw()
+        as entities can only have a single of each type, can use 'getComponent(type)' without worrying about what type of that it is
+        e.g. entity.getComponent('Renderer').draw()
         instead of dealing with every possible renderer
 
         public is an array of publicField instances. These are the variables exposed to the user in the editor
@@ -67,8 +25,6 @@ export abstract class Component {
         this.subtype = subtype;
         this.public = [];
     }
-
-    abstract Update (transform: Transform): void;
 
     // returns what is required to build it from the JSON processor
     // used especially for building the game as a html file
@@ -176,7 +132,7 @@ export abstract class Component {
         switch(current.type) {
             case 'rgb':
                 if (typeof value === 'string') {
-                    this.setPublic(name, parseColour(value));
+                    this.setPublic(name, rgb.parse(value));
                     break;
                 }
                 if (value && value?.isColour) {

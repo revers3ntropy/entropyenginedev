@@ -1,4 +1,4 @@
-import {TriangleV2, v2} from './maths2D.js';
+import {v2} from "./v2.js";
 
 export class v3 {
     x: number;
@@ -71,9 +71,9 @@ export class v3 {
 
     get magnitude (): number {
         let dot = this.x**2 + this.y**2 + this.z**2;
-        
+
         if (dot === 0) return 0;
-        
+
         return Math.sqrt(dot);
     }
 
@@ -156,7 +156,7 @@ export class v3 {
         this.apply(Math.round);
         return this;
     }
-    
+
     get v2 (): v2 {
         return new v2(this.x, this.y);
     }
@@ -198,124 +198,8 @@ export class v3 {
 
         return total.scale(1/points.length);
     }
-    
+
     static fromArray (arr: any) {
         return new v3(arr[0], arr[1], arr[2]);
-    }
-}
-
-export class TriangleV3 {
-
-    points: [v3, v3, v3];
-
-    constructor (p1: v3, p2: v3, p3: v3) {
-        this.points = [p1, p2, p3];
-    }
-
-    move (by: v3) {
-        for (const point of this.points) {
-            point.add(by);
-        }
-    }
-
-    apply (cb: (point: v3) => v3) {
-        for (let i = 0; i < 3; i++) {
-            this.points[i] = cb(this.points[i].clone);
-        }
-    }
-
-    get clone () {
-        return new TriangleV3(
-            this.points[0].clone,
-            this.points[1].clone,
-            this.points[2].clone
-        );
-    }
-
-    get triangleV2 () {
-        return new TriangleV2([
-            this.points[0].v2,
-            this.points[1].v2,
-            this.points[2].v2
-        ]);
-    }
-
-    get json () {
-        let points = [];
-        for (const p of this.points) {
-            points.push(p.array);
-        }
-        return points;
-    }
-}
-export type PointArr = [number, number, number, number?];
-export type TriangleArr = [PointArr, PointArr, PointArr]
-export type MeshArr = TriangleArr[];
-
-export class MeshV3 {
-
-    triangles: TriangleV3[];
-
-    constructor (Triangles: TriangleV3[]) {
-        this.triangles = Triangles;
-    }
-
-    move (by: v3) {
-        for (const tri of this.triangles) {
-            tri.move(by);
-        }
-    }
-
-    get json (): any {
-        let tris = [];
-        for (const tri of this.triangles) {
-            tris.push(tri.json);
-        }
-        return tris;
-    }
-
-    //      STATIC
-    static fromArray (arr: MeshArr) {
-        let mesh = new MeshV3([]);
-
-        // parse array of triangles into mesh
-        for (let tri of arr) {
-            const points = [];
-            for (let point of tri) {
-                points.push(v3.fromArray(point));
-            }
-
-            // @ts-ignore - wrong number of arguments for TriangleV3 constructor - assumed to be safe
-            mesh.triangles.push(new TriangleV3(...points));
-        }
-
-        return mesh;
-    }
-
-    // basic shapes
-
-    static get cube (): MeshV3 {
-        return new MeshV3([
-            // SOUTH
-            new TriangleV3(new v3(0, 0, 0, 1), new v3(0, 1, 0, 1), new v3(1, 1, 0, 1)),
-            new TriangleV3(new v3(0, 0, 0, 1), new v3(1, 1, 0, 1), new v3(1, 0, 0, 1)),
-
-            // EAST
-            new TriangleV3(new v3(1, 0, 0, 1), new v3(1, 1, 0, 1), new v3(1, 1, 1, 1)),
-            new TriangleV3(new v3(1, 0, 0, 1), new v3(1, 1, 1, 1), new v3(1, 0, 1, 1)),
-
-            // NORTH
-            new TriangleV3(new v3(1, 0, 1, 1), new v3(1, 1, 1, 1), new v3(0, 1, 1, 1)),
-            new TriangleV3(new v3(1, 0, 1, 1), new v3(0, 1, 1, 1), new v3(0, 0, 1, 1)),
-            // WEST
-            new TriangleV3(new v3(0, 0, 1, 1), new v3(0, 1, 1, 1), new v3(0, 1, 0, 1)),
-            new TriangleV3(new v3(0, 0, 1, 1), new v3(0, 1, 0, 1), new v3(0, 0, 0, 1)),
-            // TOP
-            new TriangleV3(new v3(0, 1, 0, 1), new v3(0, 1, 1, 1), new v3(1, 1, 1, 1)),
-            new TriangleV3(new v3(0, 1, 0, 1), new v3(1, 1, 1, 1), new v3(1, 1, 0, 1)),
-            // BOTTOM
-            new TriangleV3(new v3(1, 0, 1, 1), new v3(0, 0, 1, 1), new v3(0, 0, 0, 1)),
-            new TriangleV3(new v3(1, 0, 1, 1), new v3(0, 0, 0, 1), new v3(1, 0, 0, 1)),
-        ]);
     }
 }

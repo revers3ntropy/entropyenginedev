@@ -1,11 +1,11 @@
-import {Component, publicField, publicFieldConfig} from '../ECS/component.js'
-import {Sprite} from "../ECS/sprite.js";
+import {Entity} from "../ECS/entity.js";
 import { Script } from '../components/scriptComponent.js';
 import { Transform } from '../index.js';
+import {publicField, publicFieldConfig} from "../publicField.js";
 
 export abstract class JSBehaviour {
     name: string | undefined;
-    sprite: Sprite | undefined;
+    entity: Entity | undefined;
     transform: Transform | undefined;
     component: Script | undefined;
     started: boolean;
@@ -108,7 +108,7 @@ export abstract class JSBehaviour {
     // Magic Methods
     abstract Start: () => void;
     abstract Update: () => void;
-    abstract onCollision: (collisionWith: Sprite) => void;
+    abstract onCollision: (collisionWith: Entity) => void;
     abstract onMouseDown: () => void;
     abstract onMouseUp: () => void;
     abstract onClick: () => void;

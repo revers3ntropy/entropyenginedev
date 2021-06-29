@@ -1,7 +1,16 @@
-import { v2, MeshV2, TriangleV2 } from './maths2D.js';
-import { v3, MeshV3, TriangleV3 } from './maths3D.js';
+import {v2} from "./v2";
 
-export { v2, MeshV2, TriangleV2, v3, MeshV3, TriangleV3 };
+export * from './matrix.js';
+
+export * from './v2.js';
+export * from './v3.js';
+
+export * from './meshV2.js';
+export * from './meshV3.js';
+
+export * from './triangleV2.js';
+export * from './triangleV3.js';
+
 
 export function polygonCollidingWithPoint (polygonPoints: v2[], point: v2): boolean {
 

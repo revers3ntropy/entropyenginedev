@@ -95,6 +95,15 @@ html {
     max-width: 100%;
 }
 
+#scene-settings {
+    border: 1px solid black;
+    grid-column: 2/4;
+    grid-row: 2/5;
+    height: 100%;
+    max-width: 100%;
+    overflow-y: scroll;
+}
+
 #comments {
     border: 1px solid darkgrey;
     grid-column: 2/4;

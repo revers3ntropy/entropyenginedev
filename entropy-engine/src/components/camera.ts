@@ -1,6 +1,7 @@
 import {Component} from "../ECS/component.js";
-import {v2, v3} from "../util/maths/maths.js";
+import {v2, v3} from "../maths/maths.js";
 import {getCanvasSize, getZoomScaledPosition, JSONifyComponent} from "../util/general.js";
+import {Entity} from "../ECS/entity.js";
 
 export class Camera extends Component {
     // @ts-ignore
@@ -52,8 +53,6 @@ export class Camera extends Component {
         return JSONifyComponent(this, 'Camera');
     }
 
-    Update(): void {}
-
     screenSpaceToWorldSpace (point: v2, canvas: HTMLCanvasElement, cameraPos: v3): v2 {
         point = point.clone;
         const center = getCanvasSize(canvas).scale(0.5);
@@ -79,6 +78,6 @@ export class Camera extends Component {
 
     // STATIC
 
-    // actually of type Sprite
-    static main: any;
+    // actually of type Entity
+    static main: Entity;
 }

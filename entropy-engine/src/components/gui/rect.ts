@@ -1,12 +1,10 @@
-import {parseColour, rgb} from "../../util/colour.js";
+import {rgb} from "../../util/colour.js";
 import {Transform} from "../transform.js";
-import {roundedRect} from "../../render/renderer.js";
-import {v2} from "../../util/maths/maths2D.js";
+import {roundedRect} from "../../systems/rendering/basicShapes.js";
 import {GUIElement} from "./gui.js";
+import {v2} from "../../maths/v2.js";
 
 export class GUIRect extends GUIElement {
-    Start(transform: Transform): void {
-    }
     // @ts-ignore
     width: number;
     // @ts-ignore
@@ -69,8 +67,6 @@ export class GUIRect extends GUIElement {
             this.radius
         );
     }
-
-    Update(): void {}
 
     touchingPoint(point: v2, ctx: CanvasRenderingContext2D, transform: Transform): boolean {
         const width = this.width * transform.scale.x;

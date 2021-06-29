@@ -1,13 +1,11 @@
 import {rgb} from "../../util/colour.js";
 import {Transform} from "../transform.js";
-import {v2} from "../../util/maths/maths2D.js";
 import {GUIElement} from "./gui.js";
-import {text} from '../../render/renderer.js'
+import {text} from '../../systems/rendering/basicShapes.js'
+import {v2} from "../../maths/v2.js";
 
 
 export class GUIText extends GUIElement {
-    Start(transform: Transform): void {
-    }
     // @ts-ignore
     text: string;
     // @ts-ignore
@@ -73,8 +71,6 @@ export class GUIText extends GUIElement {
     draw (ctx: CanvasRenderingContext2D, transform: Transform) {
         text(ctx, this.text, this.fontSize * transform.scale.x, this.font, this.colour, transform.position.v2);
     }
-
-    Update () {}
 
     touchingPoint (point: v2, ctx: CanvasRenderingContext2D, transform: Transform) {
         ctx.font = `${this.fontSize}px ${this.font}`;

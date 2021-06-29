@@ -1,4 +1,4 @@
-import {Sprite, Scene} from "../entropy-engine";
+import {Entity, Scene} from "../entropy-engine";
 import {scripts, projectID} from "./state.js";
 import {request} from '../request.js';
 import {sleep} from '../util.js';
@@ -50,7 +50,7 @@ window.save = async () => {
 
 const buildSpritesJSON = async projectID => {
     const json = [];
-    for (const sprite of Sprite.sprites) {
+    for (const sprite of Entity.entities) {
         const spriteJSON = sprite.json();
         
         // deal with scripts

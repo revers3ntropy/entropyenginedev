@@ -1,5 +1,4 @@
 const fastFolderSize = require('./node_modules/fast-folder-size')
-const fs = require('fs');
 
 exports.folderSize = (path, cb) => {
 	fastFolderSize(path, (err, bytes) => {

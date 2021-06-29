@@ -1,7 +1,7 @@
-import {Sprite} from "../ECS/sprite.js"
-import {v2} from "../util/maths/maths.js"
-import {Body} from "../components/body.js";
-import {Collider, RectCollider, CircleCollider} from '../components/colliders.js';
+import {Entity} from "../../ECS/entity.js"
+import {v2} from "../../maths/maths.js"
+import {Body} from "../../components/body.js";
+import {Collider, RectCollider, CircleCollider} from '../../components/colliders.js';
 
 function getNewVelocityFromCollision (V1: v2, V2: v2, m1: number, m2: number, p1: v2, p2: v2, contactAngle: number) {
 
@@ -39,7 +39,7 @@ function getNewVelocityFromCollision (V1: v2, V2: v2, m1: number, m2: number, p1
 }
 
 // collisions types
-function circleCircleCollision (sprite1: Sprite, sprite2: Sprite, onCollision: () => void) {
+function circleCircleCollision (sprite1: Entity, sprite2: Entity, onCollision: () => void) {
     const transform1 = sprite1.transform;
     const transform2 = sprite2.transform;
 
@@ -97,7 +97,7 @@ function circleCircleCollision (sprite1: Sprite, sprite2: Sprite, onCollision: (
     onCollision();
 }
 
-function circleRectCollision (circle: Sprite, rect: Sprite, onCollision: () => void) {
+function circleRectCollision (circle: Entity, rect: Entity, onCollision: () => void) {
     const transformRect = rect.transform;
     const transformCircle = circle.transform;
 
@@ -227,7 +227,7 @@ function circleRectCollision (circle: Sprite, rect: Sprite, onCollision: () => v
     onCollision();
 }
 
-function rectRectCollision (sprite1: Sprite, sprite2: Sprite, onCollision: () => void) {
+function rectRectCollision (sprite1: Entity, sprite2: Entity, onCollision: () => void) {
     const transform1 = sprite1.transform;
     const transform2 = sprite2.transform;
 
@@ -314,14 +314,14 @@ function rectRectCollision (sprite1: Sprite, sprite2: Sprite, onCollision: () =>
 const collisionTypes: {[name: string]: any} = {
     'CircleCollider CircleCollider': circleCircleCollision,
     // have to have two different functions for the case of one of each, as one needs to be swapped around
-    'RectCollider CircleCollider': (rect: Sprite, circle: Sprite, onCollision: () => void) => {
+    'RectCollider CircleCollider': (rect: Entity, circle: Entity, onCollision: () => void) => {
         circleRectCollision(circle, rect, onCollision);
     },
     'CircleCollider RectCollider': circleRectCollision,
     'RectCollider RectCollider': rectRectCollision
 }
 
-function collide (sprite1: Sprite, sprite2: Sprite, scriptCollide: (sprite1: Sprite, sprite2: Sprite) => void): void {
+export function collide (sprite1: Entity, sprite2: Entity, scriptCollide: (sprite1: Entity, sprite2: Entity) => void): void {
     if (!sprite1.hasComponent("Collider") || !sprite2.hasComponent("Collider"))
         return;
 
@@ -349,10 +349,4 @@ function collide (sprite1: Sprite, sprite2: Sprite, scriptCollide: (sprite1: Spr
     } catch (e) {
         console.log(`Cannot collide '${type1} ${type2}': \n${e}`);
     }
-}
-
-export function collideAll (sprites: Sprite[], scriptCollide: (sprite1: Sprite, sprite2: Sprite) => void) {
-    for (let i = 0; i < sprites.length; i++)
-        for (let j = i+1; j < sprites.length; j++)
-            collide(sprites[i], sprites[j], scriptCollide);
 }

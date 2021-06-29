@@ -38,8 +38,8 @@ function _transform_ (id, value, componentName, argumentChain, key, canBeSelf=fa
 
 	let found = false;
 
-	for (let sprite of Scene.activeScene.sprites) {
-		if (!canBeSelf && Object.is(sprite, state.selectedSprite))
+	for (let sprite of Scene.activeScene.entities) {
+		if (!canBeSelf && Object.is(sprite, state.selectedEntity))
 			continue;
 
 		const isSelected = Object.is(value, sprite.transform);
@@ -214,17 +214,11 @@ export const _componentProperty_ = (object, key, componentName, chain=[], showNa
 		">
 			<span style="grid-column: 1/1; font-size: 14px" class="tooltip-container">
 				${showName}
-				${!(description || defaultVal)? '' : `
+				
+				${!(description || showDefault)? '' : `
 					<span class="tooltip-fleeting">
 						${description ? description: ''}
-						
-						${showDefault ? `
-		
-							<span style="font-size: 10px">
-								Default: ${defaultVal}
-							</span>
-					
-					    `: ''}
+						${showDefault ? `Default: ${defaultVal}`: ''}
 					</span>
 				`}
 			</span> 

@@ -1,32 +1,36 @@
-import { Sprite } from "./ECS/sprite.js"
-import { setCanvasSize, startAnimation } from "./render/renderer.js"
-import {renderAll} from "./render/renderer.js"
+import { Entity } from "./ECS/entity.js"
+import { startAnimation } from "./systems/rendering/startAnimation.js"
 import { Script } from './components/scriptComponent.js'
-import { collideAll} from "./physics/collisions.js"
 import {Collider} from './components/colliders.js'
-import { license } from "./util/license.js"
-import {getMousePos, input, setMousePos} from "./util/input.js"
+import { license } from "./license.js"
+import {getMousePos, input, setMousePos} from "./input.js"
 import { GUIElement, GUITextBox } from "./components/gui/gui.js"
-import { spritesFromJSON, initialiseScenes } from './util/JSONprocessor.js'
+import { spritesFromJSON, initialiseScenes } from './JSONprocessor.js'
 import {Camera} from "./components/camera.js"
-import {getCanvasStuff} from "./util/general.js"
+import {getCanvasStuff, setCanvasSize} from "./util/general.js"
 import {rgb} from './util/colour.js'
 import {Scene} from './ECS/scene.js'
+import {System} from "./ECS/system.js";
+
+import './systems/physics/physics.js';
+import './systems/rendering/renderer.js';
+import './systems/entities/entityController.js';
 
 export {rgb} from './util/colour.js'
-export { Sprite } from"./ECS/sprite.js"
+export { Entity } from "./ECS/entity.js"
 export {Script} from './components/scriptComponent.js'
 export { CircleCollider, RectCollider } from './components/colliders.js'
-export { v2, TriangleV2, MeshV2, v3, TriangleV3, MeshV3 } from './util/maths/maths.js'
+export { v2, TriangleV2, MeshV2, v3, TriangleV3, MeshV3 } from './maths/maths.js'
 export { Body } from "./components/body.js"
 export { CircleRenderer, RectRenderer, ImageRenderer2D, MeshRenderer } from './components/renderComponents.js'
 export { GUIBox, GUIText, GUITextBox, GUIRect, GUICircle, GUIPolygon, GUIImage } from './components/gui/gui.js'
-export { input } from './util/input.js'
+export { input } from './input.js'
 export { Camera } from './components/camera.js'
-export { spritesFromJSON } from './util/JSONprocessor.js'
+export { spritesFromJSON } from './JSONprocessor.js'
 export {Transform} from './components/transform.js'
 export {JSBehaviour} from './scripting/scripts.js'
 export {Scene} from './ECS/scene.js'
+export {System} from './ECS/system.js';
 
 /**
  * Returns a number whose value is limited to the given range.
@@ -76,7 +80,7 @@ export default function entropyEngine ({
 
         setMousePos(evt, canvas);
 
-        Sprite.loop(sprite => {
+        Entity.loop(sprite => {
             if (!(sprite.sceneID === Scene.active)) return;
             
             for (const component of sprite.components) {
@@ -153,71 +157,15 @@ export default function entropyEngine ({
 
         Scene.activeScene.findMainCamera();
 
-        // scripts start running their own start methods now
-        Script.runStartMethodOnInit = true;
-
-        Scene.loopThroughAllScripts((script: Script, sprite: Sprite) => {
-            if (script.script === undefined) return;
-            // assign properties from a Sprite instance to be accessible by 'this' in scripts
-            script.script.sprite = sprite;
-            script.script.name = sprite.name;
-            script.script.transform = sprite.transform;
-
-            let thisComponent: any = null;
-
-            Scene.loopThroughAllScripts((script_, sprite) => {
-                if (Object.is(script.script, script_.script))
-                    thisComponent = script_;
-            });
-
-            if (!(thisComponent instanceof Script))
-                throw `Cannot find self on script with name ${script.script.name}!`;
-
-            script.script.component = thisComponent;
-
-            script.script.started = true;
-            script.runMethod('Start', []);
-        });
+        System.Start(Scene.activeScene);
 
         // for event listeners
         isInitialised = true;
     }
 
-    async function tick (timestamp: number) {
+    async function tick () {
 
-        let initTime = timestamp;
-
-        Scene.activeScene.broadcast('Update', []);
-        
-        Sprite.loop(sprite => {            
-            if (!(sprite.sceneID === Scene.active)) return;
-            sprite.tick();
-        });
-        
-        if (performanceDebug > 1)
-            console.log(`tick sprite and gravity: ${performance.now() - initTime}`);
-
-        let time = performance.now();
-        collideAll(Scene.activeScene.sprites, (sprite1, sprite2) => {
-            for (let component of sprite1.components)
-                if (component.type === 'Script')
-                    (component as Script).runMethod('onCollision', [sprite2]);
-
-
-            for (let component of sprite2.components)
-                if (component.type === 'Script')
-                    (component as Script).runMethod('onCollision', [sprite1]);
-        });
-        if (performanceDebug > 1)
-            console.log(`collisions: ${performance.now() - time}`);
-
-        time = performance.now();
-        renderAll(Scene.activeScene.sprites, canvas, ctx, Scene.activeScene.settings.background, Camera.main);
-        if (performanceDebug > 1)
-            console.log(`rendering: ${performance.now() - time}`);
-
-        if (performanceDebug > 0)
-            console.log(`${performanceDebug > 1 ? 'Total:' : ''}${performance.now() - initTime}`);
+        System.Update(Scene.activeScene);
 
         window.requestAnimationFrame(tick);
     }

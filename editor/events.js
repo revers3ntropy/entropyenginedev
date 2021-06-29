@@ -9,11 +9,10 @@ import {
 } from "./state.js";
 
 import {reRender, reRenderCanvas, reRenderCanvasDebug, reRenderSceneToolbar} from "./render/renderer.js";
-import {rect} from "../entropy-engine/render/renderer.js";
-import {loopThroughScripts, screenSpaceToWorldSpace} from '../entropy-engine/util/util.js';
-import {v2, Sprite, Scene, Camera} from '../entropy-engine';
+import {rect} from "../entropy-engine/systems/rendering/basicShapes.js";
+import {v2, Entity, Scene, Camera} from '../entropy-engine';
 import {genCacheBust} from '../util.js';
-import {getMousePos} from "../entropy-engine/util/input.js";
+import {getMousePos} from "../entropy-engine/input.js";
 
 window.addEventListener('click', () => {
     $('#pop-up').css('visibility', 'hidden');
@@ -37,9 +36,9 @@ window.onPropertyChange = (id, componentName, componentPropertyChain, parser) =>
 
     let component;
     if (componentName === 'nocomponent')
-        component = state.selectedSprite;
+        component = state.selectedEntity;
     else
-        component = state.selectedSprite.getComponent(componentName);
+        component = state.selectedEntity.getComponent(componentName);
 
     let toChange = component;
     for (let i = 0; i < componentPropertyChain.length-1; i++)
@@ -61,7 +60,7 @@ window.onPropertyChange = (id, componentName, componentPropertyChain, parser) =>
 
 window.setParent = id => {
     const name = $(`#${id}`).val();
-    state.selectedSprite.transform.setParentDirty(window.findNodeWithName(name));
+    state.selectedEntity.transform.setParentDirty(window.findNodeWithName(name));
 
     reRender();
 }
@@ -105,7 +104,7 @@ window.run = async () => {
 
     const allScripts = await import(`../projects/${projectID}/scripts.js?c=${genCacheBust()}`);
 
-    loopThroughScripts((script, sprite) => {
+    Scene.activeScene.loopThroughScripts((script, sprite) => {
         const className = script.name || script.scriptName;
         const scriptClass = allScripts[className];
         script.script = new scriptClass();
@@ -132,7 +131,7 @@ document.getElementById('myCanvas').onwheel = event => {
 
 export function setSelectedSpriteFromClick (pos) {
     let touching = [];
-    for (let sprite of Scene.activeScene.sprites) {
+    for (let sprite of Scene.activeScene.entities) {
         for (const component of sprite.components) {
             if (component.type === 'GUIElement')
                 if (component.touchingPoint(pos, ctx, sprite.transform))
@@ -160,7 +159,7 @@ window.goToBuildMenu = async () => {
 // sets the scene from the
 window.setScene = () => {
     Scene.active = parseInt($('#scene-select').val()) || 0;
-    setSelected(Scene.activeScene.sprites[0]);
+    setSelected(Scene.activeScene.entities[0]);
     sessionStorage.sceneID = Scene.active;
     reRender();
 };
@@ -168,7 +167,8 @@ window.setScene = () => {
 canvas.addEventListener('click', event => {
     if (state.window !== sceneView) return;
     const mousePos = getMousePos(canvas, event);
-    const clickPos = screenSpaceToWorldSpace(mousePos, state.sceneCamera, canvas);
+    const clickPos = state.sceneCamera.getComponent('Camera')
+        .screenSpaceToWorldSpace(mousePos, canvas, state.sceneCamera.transform.position);
     setSelectedSpriteFromClick(clickPos);
 });
 
@@ -208,11 +208,13 @@ function drag (event) {
 canvas.addEventListener('mousemove', evt => {
     if (!Camera.main) return;
     if (state.window !== sceneView) return;
+    if (!state.sceneCamera) return;
 
     // update world and screen space values in scene view toolbar
 
     const screenSpace = getMousePos(canvas, evt);
-    const worldSpace = screenSpaceToWorldSpace(screenSpace, state.sceneCamera, canvas);
+    const worldSpace = state.sceneCamera.getComponent('Camera')
+        .screenSpaceToWorldSpace(screenSpace, canvas, state.sceneCamera.transform.position);
 
     const worldSpaceDIV = $('#world-space-pos');
     const screenSpaceDIV = $('#screen-space-pos');
@@ -233,15 +235,15 @@ canvas?.parentNode?.addEventListener('resize', () => {
     reRender();
 });
 
-// for type Sprite in the inspector
+// for type Entity in the inspector
 window.findSpriteWithName = (name) => {
-    return Sprite.find(name);
+    return Entity.find(name);
 };
 
-// if no sprite is found with that name, then the active scene is used instead
+// if no entity is found with that name, then the active scene is used instead
 window.findNodeWithName = name => {
 
-    let node = Sprite.find(name)?.transform;
+    let node = Entity.find(name)?.transform;
 
     node ??= Scene.active;
 

@@ -1,7 +1,7 @@
 import {v2} from "./maths/maths.js";
-import {Sprite} from "../ECS/sprite.js";
-import {GUIElement, GUITextBox} from "../components/gui/gui.js";
-import {Camera} from "../components/camera.js";
+import {Entity} from "./ECS/entity.js";
+import {GUIElement, GUITextBox} from "./components/gui/gui.js";
+import {Camera} from "./components/camera.js";
 
 export function getMousePos(canvas: HTMLCanvasElement, event: MouseEvent) {
     let rect = canvas.getBoundingClientRect();
@@ -26,7 +26,7 @@ export function getMousePos(canvas: HTMLCanvasElement, event: MouseEvent) {
 
 export function getMousePosWorldSpace (canvas: HTMLCanvasElement, event: MouseEvent) {
     const mousePos = getMousePos(canvas, event);
-    return (<Sprite>Camera.main)
+    return (<Entity>Camera.main)
         .getComponent<Camera>('Camera')
         .screenSpaceToWorldSpace(mousePos, canvas, Camera.main.transform.position);
 }
@@ -69,7 +69,7 @@ document.addEventListener('keyup', event => {
 });
 
 document.addEventListener('keypress', event => {
-    Sprite.loop(sprite => {
+    Entity.loop(sprite => {
         if (!sprite.hasComponent('GUIElement', 'GUITextBox')) return;
 
         const element = sprite.getComponent<GUITextBox>('GUIElement', 'GUITextBox');
@@ -84,7 +84,7 @@ document.addEventListener('keypress', event => {
 document.addEventListener('keydown', event => {
     if (event.keyCode !== 8) return;
 
-    Sprite.loop(sprite => {
+    Entity.loop(sprite => {
         if (!sprite.hasComponent('GUIElement', 'GUITextBox')) return;
 
         const element = sprite.getComponent<GUITextBox>('GUIElement', 'GUITextBox');

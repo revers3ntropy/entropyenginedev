@@ -1,6 +1,6 @@
 import {Component} from '../ECS/component.js';
 import {JSBehaviour} from '../scripting/scripts.js';
-import { v2, v3 } from '../util/maths/maths.js';
+import { v2, v3 } from '../maths/maths.js';
 
 export class Script extends Component {
     static runStartMethodOnInit = false;

@@ -1,11 +1,9 @@
-import {v3} from "../util/maths/maths.js";
+import {v3} from "../maths/maths.js";
 import {Component} from "../ECS/component.js";
 import {JSONifyComponent} from "../util/general.js";
-import {Scene, Transform} from "../index.js";
+import {Transform} from "./transform";
 
 export class Body extends Component {
-    Start(transform: Transform): void {
-    }
 
     // @ts-ignore
     velocity: v3;
@@ -61,26 +59,6 @@ export class Body extends Component {
     
     json () {
         return JSONifyComponent(this, 'Body');
-    }
-
-    Update (transform: Transform): void {
-
-        const settings = Scene.activeScene.settings;
-
-        // update gravity
-        this.velocity.add(settings.globalGravity.clone.scale(settings.G));
-
-        // update the position for new velocity
-        transform.position.add(this.velocity.clone.scale(settings.timeScale));
-
-        // apply air resistance
-        this.velocity.scale(1 - this.airResistance);
-
-        // set default values if error
-        if (this.velocity == undefined || this.velocity.x == undefined || this.velocity.y == undefined) {
-            console.error(`Velocity Error: velocity is ${this.velocity}`);
-            this.velocity = v3.zero;
-        }
     }
 
     applyForce(force: v3): v3 {

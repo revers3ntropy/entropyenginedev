@@ -5,14 +5,14 @@
             "name": "Sample Scene"
         }
     ],
-    "sprites": [
+    "entities": [
         {
             "name": "main camera",
             "components": [
                 {"type": "Camera"}
             ]
         }, {
-            "name": "sprite",
+            "name": "entity",
             "transform": {
                 "scale": [100, 100, 100]
             },

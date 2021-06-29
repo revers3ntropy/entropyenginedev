@@ -1,4 +1,4 @@
-import {v2, v3} from "./maths/maths.js";
+import {v2, v3} from "../maths/maths.js";
 
 export function sleep(ms: number) {
     // @ts-ignore
@@ -20,6 +20,13 @@ export function getCanvasStuff(id: string) {
         canvas: c,
         ctx: <CanvasRenderingContext2D> c.getContext('2d')
     }
+}
+
+export function setCanvasSize (canvas: HTMLCanvasElement) {
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.width  = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
 }
 
 export function deepClone(obj: any, hash = new WeakMap()): any {

@@ -92,9 +92,17 @@
                     Assets
                 </button>
                 <button
+                        onclick="window.setState(window.sceneSettings)"
+                        class="button tab"
+                        style="grid-column: 9/11; width: 100%"
+                        id="go-to-scene-settings-button"
+                >
+                    Scene Settings
+                </button>
+                <button
                     onclick="window.setState(window.comments)"
                     class="button tab"
-                    style="grid-column: 9/11; width: 100%"
+                    style="grid-column: 11/13; width: 100%"
                     id="go-to-comments-button"
                 >
                     Comments
@@ -113,6 +121,8 @@
         </div>
 
         <div id="assets"></div>
+
+        <div id="scene-settings"></div>
 
         <div id="inspector"></div>
 

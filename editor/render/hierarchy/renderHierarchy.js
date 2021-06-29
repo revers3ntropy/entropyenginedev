@@ -1,9 +1,9 @@
 import {state, setSelected} from "../../state.js";
-import {Scene, Sprite, Transform} from "../../../entropy-engine";
+import {Scene, Entity, Transform} from "../../../entropy-engine";
 import {reRender, rightClickOption, setRightClick} from "../renderer.js";
 import {setRightClickAddSpriteMenu} from "./rightClickCreateMenu.js";
 
-const _sprite_ = (sprite, selected) => `
+const _entity_ = (sprite, selected) => `
     <div style="margin: 0; padding: 0" id="sprite${sprite.id}">
         <button
             class="empty-button"
@@ -17,7 +17,7 @@ const _sprite_ = (sprite, selected) => `
         </button>
         <div id="childrenOf${sprite.id}" style="padding-left: 20px">
             ${sprite.transform.children
-                .map(child => _sprite_(child, Object.is(state.selectedSprite, child))
+                .map(child => _entity_(child, Object.is(state.selectedEntity, child))
             ).join('')}
         </div>
     </div>
@@ -74,17 +74,17 @@ export function reRenderHierarchy () {
         reRender();
     });
 
-    let sprites = '';
+    let entities = '';
+    let sceneEntities = Scene.activeScene.entities;
 
-    for (let i = 0; i < Scene.activeScene.sprites.length; i++) {
-        const sprite = Scene.activeScene.sprites[i];
+    for (let entity of sceneEntities){
 
-        if (!sprite.transform.isRoot()) continue;
+        if (!entity.transform.isRoot()) continue;
 
         // so that only root nodes have <li>s around, children are just in divs
-        sprites += `
+        entities += `
         <li>
-            ${_sprite_(sprite, Object.is(state.selectedSprite, sprite), h)}
+            ${_entity_(entity, Object.is(state.selectedEntity, entity), h)}
         </li>
         `;
     }
@@ -92,15 +92,13 @@ export function reRenderHierarchy () {
 
     h.append(`
         <ul id="hierarchy-draggable-area">
-            ${sprites}
+            ${entities}
         </ul>
         <div id="create-sprite-area" style="height: 100%; max-height: 100vw"></div>
     `);
 
-
-    let sceneSprites = Scene.activeScene.sprites;
-    for (let i = 0; i < sceneSprites.length; i++) {
-        const sprite = sceneSprites[i];
+    for (let i = 0; i < sceneEntities.length; i++) {
+        const sprite = sceneEntities[i];
 
         $(`#spritebutton${sprite.id}`).click(() => {
             // stop a new spite being selected when the menu is up and an option is clicked
@@ -113,16 +111,16 @@ export function reRenderHierarchy () {
 
         setRightClick(`spritebutton${sprite.id}`, sprite, `
             ${rightClickOption('delete', () => {
-                state.selectedSprite.delete();
-                for (let child of state.selectedSprite.transform.children) {
+                state.selectedEntity.delete();
+                for (let child of state.selectedEntity.transform.children) {
                     child.delete();
                 }
                 reRender();
             })}
             ${rightClickOption('duplicate', async () => {
-                let clone = await state.selectedSprite.getClone();
+                let clone = await state.selectedEntity.getClone();
     
-                // sprite (1) ==> sprite (2)
+                // entity (1) ==> entity (2)
                 const regex = /(.*)\(([0-9]+)\)/;
                 const match = clone.name.match(regex);
                 if (match) {
@@ -132,15 +130,15 @@ export function reRenderHierarchy () {
                 else
                     clone.name = `${clone.name} (1)`;
     
-                Sprite.sprites.push(clone);
+                Entity.entities.push(clone);
                 reRender();
             })}
             ${rightClickOption('add child', async () => {
     
-                Sprite.newSprite({
+                Entity.newSprite({
                     name: 'New Sprite',
                     transform: new Transform({
-                        parent: state.selectedSprite.transform
+                        parent: state.selectedEntity.transform
                     })
                 });
                 reRender();
@@ -153,5 +151,5 @@ export function reRenderHierarchy () {
         reRender();
     });
 
-    setRightClickAddSpriteMenu('create-sprite-area');
+    setRightClickAddSpriteMenu('create-entity-area');
 }

@@ -1,8 +1,8 @@
 "use strict";
 import entropyEngine, * as ee from "../entropy-engine";
-import {Scene, Sprite, spritesFromJSON} from "../entropy-engine";
-import {initialiseScenes} from '../entropy-engine/util/JSONprocessor.js';
-import {cullString} from '../entropy-engine/util/util.js';
+import {Entity, spritesFromJSON} from "../entropy-engine";
+import {initialiseScenes} from '../entropy-engine/JSONprocessor.js';
+import {cullString} from '../entropy-engine/util/general.js';
 
 import {genCacheBust, mustBeSignedIn} from '../util.js';
 import {request} from '../request.js';
@@ -41,7 +41,7 @@ async function initFromFiles (id) {
 
     initialiseScenes(data['scenes'] || []);
 
-    state.sceneCamera = new Sprite({
+    state.sceneCamera = new Entity({
         components: [
             new ee.Camera({})
         ]
@@ -51,11 +51,11 @@ async function initFromFiles (id) {
 
     await spritesFromJSON(data['sprites']);
 
-    setSelected(Sprite.sprites[0]);
+    setSelected(Entity.entities[0]);
 
     import(`../projects/${projectID}/scripts.js?c=${genCacheBust()}`)
         .then (scripts => {
-            for (const sprite of Sprite.sprites) {
+            for (const sprite of Entity.entities) {
                 for (const component of sprite.components) {
                     if (component.type !== 'Script') continue;
 

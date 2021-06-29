@@ -1,10 +1,10 @@
 ﻿import { Component } from './component.js'
 import { Body} from "../components/body.js"
 import {Script} from "../components/scriptComponent.js"
-import {getSpriteFromJSON, setParentFromInfo} from "../util/JSONprocessor.js";
+import {getSpriteFromJSON, setParentFromInfo} from "../JSONprocessor.js";
 import { Transform } from '../components/transform.js';
 
-export type spriteConfig = {
+export type entityConfig = {
     name: string
     components: Component[]
     tag: string | undefined
@@ -12,7 +12,7 @@ export type spriteConfig = {
     Static: boolean
 };
 
-export class Sprite {
+export class Entity {
     name: string;
     components: Component[];
     id: number;
@@ -20,9 +20,9 @@ export class Sprite {
     transform: Transform;
     Static: boolean;
 
-    constructor (config: spriteConfig) {
+    constructor (config: entityConfig) {
         this.tag = config.tag ?? 'sprite';
-        this.name = config.name ?? 'new sprite';
+        this.name = config.name ?? 'new entity';
         this.components = config.components ?? [];
         this.transform = config.transform ?? new Transform({})
         this.Static = config.Static ?? false
@@ -46,7 +46,7 @@ export class Sprite {
     generateID (): number {
         let id = 0;
 
-        let idsInUse = Sprite.sprites.map(sprite => sprite.id);
+        let idsInUse = Entity.entities.map(sprite => sprite.id);
 
         function getID () {
             return Math.floor(Math.random() * 10**5);
@@ -58,14 +58,9 @@ export class Sprite {
         return id;
     }
 
-    tick () {
-        for (let component of this.components)
-            component.Update(this.transform);
-    }
-
     addComponent (toAdd: Component) {
         /*
-            Checks if the component is viable on the sprite, and if it is not,
+            Checks if the component is viable on the entity, and if it is not,
             then refuses to add it or overrides the problematic component.
             For example, if you try to add a rectRenderer while a CircleRenderer already exists,
             the CircleRenderer will be deleted and then the RectRenderer will be added
@@ -152,12 +147,12 @@ export class Sprite {
     }
 
     delete () {
-        for (let i = 0; i < Sprite.sprites.length; i++) {
-            const sprite = Sprite.sprites[i];
+        for (let i = 0; i < Entity.entities.length; i++) {
+            const sprite = Entity.entities[i];
 
             if (!Object.is(sprite, this)) continue;
 
-            delete Sprite.sprites.splice(i, 1)[0];
+            delete Entity.entities.splice(i, 1)[0];
         }
     }
 
@@ -178,36 +173,36 @@ export class Sprite {
     }
 
     // -------------- static stuff ------------
-    static sprites: Sprite[] = [];
+    static entities: Entity[] = [];
 
-    static newSprite(setup: spriteConfig) {
-        const newSprite = new Sprite(setup);
-        Sprite.sprites.push(newSprite);
+    static newSprite(setup: entityConfig) {
+        const newSprite = new Entity(setup);
+        Entity.entities.push(newSprite);
         return newSprite;
     }
 
     static find (name = "") {
-        const sprite = Sprite.sprites.find((sprite: Sprite) => {
+        const sprite = Entity.entities.find((sprite: Entity) => {
             return sprite.name === name;
         });
 
         if (!sprite)
             return undefined;
 
-        return sprite as Sprite;
+        return sprite as Entity;
     }
 
     static findWithTag (tag: string) {
-        let sprites: Sprite[] = [];
-        Sprite.loop((sprite: Sprite) => {
+        let sprites: Entity[] = [];
+        Entity.loop((sprite: Entity) => {
             if (sprite.tag === tag)
                 sprites.push(sprite);
         });
         return sprites;
     }
 
-    static loop (handler: (sprite: Sprite) => void) {
-        for (const sprite of Sprite.sprites)
+    static loop (handler: (sprite: Entity) => void) {
+        for (const sprite of Entity.entities)
             handler(sprite);
     }
 }

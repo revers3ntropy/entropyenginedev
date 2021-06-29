@@ -1,13 +1,9 @@
-import {Sprite} from './sprite.js';
+import {Entity} from './entity.js';
 import {Camera} from "../components/camera.js";
-import {v3} from "../util/maths/maths3D.js";
-import {colour, parseColour, rgb} from "../util/colour.js";
-import {Script} from "../components/scriptComponent";
-
-export type background = {
-    tint?: colour,
-    image?: string
-}
+import {v3} from "../maths/maths.js";
+import {colour, rgb} from "../util/colour.js";
+import {Script} from "../components/scriptComponent.js";
+import {getCanvasStuff} from "../util/general.js";
 
 export type sceneSettings = {
     // license + general
@@ -16,18 +12,19 @@ export type sceneSettings = {
     gameName: string;
 
     // rendering
+    canvasID: string;
+    ctx?: CanvasRenderingContext2D;
     maxFrameRate: number;
     timeScale: number;
-    background: background
+    backgroundTint: colour,
+    backgroundImage?: string,
 
     // physics
-    G: number,
     globalGravity: v3,
     collisionIterations: number;
 
     // sound
     globalVolume: number;
-
 }
 
 export const defaultSceneSettings = (): sceneSettings => ({
@@ -35,14 +32,13 @@ export const defaultSceneSettings = (): sceneSettings => ({
     version: '0.0.0',
     gameName: 'my game',
 
+    canvasID: 'myCanvas',
     maxFrameRate: 60,
     timeScale: 1,
-    background: {
-        tint: rgb(255, 255, 255)
-    },
 
-    G: 9.8,
-    globalGravity: new v3(0, -1, 0),
+    backgroundTint: rgb.parse('white'),
+
+    globalGravity: new v3(0, -9.8, 0),
     collisionIterations: 5,
 
     globalVolume: 1
@@ -57,6 +53,11 @@ export class Scene {
         this.id = Scene.scenes.length;
         this.name = name;
         this.settings = settings;
+
+        if (!settings.ctx) {
+            const {ctx} = getCanvasStuff(settings.canvasID);
+            settings.ctx = ctx;
+        }
     }
     
     json () {
@@ -67,14 +68,12 @@ export class Scene {
                 version: this.settings.version,
                 gameName: this.settings.gameName,
 
+                canvasID: this.settings.canvasID,
                 maxFrameRate: this.settings.maxFrameRate,
                 timeScale: this.settings.timeScale,
-                background: {
-                    tint: this.settings.background?.tint?.json || parseColour('white').json,
-                    image: this.settings.background.image,
-                },
+                backgroundTint: this.settings.backgroundTint?.json || rgb.parse('white').json,
+                backgroundImage: this.settings.backgroundImage,
 
-                G: this.settings.G,
                 globalGravity: this.settings.globalGravity.array,
                 collisionIterations: this.settings.collisionIterations,
 
@@ -83,15 +82,15 @@ export class Scene {
         }
     }
 
-    get sprites (): Sprite[] {
-        const queue: Sprite[] = [];
-        const sprites: Sprite[] = [];
+    get entities (): Entity[] {
+        const queue: Entity[] = [];
+        const entities: Entity[] = [];
 
-        for (const sprite of Sprite.sprites) {
-            if (sprite.transform.isChild()) continue;
-            if (sprite.transform.parent !== this.id) continue;
+        for (const entity of Entity.entities) {
+            if (entity.transform.isChild()) continue;
+            if (entity.transform.parent !== this.id) continue;
 
-            queue.push(sprite);
+            queue.push(entity);
         }
 
         while (queue.length > 0) {
@@ -100,17 +99,17 @@ export class Scene {
             }
 
             // there must be an element so shift can't return undefined, but ts doesn't kow that
-            sprites.push( <Sprite> queue.shift());
+            entities.push( <Entity> queue.shift());
         }
 
-        return sprites;
+        return entities;
     }
 
     findMainCamera () {
-        for (const sprite of this.sprites) {
-            if (!sprite.hasComponent('Camera')) continue;
+        for (const entity of this.entities) {
+            if (!entity.hasComponent('Camera')) continue;
 
-            Camera.main = sprite;
+            Camera.main = entity;
             return;
         }
         console.error(`
@@ -119,22 +118,22 @@ export class Scene {
         `);
     }
 
-    loopThroughScripts (handler: (script: Script, sprite: Sprite) => void) {
-        for (const sprite of this.sprites) {
-            for (const script of sprite.getComponents('Script'))
-                handler(script as Script, sprite as Sprite);
+    loopThroughScripts (handler: (script: Script, entity: Entity) => void) {
+        for (const entity of this.entities) {
+            for (const script of entity.getComponents('Script'))
+                handler(script as Script, entity as Entity);
         }
     }
     broadcast (funcName: string, params: any[]) {
-        this.loopThroughScripts((script: Script, sprite: Sprite) => {
+        this.loopThroughScripts((script: Script, entity: Entity) => {
             script.runMethod(funcName, params);
         });
     }
 
-    static loopThroughAllScripts (handler: (script: Script, sprite: Sprite) => void) {
-        Sprite.loop(sprite => {
-            for (const script of sprite.getComponents('Script'))
-                handler(script as Script, sprite as Sprite);
+    static loopThroughAllScripts (handler: (script: Script, entity: Entity) => void) {
+        Entity.loop(entity => {
+            for (const script of entity.getComponents('Script'))
+                handler(script as Script, entity as Entity);
         });
     }
 
@@ -194,21 +193,30 @@ export class Scene {
     }
     
     static create (config: {
-        name: string
+        name?: string,
+        settings?: sceneSettings
     }) {
-        const scene = new Scene(config.name || 'Scene', defaultSceneSettings());
+        const scene = new Scene(config.name || 'Scene', config.settings || defaultSceneSettings());
         Scene.scenes.push(scene);
+
+        if (Scene.scenes.length > 0 && !config.settings) {
+            const defaultSettings: any = Scene.scenes[Scene.scenes.length-1].json().settings;
+            defaultSettings.backgroundTint = new colour(255, 255, 255);
+            defaultSettings.globalGravity = v3.fromArray(defaultSettings.globalGravity);
+            scene.settings = defaultSettings;
+        }
+
         return scene;
     }
 
-    static next (persists: Sprite[]) {
+    static next (persists: Entity[]) {
         Scene.active++;
         
         if (Scene.active > Scene.scenes.length-1) {
             Scene.active = 0;
         }
         
-        // move sprites to current scene
+        // move entities to current scene
         for (let sprite of persists) {
             if (typeof sprite.transform.parent === 'number'){
                 sprite.transform.parent = Scene.active;
@@ -218,14 +226,14 @@ export class Scene {
         Scene.activeScene.findMainCamera();
     }
 
-    static previous (persists: Sprite[]) {
+    static previous (persists: Entity[]) {
         Scene.active--;
 
         if (Scene.active < 0) {
             Scene.active = Scene.scenes.length-1;
         }
 
-        // move sprites to current scene
+        // move entities to current scene
         for (let sprite of persists) {
             if (typeof sprite.transform.parent === 'number') {
                 sprite.transform.parent = Scene.active;

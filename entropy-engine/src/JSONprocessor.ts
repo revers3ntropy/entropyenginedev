@@ -1,15 +1,16 @@
-import { Sprite } from '../ECS/sprite.js'
+import { Entity } from './ECS/entity.js'
 import {v2, v3} from "./maths/maths.js";
-import {Component} from "../ECS/component.js";
-import {Script} from "../components/scriptComponent.js"
+import {Component} from "./ECS/component.js";
+import {Script} from "./components/scriptComponent.js"
 // all components
-import {CircleCollider, RectCollider} from '../components/colliders.js';
-import {Body} from '../components/body.js';
-import {CircleRenderer, ImageRenderer2D, RectRenderer, MeshRenderer} from '../components/renderComponents.js'
-import {GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox} from '../components/gui/gui.js'
-import {Camera} from '../components/camera.js'
-import {rgb, Transform } from '../index.js';
-import { Scene } from '../ECS/scene.js';
+import {CircleCollider, RectCollider} from './components/colliders.js';
+import {Body} from './components/body.js';
+import {CircleRenderer, ImageRenderer2D, RectRenderer, MeshRenderer} from './components/renderComponents.js'
+import {GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox} from './components/gui/gui.js'
+import {Camera} from './components/camera.js'
+import { Transform} from "./components/transform.js";
+import {defaultSceneSettings, Scene, sceneSettings} from './ECS/scene.js';
+import {rgba} from "./util/colour.js";
 
 // reference everything so the ts compiler will think that it is being used and wont delete the import
 CircleCollider; RectCollider;
@@ -56,7 +57,7 @@ function componentPropProcessor (propName: any, componentJSON: any, component: C
 
     if (isColour(componentJSON[propName])) {
         const c = componentJSON[propName];
-        component[propName] = rgb(c.r, c.g, c.b, c.a);
+        component[propName] = rgba(c.r, c.g, c.b, c.a);
         return;
     }
 
@@ -174,7 +175,7 @@ export async function getSpriteFromJSON (JSON: any) {
     /*
         Needs MUCH more error checking as you can pass anything as the JSON into it
      */
-    const name: string = JSON['name'] ?? `sprite ${Sprite.sprites.length}`;
+    const name: string = JSON['name'] ?? `sprite ${Entity.entities.length}`;
     const tag: string = JSON['tag'] ?? 'sprite';
     const Static: boolean = JSON['Static'] ?? false;
 
@@ -192,7 +193,7 @@ export async function getSpriteFromJSON (JSON: any) {
     }
 
     return {
-        sprite: new Sprite({
+        sprite: new Entity({
             name,
             components,
             transform,
@@ -208,7 +209,7 @@ export function setParentFromInfo (parentInfo: {type: string, name: string}, chi
     let parent: Transform | number | undefined;
 
     if (parentInfo.type === 'Transform') {
-        parent = Sprite.find(parentInfo.name)?.transform;
+        parent = Entity.find(parentInfo.name)?.transform;
 
     } else if (parentInfo.type === 'Scene') {
         parent = Scene.sceneByID(parseInt(parentInfo.name)).id;
@@ -229,17 +230,25 @@ export async function spritesFromJSON (JSON: any) {
     for (let spriteJSON of JSON) {
         let sprite = await getSpriteFromJSON(spriteJSON);
         parentPairs[sprite.sprite.name] = sprite.parentInfo;
-        Sprite.sprites.push(sprite.sprite);
+        Entity.entities.push(sprite.sprite);
     }
 
-    // deal with parent-child stuff once all sprites have been initialised
+    // deal with parent-child stuff once all entities have been initialised
     for (let childName in parentPairs) {
-        setParentFromInfo(parentPairs[childName], Sprite.find(childName)?.transform);
+        setParentFromInfo(parentPairs[childName], Entity.find(childName)?.transform);
     }
 }
 
 export function initialiseScenes (JSON: any) {
     for (let scene of JSON) {
-        Scene.create(scene);
+        const settings: sceneSettings = defaultSceneSettings();
+        const settingsJSON = scene['settings'] ?? {};
+        for (let prop in settingsJSON) {
+            componentPropProcessor(prop, scene['settings'] || {}, settings);
+        }
+        Scene.create({
+            name: scene.name,
+            settings
+        });
     }
 }

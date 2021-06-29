@@ -37,7 +37,7 @@ index.json file:
 ```json
 {
   "canvasID": "myCanvas",
-  "sprites": [
+  "entities": [
     {
       "name": "main camera",
       "components": [
@@ -57,7 +57,7 @@ The imported JSON file can have the following properties:
   "width": 1000,
   "height": 500,
   "performanceDebug": 0,
-  "sprites": []
+  "entities": []
 }
 ```
 Where:
@@ -66,7 +66,7 @@ Where:
 - height is the desired height
 - performanceDebug is if you want a breakdown of how long various things take to run. 
   1 gives you just total Update time, 2 givers you more detail.
-- sprites is a list of all sprite objects (see below)
+- entities is a list of all entity objects (see below)
 
 
 ***
@@ -173,15 +173,16 @@ triangles triangle by the `v2` passed in.
 Sprites are the most basic thing in your game.
 They can be created in the javascript or in the .json file.
 
-To create one in JS, use `Sprite.newSprite({ })`. 
-Pass arguments using standard JS object syntax: 
+To create one in JS, use `Entity.newSprite({ })`. 
+Pass arguments using standard JS object syntax:
+
 ```js
-Sprite.newSprite({
-    name: 'player'
+Entity.newSprite({
+	name: 'player'
 });
 ```
 
-To create in the json, simply add a new object to the `"sprites"` field like so:
+To create in the json, simply add a new object to the `"entities"` field like so:
 
 ```json
 {
@@ -193,30 +194,30 @@ They do the same thing.
 
 ### Sprites take through these arguments:
 
-- `name: string` gives the sprite a name
+- `name: string` gives the entity a name
 
-- `tag: string` gives the sprite a tag. Tags can be used for lots of sprites.
+- `tag: string` gives the entity a tag. Tags can be used for lots of entities.
 
-- `scaleBy: v2`  scales the sprite and all of its components on initialisation 
+- `scaleBy: v2`  scales the entity and all of its components on initialisation 
     (to define a 2D vector in the JSON use `[number, number]`, and in js use `new v2(number, number)`)
 
-- `components: array` a list of all components the sprite should use. See 'Components' for more.
+- `components: array` a list of all components the entity should use. See 'Components' for more.
 
-- `Static: boolean` if the sprite should move or not. When set to false, 
-  only scripting can move the sprite
+- `Static: boolean` if the entity should move or not. When set to false, 
+  only scripting can move the entity
   
-- `transform: Transform` All sprites have to have a transform. See more about Transforms below.
+- `transform: Transform` All entities have to have a transform. See more about Transforms below.
 
 
-## Sprite class
-The sprite class has many useful Static and instance methods. 
+## Entity class
+The entity class has many useful Static and instance methods. 
 ### Instance methods:
 
 ```ts
-// adds a component to the sprite
+// adds a component to the entity
 let addComponent: (component: Component) => void
     
-//Checks if the component exists on the sprite or not
+//Checks if the component exists on the entity or not
 let hasComponent: (type: string, subtype: string) => boolean
 
 // returns the first component if it exists, throws an error if it doesn't
@@ -225,18 +226,18 @@ let getComponent: (type: string, subtype: string) => Component
 // returns an array of all component with matching type
 let getComponents: (type: string, subtype: string) => Component[]
 
-// scales all components of the sprite
+// scales all components of the entity
 let scaleBy: (factor: v2) => void
 
-// deletes the sprites and stop any components from functioning
+// deletes the entities and stop any components from functioning
 let delete: () => void
 ```
 
 ### Static methods:
 ```ts
-// creates a new sprite and returns it. 
+// creates a new entity and returns it. 
 // Note that SpriteConfig is an object which takes the arguments defined above in
-let newSprite: (setup: SpriteConfig) => Sprite
+let newSprite: (setup: SpriteConfig) => Entity
 
 // fills and area with circles
 // each circle automatically has these components:
@@ -252,39 +253,39 @@ let fill: ({
     particleRadius: number,
     // this is applied to each particle
     material: PhysicsMaterial,
-    // applied to every sprite
+    // applied to every entity
     gravityAttract: v2,
-    // applied to every sprite
+    // applied to every entity
     gravityEffect: number,
-    // each sprite is called 'name x y'
+    // each entity is called 'name x y'
     name: string,
-    // applied to the CircleRenderer of each sprite
+    // applied to the CircleRenderer of each entity
     colour: string,
-    // the Static property on all sprites
+    // the Static property on all entities
     Static: boolean
-}) => Sprite[]
+}) => Entity[]
 
-// returns the first sprite with the name passed in
-let find: (name: string) => Sprite | undefined
+// returns the first entity with the name passed in
+let find: (name: string) => Entity | undefined
 
-// returns all sprites with specified tag
-let findWithTag: (tag: string) => Sprite[] | []
+// returns all entities with specified tag
+let findWithTag: (tag: string) => Entity[] | []
 
-// calls the handler for each sprite, passing it in
-let loopThroughSprites: (handler: (sprite: Sprite) => void) => void
+// calls the handler for each entity, passing it in
+let loopThroughSprites: (handler: (entity: Entity) => void) => void
 ```
 ***
 # Components
-Components are added to Sprite instances and hold almost all functionality for the sprite.
-Components are defined in the JSON `"components"` attribute of a sprite. 
+Components are added to Entity instances and hold almost all functionality for the entity.
+Components are defined in the JSON `"components"` attribute of a entity. 
 The component only requires the `"type"` attribute, but other specific to the type can be used.
-Most sprites have to have a `Body` component to function;
-for example `Renderer` and `Collider` components need to know where the sprite is to operate.
+Most entities have to have a `Body` component to function;
+for example `Renderer` and `Collider` components need to know where the entity is to operate.
 
 Every component has a `scaleBy` function built in, which takes in a `v2`. 
 Where only one number is required, just the x value will be used. 
 However, the y value can still have an effect, so when doing this default the y value to 1 rather than 0.
-This is called on every component in the sprite when `scaleBy` is called on the sprite.
+This is called on every component in the entity when `scaleBy` is called on the entity.
 
 Every component also has the following properties:
 ```ts
@@ -299,7 +300,7 @@ For `Script` components, the subtype is the name of the script (e.g. `'playerCon
 
 Component constructors take in an object and will look at properties the same as their own.
 ## Transform
-Most basic component that every sprite has to have.
+Most basic component that every entity has to have.
 Constructor takes an object with the following properties:
 ```ts
 position: v2 // default (0, 0)
@@ -319,7 +320,7 @@ parent: Transform // not needed if you want it to be a root
 | localRotation       | the rotation relative to direct parent     
 | scale               | *
 | localScale          | scale relative to direct parent
-| sprite              | the sprite this Transform is attached to
+| entity              | the entity this Transform is attached to
 | root                | the root parent of this transform - returns itself if it is root
 | forwards            | a unit v2 in the direction this is pointing in in world space
 | right               | a unit vector 90 degrees clockwise from forwards
@@ -331,11 +332,11 @@ parent: Transform // not needed if you want it to be a root
 | getChildren         |              | returns an array of all child Transform's Sprites
 | getChildCount       |              | returns the number of direct children this has
 | makeChildOf         | t: Transform | sets this parent to passed transform
-| makeChildOfFromName | name: string | sets this parent to transform associated with first Sprite with passed name
+| makeChildOfFromName | name: string | sets this parent to transform associated with first Entity with passed name
 | makeParentOf        | transforms: Transform[] | sets parent of all passed Transforms to this
 | isRoot              |              | true is this.parent is undefined
 | isChild             |              | true is this.parent is not undefined
-| getChild            | name: string | gets a child whose sprite's name matches passed
+| getChild            | name: string | gets a child whose entity's name matches passed
 
 No static methods
 
@@ -379,8 +380,8 @@ bounciness: number // 0-1
 all in the range of 0 to 1
 
 ## Renderer Components
-These components allow the sprite to be drawn to the screen, 
-and are dependent on the main camera, the sprites `Body` component and this component's offset.
+These components allow the entity to be drawn to the screen, 
+and are dependent on the main camera, the entities `Body` component and this component's offset.
 
 ### Properties
 
@@ -421,7 +422,7 @@ offset: v2
 
 ## Collider Components
 These components allow two objects to detect and resolve collisions dynamically and statically
-(i.e. the sprites are moved away from each other, and they bounce off of each other)
+(i.e. the entities are moved away from each other, and they bounce off of each other)
 
 Every collider has a `overlapsPoint` function, which takes in a point (`v2`)
 
@@ -484,10 +485,10 @@ Optionally, if the classname is different from the name of the file that the cla
 is contained in, a `className` property can be added as well.
 
 ## Camera Component
-Cameras are how things are viewed. Camera components can be added to any sprite. 
+Cameras are how things are viewed. Camera components can be added to any entity. 
 Only one camera is used at a time, which is stored in the Static property `Camera.main` on the Camera component class.
-This sprite must have a Camera Component attached to it. 
-The first sprite with a camera component is made the main on initialisation, 
+This entity must have a Camera Component attached to it. 
+The first entity with a camera component is made the main on initialisation, 
 but can be changed under a `Start` method if you want it be a different camera.
 
 The camera component takes in an object with the following properties:
@@ -498,7 +499,7 @@ zoom: number
 | property            | description
 |---                  |---
 | zoom                | how zoomed the field of view is  |
-| [static] main       | the sprite with the Camera component currently in use  |
+| [static] main       | the entity with the Camera component currently in use  |
 
 | Static Methods     |  Arguments   | description
 |---              |---           |---
@@ -512,9 +513,10 @@ To reset the main camera, call `Camera.findMain()`.
 
 # Scripting API
 
-Almost everything mentioned above can be used when scripting, for example accessing a sprite's body's x-coordinate would be through:
+Almost everything mentioned above can be used when scripting, for example accessing a entity's body's x-coordinate would be through:
+
 ```js
-Sprite.find('name').getComponent('Body').velocity.x
+Entity.find('name').getComponent('Body').velocity.x
 ```
 
 ## Magic Methods
@@ -530,11 +532,11 @@ so is the first place you will be able to use `this` (as shown below).
 This is called every single frame
 
 ### `onCollision`
-This is called if the sprite this script is attached to has a `Collider` component, 
-when that collider collides with anything. The sprite it collides with is passed in.
+This is called if the entity this script is attached to has a `Collider` component, 
+when that collider collides with anything. The entity it collides with is passed in.
 
 ### `onClick`
-If the sprite that this is attached to has a `GUIElement` component as well, 
+If the entity that this is attached to has a `GUIElement` component as well, 
 then this will get called whenever the GUI component is clicked on by the user
 
 ## Input
@@ -573,18 +575,18 @@ Some properties are added to `this` on construction:
 
 | property   | description
 |---         |---
-| name       |  the name of the sprite the script is attached to
-| sprite     | the sprite the script is attached to
-| transform  | the transform attached to `this.sprite`
+| name       |  the name of the entity the script is attached to
+| entity     | the entity the script is attached to
+| transform  | the transform attached to `this.entity`
 
 
 ## Tips
 
-- Try not to use any 'getting' functions during the `Update` method, as with lots of sprites they can 
+- Try not to use any 'getting' functions during the `Update` method, as with lots of entities they can 
   get very inefficient. Rather, keep as instance of what you need to access on `this` and 
   define it in the `Start` method.
   
-- Rather than setting a width and height for every component, set the `scaleBy` attribute on the sprite and 
+- Rather than setting a width and height for every component, set the `scaleBy` attribute on the entity and 
   everything will get scaled automatically.
   
 - It may not be practical for lots of small scripts, but try to give each script its own file, 
@@ -606,7 +608,7 @@ This is a very simple Pong game:
 index.js:
 ```js
 import { runFromJSON } from "./path/to/entropy/engine/entropy-engine-jc";
-runFromJSON('./path/from/entropy/engine/sprites.json');
+runFromJSON('./path/from/entropy/engine/entities.json');
 ```
 
 index.html:
@@ -665,7 +667,7 @@ export class playerController extends JSBehaviour {
 
 ballController.js:
 ```js
-import { JSBehaviour, v2, Sprite } from "../entropy-engine-jc";
+import { JSBehaviour, v2, Entity } from "../entropy-engine-jc";
 
 export class ballController extends JSBehaviour {
   constructor(){super()}
@@ -674,15 +676,15 @@ export class ballController extends JSBehaviour {
     this.speedX = 10;
     this.bounceRandomMod = 3;
 
-    this.body = this.sprite.getComponent('Body');
+    this.body = this.entity.getComponent('Body');
 
     this.body.velocity= v2.right.scale(this.speedX);
   }
 
   Update () {}
 
-  onCollision (sprite) {
-    switch (sprite.name) {
+  onCollision (entity) {
+    switch (entity.name) {
       case 'player 1':
       case 'player 2':
         this.body.velocity.x *= -1;
@@ -698,7 +700,7 @@ export class ballController extends JSBehaviour {
       case 'left':
       case 'right':
         // has gone past a bat
-        this.restart(sprite.name);
+        this.restart(entity.name);
         break;
     }
   }
@@ -708,7 +710,7 @@ export class ballController extends JSBehaviour {
     this.body.velocity = v2.right.scale(this.speedX);
 
     // increment one of the `GUIText`s by 1
-    let score = Sprite.find(`${loser === 'left' ? 'player 1' : 'player 2'} opponent-points`).getComponent('GUIElement');
+    let score = Entity.find(`${loser === 'left' ? 'player 1' : 'player 2'} opponent-points`).getComponent('GUIElement');
     score.text = (parseInt(score.text) + 1).toString()
   }
 }
@@ -720,7 +722,7 @@ And finally, the *very* long index.json:
   "canvasID": "myCanvas",
   "width": 1000,
   "height": 500,
-  "sprites": [
+  "entities": [
     {
       "name": "main camera",
       "components": [
