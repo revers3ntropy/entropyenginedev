@@ -5,4 +5,7 @@ export class Token {
         this.startPos = startPos;
         this.endPos = endPos;
     }
+    matches(type, val) {
+        return this.type === type && this.value === val;
+    }
 }

@@ -1,5 +1,8 @@
 import {Lexer} from "./lexer.js";
 import {Parser} from "./parser.js";
+import {Context} from "./context.js";
+
+const global = new Context();
 
 export function run (msg: string) {
     const lexer = new Lexer(msg);
@@ -12,9 +15,8 @@ export function run (msg: string) {
     if (res.error)
         return res.error.str;
 
-    return res.node?.interpret({});
-}
+    if (!res.node)
+        return '';
 
-export function interpret (text: string) {
-
+    return res.node.interpret(global);
 }

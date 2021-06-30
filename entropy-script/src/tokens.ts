@@ -13,4 +13,8 @@ export class Token {
         this.startPos = startPos;
         this.endPos = endPos;
     }
+
+    public matches(type: tokenType, val: any) {
+        return this.type === type && this.value === val;
+    }
 }

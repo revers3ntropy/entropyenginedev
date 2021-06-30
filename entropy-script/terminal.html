@@ -13,23 +13,22 @@
 
 <input type="text" id="input" style="width: 75%">
 <br>
-<textarea id="output" rows="30" style="width: 100%"></textarea>
+<textarea id="output" rows="30" style="width: 100%" disabled></textarea>
 
 </body>
 </html>
 
 <script type="module">
+    import {run} from "./build";
 
-    import {run} from "./build/entropy-script/src";
+	const input = $('#input');
+	const output = $('#output');
 
+	input.keypress(e => {
+		if (e.keyCode !== 13) return;
 
-	$('#input').keypress(e => {
-		if(e.keyCode !== 13) return;
-		const input = $('#input')
-
-		const output = run(input.val());
-		console.log(output);
-		$('#output').append(`\n>> ${output}`);
+		const result = run(input.val());
+		output.html(`>> ${input.val()} \n ${result} \n${output.val()}`);
 		input.val('');
 	});
 

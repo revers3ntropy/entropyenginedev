@@ -29,3 +29,9 @@ export class InvalidSyntaxError extends ESError {
         super(startPos, endPos, 'Syntax', details);
     }
 }
+
+export class ExpectedCharError extends ESError {
+    constructor(startPos: Position, endPos: Position, char: string) {
+        super(startPos, endPos, 'Expected Character', `'${char}'`);
+    }
+}
