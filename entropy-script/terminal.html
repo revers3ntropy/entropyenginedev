@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        Entropy Script
+    </title>
+
+    <meta name="viewport" content="width=device-width">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+</head>
+<body style="text-align: center">
+
+<input type="text" id="input" style="width: 75%">
+<br>
+<textarea id="output" rows="30" style="width: 100%"></textarea>
+
+</body>
+</html>
+
+<script type="module">
+
+    import {run} from "./build/entropy-script/src";
+
+
+	$('#input').keypress(e => {
+		if(e.keyCode !== 13) return;
+		const input = $('#input')
+
+		const output = run(input.val());
+		console.log(output);
+		$('#output').append(`\n>> ${output}`);
+		input.val('');
+	});
+
+</script>
