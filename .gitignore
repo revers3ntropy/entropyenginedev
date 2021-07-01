@@ -9,4 +9,6 @@
 
 /entropy-engine/*.js
 /entropy-engine/**/*.js
+/entropy-script/*.js
+/entropy-script/**/*.js
 !**/tsconfig.json
