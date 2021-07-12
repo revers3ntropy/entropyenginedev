@@ -1,14 +1,17 @@
-**/node_modules/
 *.env
 *.pem
 .idea
-/libraries/
 *.htaccess
 *.json
+!**/tsconfig.json
+
+**/node_modules/
+/libraries/
+
 /projects/
+/svg/
+/server/*.js
+/server/**/*.js
 
 /entropy-engine/*.js
 /entropy-engine/**/*.js
-/entropy-script/*.js
-/entropy-script/**/*.js
-!**/tsconfig.json

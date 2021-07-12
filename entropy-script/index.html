@@ -14,33 +14,22 @@
     :root {
         --input-bg: rgb(255, 255, 255);
     }
+
+    #input {
+        padding-bottom: 0;
+        margin-bottom: 10px;
+        background-color: var(--input-bg);
+        height: 30px;
+        outline: none;
+        font-family: Menlo,Monaco,Consolas,'Courier New',monospace;
+        font-size: 13px;
+        width: 100%;
+        border: 1px solid #e7e7e7;
+    }
 </style>
-<button id="test">
-    Run Test Suit
-</button><br>
 
-<span style="
-    background-color: var(--input-bg);
-    height: 30px;
-    width: 30px;
-    margin: 0;
-    padding: 0;
-    font-family: Menlo,Monaco,Consolas,'Courier New',monospace;
-    font-size: 13px;
-">>></span>
-
-<input type="text" id="input" style="
-    width: calc(100% - 30px);
-    padding-bottom: 0;
-    margin-bottom: 10px;
-    border: none;
-    background-color: var(--input-bg);
-    height: 30px;
-    outline: none;
-    font-family: Menlo,Monaco,Consolas,'Courier New',monospace;
-    font-size: 13px;
-">
-<br>
+<textarea id="input" rows="5"></textarea>
+<button id="submit"> Run </button>
 <div id="output" style="
     text-align: left;
     white-space: pre-line;
@@ -59,18 +48,18 @@
 
 <script type="module">
     import {run, init} from "./build";
-	import {Test} from "./build/testFramework.js";
 	import './build/tests.js';
 	import {Undefined} from "./build/constants.js";
 
 	const input = $('#input');
 	const output = $('#output');
+	const submit = $('#submit');
 
 	function str (val) {
 		let result = '';
 		if (val instanceof Undefined) {
 			return 'Undefined';
-		}
+        }
 
 		if (typeof val === 'object') {
 			result += val.constructor.name;
@@ -80,55 +69,37 @@
 				result += '[';
 				for (let item of val) {
 					result += `${str(item)}, `;
-				}
+                }
 				result = result.substring(0, result.length - 2);
 				result += ']';
-			} else {
+            } else {
 				result += '{';
 				for (let item in val) {
 					if (val.hasOwnProperty(item))
-						result += `${item}: ${str(val[item])}, `;
+					result += `${item}: ${str(val[item])}, `;
 				}
 				result = result.substring(0, result.length - 2);
 				result += '}';
-			}
-		} else {
+            }
+        } else {
 			result = `${val}`;
-		}
+        }
 
 		return result;
-	}
+    }
 
 	function outputFunc (message) {
 		output.html(`${str(message)} \n${output.html()}`);
 	}
 
-	localStorage.lastCommand = '';
-
     init(outputFunc);
 
-	$('#test').on('click', async () => {
-		const res = await Test.testAll();
-		outputFunc(res.str());
-	});
-
-	input.keyup(async e => {
-		if (e.keyCode === 38)
-			input.val(localStorage.lastCommand);
-
-		if (e.keyCode !== 13) return;
-
-		localStorage.lastCommand = input.val();
-
-		output.html(`>> ${input.val()} \n${output.html()}`);
+	submit.click(async e => {
+		output.html('');
 
 		let res = await run(input.val());
 
-		let out = res.val;
-
-		if (res.error) out = res.error.str;
-		if (out.length === 1) out = out[0];
-		if (out) outputFunc(out);
+		if (res.error) outputFunc(res.error.str);
 
 		input.val('');
 	});

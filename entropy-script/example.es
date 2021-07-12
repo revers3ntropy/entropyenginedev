@@ -1,3 +1,3 @@
-1+2*7 + (
-    1 / (7-8)
-)
+for (var i in range(4)) {
+    print(i);
+}
