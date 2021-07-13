@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { Undefined } from "./constants.js";
 export const builtInFunctions = {
     'range': (context) => __awaiter(void 0, void 0, void 0, function* () {
         let start = context.get('start');
@@ -30,10 +31,43 @@ export const builtInFunctions = {
         const msg = context.get('message') || '';
         console.log(msg);
         return msg;
+    }),
+    'str': (context) => __awaiter(void 0, void 0, void 0, function* () {
+        let val = context.get('val');
+        let result = '';
+        if (val instanceof Undefined) {
+            return 'Undefined';
+        }
+        if (typeof val === 'object') {
+            result += val.constructor.name;
+            result += ': ';
+            if (Array.isArray(val)) {
+                result += '[';
+                for (let item of val) {
+                    result += `${yield builtInFunctions.str(item)}, `;
+                }
+                result = result.substring(0, result.length - 2);
+                result += ']';
+            }
+            else {
+                result += '{';
+                for (let item in val) {
+                    if (val.hasOwnProperty(item))
+                        result += `${item}: ${yield builtInFunctions.str(val[item])}, `;
+                }
+                result = result.substring(0, result.length - 2);
+                result += '}';
+            }
+        }
+        else {
+            result = `${val}`;
+        }
+        return result;
     })
 };
 export const builtInArgs = {
     'add': ['a', 'b'],
     'range': ['start', 'stop', 'step'],
-    'log': ['message']
+    'log': ['message'],
+    'str': ['val'],
 };

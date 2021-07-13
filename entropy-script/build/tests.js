@@ -83,6 +83,27 @@ expect([0, 'Undefined', 10], `
 expect([[0, 1, 2]], `
     [0, 1, 2];
 `);
+expect([[[6, 8], 1, [8, 9]]], `
+    [[6, 8], 1, [8, 9]];
+`);
+expect([[0, 1, 2], 1], `
+    var arr = [0, 1, 2];
+    arr[1];
+`);
+expect([[[1, 2], 1, 2], 2], `
+    var arr = [[1, 2], 1, 2];
+    arr[0][1];
+`);
+expect([[0, 1, 2], 2, [0, 2, 2]], `
+    var arr = [0, 1, 2];
+    arr[1] = 2;
+    arr;
+`);
+expect([[[1, 2], 1, 2], 5, [[1, 5], 1, 2]], `
+    var arr = [[1, 2], 1, 2];
+    arr[0][1] = 5;
+    arr;
+`);
 // for
 expect(['Undefined', 'Undefined', 2], `
     var output;
@@ -144,12 +165,18 @@ myFunc(10);
 // nesting
 expect(['N_function', 4], `
 var myFunc = func (n, cb) {
-    if (cb(n))
-        return n;
-        
-    while (!cb(n))
+    log('start');
+    log(cb);
+    log(cb(n));
+    log(!cb(n));
+    log('___');
+    while (!cb(n)) {
         n = n - 1;
+        log('hiiii');
+        log(n);
+    }
         
+               
     return n;
 };
 myFunc(20, func (n) { 

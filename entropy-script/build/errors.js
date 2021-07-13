@@ -26,8 +26,8 @@ export class ExpectedCharError extends ESError {
     }
 }
 export class TypeError extends ESError {
-    constructor(startPos, endPos, expectedType, actualType) {
-        super(startPos, endPos, 'TypeError', `Expected type '${expectedType}', got type ${actualType}`);
+    constructor(startPos, endPos, expectedType, actualType, value = '', detail = '') {
+        super(startPos, endPos, 'TypeError', `Expected type '${expectedType}', got type ${actualType} ${typeof value === 'undefined' ? '' : ` on value ${value}`} ${!detail ? '' : detail}`);
     }
 }
 export class ImportError extends ESError {

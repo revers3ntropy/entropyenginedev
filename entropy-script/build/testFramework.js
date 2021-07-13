@@ -11,6 +11,7 @@ import { ESError, TestFailed } from "./errors.js";
 import { run } from "./index.js";
 import { Context } from "./context.js";
 import { global } from "./constants.js";
+let now = (typeof performance === 'undefined') ? () => 0 : performance.now;
 export class TestResult {
     constructor() {
         this.time = 0;
@@ -62,16 +63,19 @@ export class Test {
         Test.tests.push(new Test(test, Test.tests.length));
     }
     static testAll() {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const res = new TestResult();
-            const time = performance.now();
+            if (typeof window === 'undefined' && typeof now === 'undefined')
+                now = (_a = (yield import('perf_hooks')).performance) === null || _a === void 0 ? void 0 : _a.now;
+            const time = now();
             for (let test of Test.tests) {
                 global.resetAsGlobal();
                 const testEnv = new Context();
                 testEnv.parent = global;
                 res.register(yield test.run(testEnv));
             }
-            res.time = Math.round(performance.now() - time);
+            res.time = Math.round(now() - time);
             return res;
         });
     }

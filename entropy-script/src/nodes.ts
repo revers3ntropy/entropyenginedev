@@ -3,6 +3,7 @@ import {Token} from "./tokens.js";
 import {ESError, InvalidSyntaxError, TypeError, ReferenceError} from "./errors.js";
 import {Context} from "./context.js";
 import {Position} from "./position.js";
+import {deepClone} from "./util.js";
 
 export class interpretResult {
     val: any | undefined;
@@ -120,6 +121,8 @@ export class N_unaryOp extends Node {
             case tt.ADD:
                 return res.val;
             case tt.NOT:
+                if (res.val instanceof Undefined)
+                    return true;
                 return !res.val;
             default:
                 return new InvalidSyntaxError(
@@ -273,7 +276,7 @@ export class N_array extends Node {
         for (let item of this.items) {
             const value = await item.interpret(context);
             if (value.error) return value;
-            interpreted.push(value.val);
+            interpreted.push(deepClone(value.val));
         }
 
         return interpreted;
@@ -299,28 +302,27 @@ export class N_statements extends Node {
 
 export class N_functionCall extends Node {
     arguments: Node[];
-    functionID: Token;
+    to: Node
 
-    constructor(startPos: Position, endPos: Position, functionID: Token, args: Node[]) {
+    constructor(startPos: Position, endPos: Position, to: Node, args: Node[]) {
         super(startPos, endPos);
         this.arguments = args;
-        this.functionID = functionID;
+        this.to = to;
     }
 
     async interpret_ (context: Context): Promise<any> {
-        let func = context.get(this.functionID.value);
+        let func = await this.to.interpret(context);
+        if (func.error) return func;
 
-        if (func === undefined)
-            return new ReferenceError(this.functionID.startPos, this.functionID.endPos, this.functionID.value);
+        if (func.val instanceof N_function) {
+            return await this.runFunc(func.val, context);
+        }
 
-        else if (func instanceof N_function)
-            return await this.runFunc(func, context);
-
-        else if (func instanceof N_builtInFunction)
-            return await this.runBuiltInFunction(func, context);
+        else if (func.val instanceof N_builtInFunction)
+            return await this.runBuiltInFunction(func.val, context);
 
         else
-            return new TypeError(this.startPos, this.endPos, "function", typeof func);
+            return new TypeError(this.startPos, this.endPos, "function", typeof func.val);
     }
 
     async genContext (context: Context, args: string[]) {
@@ -342,7 +344,13 @@ export class N_functionCall extends Node {
     async runFunc (func: N_function, context: Context) {
         const newContext = await this.genContext(context, func.arguments);
         if (newContext instanceof ESError) return newContext;
-        return func.body.interpret(newContext);
+        const res = await func.body.interpret(newContext);
+        console.log('return: ', res);
+        if (res.funcReturn && !(res.funcReturn instanceof Undefined)) {
+            res.val = res.funcReturn;
+            res.funcReturn = undefined;
+        }
+        return res;
     }
 
     async runBuiltInFunction (func: N_builtInFunction, context: Context) {
@@ -389,13 +397,61 @@ export class N_return extends Node {
     }
 
     async interpret_ (context: Context) {
-        if (!this.value) return undefined;
+        if (!this.value) return None;
 
         let val = await this.value.interpret(context);
         if (val.error) return val.error;
         const res = new interpretResult();
-        res.funcReturn = val;
+        res.funcReturn = val.val;
         return res;
+    }
+}
+
+export class N_indexed extends Node {
+    base: Node;
+    index: Node;
+    value: Node | undefined;
+
+    constructor(startPos: Position, endPos: Position, base: Node, index: Node) {
+        super(startPos, endPos);
+        this.base = base;
+        this.index = index;
+    }
+
+    async interpret_ (context: Context) {
+        let baseRes = await this.base.interpret(context);
+        if (baseRes.error) return baseRes;
+
+        let indexRes = await this.index.interpret(context);
+        if (indexRes.error) return indexRes;
+
+        const index = indexRes.val;
+        const base = baseRes.val;
+
+        if (typeof index === 'undefined' || index instanceof Undefined)
+            return new TypeError(
+                this.startPos, this.endPos,
+                'string | number',
+                typeof index,
+                index,
+                `With base ${base} and index ${index}`
+            );
+
+        if (typeof base !== 'object')
+            return new TypeError(
+                this.startPos, this.endPos,
+                'object | array',
+                typeof base
+            );
+
+        if (this.value) {
+            let valRes = await this.value.interpret(context);
+            if (valRes.error) return valRes;
+
+            base[index] = valRes.val ?? None;
+        }
+
+        return base[index];
     }
 }
 

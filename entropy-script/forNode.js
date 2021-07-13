@@ -1,5 +1,8 @@
 import * as es from './build/index.js';
 import readline from 'readline';
+import {Test} from "./build/testFramework.js";
+import './build/tests.js';
+
 
 es.init(console.log);
 
@@ -19,6 +22,11 @@ while (true) {
 	const input = await askQuestion('>> ');
 	if (input === 'exit')
 		break;
+	if (input === 'test') {
+		const res = await Test.testAll();
+		console.log(res.str());
+		continue;
+	}
 
 	let res = await es.run(input);
 

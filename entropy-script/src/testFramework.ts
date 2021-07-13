@@ -2,7 +2,8 @@ import {ESError, TestFailed} from "./errors.js";
 import {run} from "./index.js";
 import {Context} from "./context.js";
 import {global} from "./constants.js";
-import {interpretResult} from "./nodes.js";
+
+let now = (typeof performance === 'undefined') ? () => 0 : performance.now;
 
 export class TestResult {
 
@@ -74,7 +75,10 @@ export class Test {
     static async testAll (): Promise<TestResult> {
         const res = new TestResult();
 
-        const time = performance.now();
+        if (typeof window === 'undefined' && typeof now === 'undefined')
+            now = (await import('perf_hooks')).performance?.now;
+
+        const time = now();
 
         for (let test of Test.tests) {
             global.resetAsGlobal();
@@ -83,7 +87,7 @@ export class Test {
             res.register(await test.run(testEnv));
         }
 
-        res.time = Math.round(performance.now() - time);
+        res.time = Math.round(now() - time);
 
         return res;
     }
