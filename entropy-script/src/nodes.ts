@@ -243,18 +243,31 @@ export class N_for extends Node {
         const array = await this.array.interpret(context);
         if (array.error) return array;
 
-        if (!Array.isArray(array.val) && typeof array.val !== 'string') return new TypeError(
+        if (!Array.isArray(array.val) && typeof array.val !== 'string' && typeof array.val !== 'object') return new TypeError(
             this.identifier.startPos,
             this.identifier.endPos,
             'array | string',
             typeof array.val
         );
 
-        for (let element of array.val) {
-            newContext.set(this.identifier.value, element, this.isGlobalId);
-            res = await this.body.interpret(newContext);
-            // so that if statements always return a value of None
-            if (res.error || res.funcReturn) return res;
+        async function iteration (element: any, self: any) {
+
+        }
+
+        if (typeof array.val === 'object' && !Array.isArray(array.val)) {
+            for (let element in array.val) {
+                newContext.set(this.identifier.value, element, this.isGlobalId);
+                res = await this.body.interpret(newContext);
+                // so that if statements always return a value of None
+                if (res.error || res.funcReturn) return res;
+            }
+        } else {
+            for (let element of array.val) {
+                newContext.set(this.identifier.value, element, this.isGlobalId);
+                res = await this.body.interpret(newContext);
+                // so that if statements always return a value of None
+                if (res.error || res.funcReturn) return res;
+            }
         }
 
         newContext.delete();
@@ -280,6 +293,40 @@ export class N_array extends Node {
         }
 
         return interpreted;
+    }
+}
+
+export class N_objectLiteral extends Node {
+    properties: [Node, Node][];
+    constructor(startPos: Position, endPos: Position, properties: [Node, Node][]) {
+        super(startPos, endPos);
+        this.properties = properties;
+    }
+
+    async interpret_ (context: Context) {
+        let interpreted: any = {};
+
+        for (const [keyNode, valueNode] of this.properties) {
+            const value = await valueNode.interpret(context);
+            if (value.error) return value;
+
+            const key = await keyNode.interpret(context);
+            if (key.error) return key;
+
+            interpreted[key.val] = deepClone(value.val);
+        }
+
+        return interpreted;
+    }
+}
+
+export class N_emptyObject extends Node {
+    constructor(startPos: Position, endPos: Position) {
+        super(startPos, endPos);
+    }
+
+    async interpret_ (context: Context) {
+        return {};
     }
 }
 
@@ -345,7 +392,7 @@ export class N_functionCall extends Node {
         const newContext = await this.genContext(context, func.arguments);
         if (newContext instanceof ESError) return newContext;
         const res = await func.body.interpret(newContext);
-        console.log('return: ', res);
+        // console.log('return: ', res);
         if (res.funcReturn && !(res.funcReturn instanceof Undefined)) {
             res.val = res.funcReturn;
             res.funcReturn = undefined;
@@ -428,7 +475,7 @@ export class N_indexed extends Node {
         const index = indexRes.val;
         const base = baseRes.val;
 
-        if (typeof index === 'undefined' || index instanceof Undefined)
+        if (!['string', 'number'].includes(typeof index))
             return new TypeError(
                 this.startPos, this.endPos,
                 'string | number',
@@ -437,7 +484,7 @@ export class N_indexed extends Node {
                 `With base ${base} and index ${index}`
             );
 
-        if (typeof base !== 'object')
+        if (typeof base !== 'object' && typeof base !== 'string')
             return new TypeError(
                 this.startPos, this.endPos,
                 'object | array',

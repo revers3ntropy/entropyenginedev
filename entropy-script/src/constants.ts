@@ -44,6 +44,9 @@ export enum tokenType {
     AND,
     OR,
 
+    COLON,
+    DOT,
+
     EOF
 }
 
@@ -86,6 +89,9 @@ export const tokenTypeString: enumDict<tokenType, string> = {
     [tt.AND]: '&',
     [tt.OR]: '|',
 
+    [tt.COLON]: ':',
+    [tt.DOT]: '.',
+
     [tt.EOF]: 'End of File'
 }
 
@@ -104,7 +110,9 @@ export const singleCharTokens: {[char: string]: tokenType} = {
     ',': tt.COMMA,
     '[': tt.OSQUARE,
     ']': tt.CSQUARE,
-    ';': tt.ENDSTATEMENT
+    ';': tt.ENDSTATEMENT,
+    ':': tt.COLON,
+    '.': tt.DOT,
 };
 
 export const stringSurrounds = ['\'', '`', '"'];

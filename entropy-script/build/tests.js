@@ -165,18 +165,9 @@ myFunc(10);
 // nesting
 expect(['N_function', 4], `
 var myFunc = func (n, cb) {
-    log('start');
-    log(cb);
-    log(cb(n));
-    log(!cb(n));
-    log('___');
     while (!cb(n)) {
         n = n - 1;
-        log('hiiii');
-        log(n);
     }
-        
-               
     return n;
 };
 myFunc(20, func (n) { 
@@ -202,4 +193,53 @@ var myFunc = func (arr, cb) {
 myFunc([0, 1, 2, 3], func (n) { 
     return n == 3;
 });
+`);
+expect(['N_function', 2], `
+var myFunc = func () {
+    return [0, 1, [0, 2]];
+};
+myFunc()[2][1];
+`);
+// objects + properties
+expect(['Object', 1, 1, 1], `
+    var a = {};
+    a['a'] = 1;
+    a.a;
+    a['a'];
+`);
+expect(['Object', 1, 1, 1], `
+    var a = {};
+    a.a = 1;
+    a.a;
+    a['a'];
+`);
+expect(['Object', 6, 6, 6, 6, 6], `
+    var a = {a: {}};
+    a.a.a = 6;
+    a.a.a;
+    a['a'].a;
+    a.a['a'];
+    a['a']['a'];
+`);
+expect(['Object', 1], `
+    var a = {a: 1};
+    a.a;
+`);
+expect(['Object', 1, 1], `
+    var a = {'a': 1};
+    a['a'];
+    a.a;
+`);
+expect(['a', 'Object', 1, 1], `
+    var b = 'a';
+    var a = {[b]: 1};
+    a['a'];
+    a.a;
+`);
+expect(['Object', 'N_function', 'e'], `
+    var a = {a: func () {
+        return 'hello world';
+    }};
+    a.a;
+    a.a()[1];
 `);

@@ -34,7 +34,9 @@ export var tokenType;
     tokenType[tokenType["LTE"] = 24] = "LTE";
     tokenType[tokenType["AND"] = 25] = "AND";
     tokenType[tokenType["OR"] = 26] = "OR";
-    tokenType[tokenType["EOF"] = 27] = "EOF";
+    tokenType[tokenType["COLON"] = 27] = "COLON";
+    tokenType[tokenType["DOT"] = 28] = "DOT";
+    tokenType[tokenType["EOF"] = 29] = "EOF";
 })(tokenType || (tokenType = {}));
 export let tt = tokenType;
 export const tokenTypeString = {
@@ -65,6 +67,8 @@ export const tokenTypeString = {
     [tt.LTE]: '<=',
     [tt.AND]: '&',
     [tt.OR]: '|',
+    [tt.COLON]: ':',
+    [tt.DOT]: '.',
     [tt.EOF]: 'End of File'
 };
 export const singleCharTokens = {
@@ -82,7 +86,9 @@ export const singleCharTokens = {
     ',': tt.COMMA,
     '[': tt.OSQUARE,
     ']': tt.CSQUARE,
-    ';': tt.ENDSTATEMENT
+    ';': tt.ENDSTATEMENT,
+    ':': tt.COLON,
+    '.': tt.DOT,
 };
 export const stringSurrounds = ['\'', '`', '"'];
 export const KEYWORDS = [

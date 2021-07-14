@@ -211,14 +211,29 @@ export class N_for extends Node {
             const array = yield this.array.interpret(context);
             if (array.error)
                 return array;
-            if (!Array.isArray(array.val) && typeof array.val !== 'string')
+            if (!Array.isArray(array.val) && typeof array.val !== 'string' && typeof array.val !== 'object')
                 return new TypeError(this.identifier.startPos, this.identifier.endPos, 'array | string', typeof array.val);
-            for (let element of array.val) {
-                newContext.set(this.identifier.value, element, this.isGlobalId);
-                res = yield this.body.interpret(newContext);
-                // so that if statements always return a value of None
-                if (res.error || res.funcReturn)
-                    return res;
+            function iteration(element, self) {
+                return __awaiter(this, void 0, void 0, function* () {
+                });
+            }
+            if (typeof array.val === 'object' && !Array.isArray(array.val)) {
+                for (let element in array.val) {
+                    newContext.set(this.identifier.value, element, this.isGlobalId);
+                    res = yield this.body.interpret(newContext);
+                    // so that if statements always return a value of None
+                    if (res.error || res.funcReturn)
+                        return res;
+                }
+            }
+            else {
+                for (let element of array.val) {
+                    newContext.set(this.identifier.value, element, this.isGlobalId);
+                    res = yield this.body.interpret(newContext);
+                    // so that if statements always return a value of None
+                    if (res.error || res.funcReturn)
+                        return res;
+                }
             }
             newContext.delete();
             return res;
@@ -240,6 +255,37 @@ export class N_array extends Node {
                 interpreted.push(deepClone(value.val));
             }
             return interpreted;
+        });
+    }
+}
+export class N_objectLiteral extends Node {
+    constructor(startPos, endPos, properties) {
+        super(startPos, endPos);
+        this.properties = properties;
+    }
+    interpret_(context) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let interpreted = {};
+            for (const [keyNode, valueNode] of this.properties) {
+                const value = yield valueNode.interpret(context);
+                if (value.error)
+                    return value;
+                const key = yield keyNode.interpret(context);
+                if (key.error)
+                    return key;
+                interpreted[key.val] = deepClone(value.val);
+            }
+            return interpreted;
+        });
+    }
+}
+export class N_emptyObject extends Node {
+    constructor(startPos, endPos) {
+        super(startPos, endPos);
+    }
+    interpret_(context) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return {};
         });
     }
 }
@@ -302,7 +348,7 @@ export class N_functionCall extends Node {
             if (newContext instanceof ESError)
                 return newContext;
             const res = yield func.body.interpret(newContext);
-            console.log('return: ', res);
+            // console.log('return: ', res);
             if (res.funcReturn && !(res.funcReturn instanceof Undefined)) {
                 res.val = res.funcReturn;
                 res.funcReturn = undefined;
@@ -377,9 +423,9 @@ export class N_indexed extends Node {
                 return indexRes;
             const index = indexRes.val;
             const base = baseRes.val;
-            if (typeof index === 'undefined' || index instanceof Undefined)
+            if (!['string', 'number'].includes(typeof index))
                 return new TypeError(this.startPos, this.endPos, 'string | number', typeof index, index, `With base ${base} and index ${index}`);
-            if (typeof base !== 'object')
+            if (typeof base !== 'object' && typeof base !== 'string')
                 return new TypeError(this.startPos, this.endPos, 'object | array', typeof base);
             if (this.value) {
                 let valRes = yield this.value.interpret(context);

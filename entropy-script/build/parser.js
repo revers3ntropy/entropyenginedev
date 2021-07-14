@@ -132,7 +132,7 @@ export class Parser {
                 this.advance(res);
                 let node = new n.N_variable(startPos, this.currentToken.endPos, tok);
                 let functionCall = false;
-                while ([tt.OPAREN, tt.OSQUARE].includes(this.currentToken.type)) {
+                while ([tt.OPAREN, tt.OSQUARE, tt.DOT].includes(this.currentToken.type)) {
                     switch (this.currentToken.type) {
                         case tt.OPAREN:
                             functionCall = true;
@@ -145,6 +145,13 @@ export class Parser {
                             if (res.error)
                                 return res;
                             break;
+                        case tt.DOT:
+                            this.advance(res);
+                            // @ts-ignore
+                            if (this.currentToken.type !== tt.IDENTIFIER)
+                                return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `Expected identifier after '.'`));
+                            node = new n.N_indexed(this.currentToken.startPos, this.currentToken.endPos, node, new n.N_string(this.currentToken.startPos, this.currentToken.endPos, this.currentToken));
+                            this.advance(res);
                     }
                 }
                 if (this.currentToken.type === tt.ASSIGN) {
@@ -182,6 +189,11 @@ export class Parser {
                 if (res.error)
                     return res;
                 return res.success(arrayExpr);
+            case tt.OBRACES:
+                let objectExpr = res.register(this.object());
+                if (res.error)
+                    return res;
+                return res.success(objectExpr);
             case tt.KEYWORD:
                 switch (tok.value) {
                     case 'if':
@@ -560,5 +572,78 @@ export class Parser {
             return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, "Expected ',' or ']'"));
         this.advance(res);
         return res.success(new n.N_array(startPos, this.currentToken.endPos, elements));
+    }
+    object() {
+        const res = new ParseResults();
+        let properties = [];
+        const startPos = this.currentToken.startPos;
+        if (this.currentToken.type !== tt.OBRACES)
+            return res.failure(new InvalidSyntaxError(startPos, this.currentToken.endPos, "Expected '{"));
+        this.advance(res);
+        // @ts-ignore
+        if (this.currentToken.type === tt.CBRACES) {
+            this.advance(res);
+            return res.success(new n.N_emptyObject(startPos, this.currentToken.endPos));
+        }
+        // @ts-ignore
+        while (true) {
+            let keyType, key, value;
+            // @ts-ignore
+            if (this.currentToken.type === tt.IDENTIFIER) {
+                keyType = 'id';
+                key = new n.N_string(this.currentToken.startPos, this.currentToken.endPos, this.currentToken);
+                this.advance(res);
+                // @ts-ignore
+            }
+            else if (this.currentToken.type === tt.STRING) {
+                keyType = 'string';
+                key = new n.N_string(this.currentToken.startPos, this.currentToken.endPos, this.currentToken);
+                this.advance(res);
+                // @ts-ignore
+            }
+            else if (this.currentToken.type === tt.OSQUARE) {
+                keyType = 'value';
+                this.advance(res);
+                key = res.register(this.expr());
+                if (res.error)
+                    return res;
+                if (this.currentToken.type !== tt.CSQUARE)
+                    return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `Expected ']', got '${tokenTypeString[this.currentToken.type]}'`));
+                this.advance(res);
+            }
+            else
+                break;
+            if (this.currentToken.type === tt.COLON) {
+                this.advance(res);
+                value = res.register(this.expr());
+                if (res.error)
+                    return res;
+                if (this.currentToken.type !== tt.COMMA && this.currentToken.type !== tt.CBRACES)
+                    return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `Expected ',' or '}', got '${tokenTypeString[this.currentToken.type]}'`));
+                if (this.currentToken.type === tt.COMMA)
+                    this.advance(res);
+            }
+            else {
+                if (this.currentToken.type !== tt.COMMA && this.currentToken.type !== tt.CBRACES)
+                    return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `Expected ',' or '}', got '${tokenTypeString[this.currentToken.type]}'`));
+                if (keyType !== 'id')
+                    return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `You must specify a value when initialising an object literal with a key that is not an identifier.
+                        Try using \`key: value\` syntax.`));
+                // reverse back to the identifier
+                this.reverse();
+                value = new n.N_variable(this.currentToken.startPos, this.currentToken.endPos, this.currentToken);
+                this.advance(res);
+                if (this.currentToken.type === tt.COMMA)
+                    this.advance(res);
+            }
+            properties.push([key, value]);
+            if (res.error)
+                return res;
+        }
+        // @ts-ignore
+        if (this.currentToken.type !== tt.CBRACES)
+            return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, "Expected identifier, ',' or '}'"));
+        this.advance(res);
+        return res.success(new n.N_objectLiteral(startPos, this.currentToken.endPos, properties));
     }
 }
