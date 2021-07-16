@@ -123,6 +123,29 @@ expect(['Undefined', 'Undefined', 2], `
     }
     output;
 `);
+// break & continue
+expect(['Undefined', 0, 'Undefined', 0, 1], `
+    var output;
+    var i_ = 0;
+    for (i in range(3)) {
+        if (i == 1) break;
+        output = i;
+        i_ = i_ + 1;
+    }
+    output;
+    i_;
+`);
+expect(['Undefined', 0, 'Undefined', 2, 2], `
+    var output;
+    var i_ = 0;
+    for (i in range(3)) {
+        if (i == 1) continue;
+        output = i;
+        i_ = i_ + 1;
+    }
+    output;
+    i_;
+`);
 // run built in functions
 expect(['hi'], `
     log('hi')
@@ -199,6 +222,18 @@ var myFunc = func () {
     return [0, 1, [0, 2]];
 };
 myFunc()[2][1];
+`);
+expect(['N_function', 'hi'], `
+var myFunc = func () {
+    return args[0];
+};
+myFunc('hi', 1, 2);
+`);
+expect(['N_function', 'Undefined'], `
+var myFunc = func (arg) {
+    return arg;
+};
+myFunc();
 `);
 // objects + properties
 expect(['Object', 1, 1, 1], `
@@ -329,7 +364,6 @@ expect(['N_class', 'myClass', 3, 'myClass', true, false, false], `
 expect(['N_class', 'N_class', 'childClass', 2, 3, 'childClass'], `
     var parentClass = class {
         init (a) {
-            log(a);
             this.a = a;
         }
     };

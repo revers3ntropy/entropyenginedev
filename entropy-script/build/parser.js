@@ -117,6 +117,14 @@ export class Parser {
                 this.reverse(res.reverseCount);
             return res.success(new n.N_return(startPos, this.currentToken.startPos.clone, expr));
         }
+        else if (this.currentToken.matches(tt.KEYWORD, 'break')) {
+            this.advance(res);
+            return res.success(new n.N_break(startPos, this.currentToken.startPos.clone));
+        }
+        else if (this.currentToken.matches(tt.KEYWORD, 'continue')) {
+            this.advance(res);
+            return res.success(new n.N_continue(startPos, this.currentToken.startPos.clone));
+        }
         const expr = res.register(this.expr());
         if (res.error)
             return res;

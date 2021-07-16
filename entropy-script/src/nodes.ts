@@ -3,7 +3,7 @@ import {Token} from "./tokens.js";
 import {ESError, InvalidSyntaxError, ReferenceError, TypeError} from "./errors.js";
 import {Context} from "./context.js";
 import {Position} from "./position.js";
-import {deepClone} from "./util.js";
+import {deepClone, str} from "./util.js";
 
 export class interpretResult {
     val: any | undefined;
@@ -214,6 +214,7 @@ export class N_while extends Node {
 
             let potentialError = await this.loop.interpret(newContext)
             if (potentialError.error) return potentialError;
+            if (potentialError.shouldBreak) break;
         }
 
         newContext.delete();
@@ -256,6 +257,13 @@ export class N_for extends Node {
                 res = await this.body.interpret(newContext);
                 // so that if statements always return a value of None
                 if (res.error || (res.funcReturn !== undefined)) return res;
+                if (res.shouldBreak) {
+                    res.shouldBreak = false;
+                    break;
+                }
+                if (res.shouldContinue) {
+                    res.shouldContinue = false;
+                }
             }
         } else {
             for (let element of array.val) {
@@ -263,6 +271,13 @@ export class N_for extends Node {
                 res = await this.body.interpret(newContext);
                 // so that if statements always return a value of None
                 if (res.error || (res.funcReturn !== undefined)) return res;
+                if (res.shouldBreak) {
+                    res.shouldBreak = false;
+                    break;
+                }
+                if (res.shouldContinue) {
+                    res.shouldContinue = false;
+                }
             }
         }
 
@@ -336,7 +351,7 @@ export class N_statements extends Node {
     async interpret_ (context: Context) {
         for (let item of this.items) {
             const res = await item.interpret(context);
-            if (res.error || (res.funcReturn !== undefined)) return res;
+            if (res.error || (res.funcReturn !== undefined) || res.shouldBreak || res.shouldContinue) return res;
         }
 
         return None;
@@ -383,19 +398,25 @@ export class N_functionCall extends Node {
             return new TypeError(this.startPos, this.endPos, 'function', typeof func.val);
     }
 
-    async genContext (context: Context, args: string[]) {
+    async genContext (context: Context, paramNames: string[]) {
         const newContext = new Context();
         newContext.parent = context;
 
-        let i = 0;
-        for (let param of args) {
-            if (this.arguments.length-1 < i) break;
-            let value = await this.arguments[i].interpret(context);
-            if (value.error) return value.error;
-            newContext.set(param, value.val);
-            i++;
+        let args = [];
+
+        for (let i = 0; i < Math.max(paramNames.length, this.arguments.length); i++) {
+            let value = None;
+            if (this.arguments[i] !== undefined) {
+                let res = await this.arguments[i].interpret(context);
+                if (res.error) return res.error;
+                value = res.val ?? None;
+            }
+            args.push(value);
+            if (paramNames[i] !== undefined)
+                newContext.set(paramNames[i], value);
         }
 
+        newContext.set('args', args);
         return newContext;
     }
 
@@ -419,7 +440,7 @@ export class N_functionCall extends Node {
 
         const res = await func.body.interpret(newContext);
 
-        if (res.funcReturn !== undefined && !(res.funcReturn instanceof Undefined)) {
+        if (res.funcReturn !== undefined) {
             res.val = res.funcReturn;
             res.funcReturn = undefined;
         }
@@ -565,18 +586,8 @@ export class N_class extends Node {
         return this;
     }
 
-    async genInstance
-    (context: Context, runInit=true, on = {
-        constructor: {
-            name: this.name
-        }
-    })
-        : Promise <
-            {constructor: {
-                name: string
-            }} |
-            ESError
-        >
+    async genInstance (context: Context, runInit=true, on = {constructor: this})
+        : Promise <{constructor: N_class } | ESError>
     {
         async function dealWithExtends(context_: Context, classNode: Node, instance: any) {
             const constructor = instance.constructor;
@@ -609,7 +620,8 @@ export class N_class extends Node {
             instance = await extendsClass.genInstance(context, false, instance);
             if (instance instanceof ESError) return instance;
 
-            instance.constructor.name = constructor.name;
+            // index access to prevent annoying wiggly red line
+            instance.constructor = constructor;
 
             return instance;
         }
@@ -649,6 +661,27 @@ export class N_class extends Node {
         this.instances.push(instance);
 
         return instance;
+    }
+}
+
+export class N_fString extends Node {
+    parts: Node[];
+    constructor (startPos: Position, endPos: Position, parts: Node[]) {
+        super(startPos, endPos);
+        this.parts = parts;
+    }
+
+    async interpret_ (context: Context) {
+        let out = '';
+        for (let part of this.parts) {
+            let res = await part.interpret(context);
+            if (res.error) return res;
+
+            // 1 to prevent '' around string
+            out += str(res.val, 1);
+        }
+
+        return out;
     }
 }
 
@@ -717,4 +750,28 @@ export class N_undefined extends Node {
         return None;
     }
 }
+
+export class N_break extends Node {
+    constructor(startPos: Position, endPos: Position) {
+        super(startPos, endPos);
+    }
+
+    async interpret_ (context: Context) {
+        const res = new interpretResult();
+        res.shouldBreak = true;
+        return res;
+    }
+}
+export class N_continue extends Node {
+    constructor(startPos: Position, endPos: Position) {
+        super(startPos, endPos);
+    }
+
+    async interpret_ (context: Context) {
+        const res = new interpretResult();
+        res.shouldContinue = true;
+        return res;
+    }
+}
+
 

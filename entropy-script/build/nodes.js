@@ -11,7 +11,7 @@ import { None, tokenTypeString, tt, Undefined } from "./constants.js";
 import { ESError, InvalidSyntaxError, ReferenceError, TypeError } from "./errors.js";
 import { Context } from "./context.js";
 import { Position } from "./position.js";
-import { deepClone } from "./util.js";
+import { deepClone, str } from "./util.js";
 export class interpretResult {
     constructor() {
         this.shouldBreak = false;
@@ -189,6 +189,8 @@ export class N_while extends Node {
                 let potentialError = yield this.loop.interpret(newContext);
                 if (potentialError.error)
                     return potentialError;
+                if (potentialError.shouldBreak)
+                    break;
             }
             newContext.delete();
             return None;
@@ -220,6 +222,13 @@ export class N_for extends Node {
                     // so that if statements always return a value of None
                     if (res.error || (res.funcReturn !== undefined))
                         return res;
+                    if (res.shouldBreak) {
+                        res.shouldBreak = false;
+                        break;
+                    }
+                    if (res.shouldContinue) {
+                        res.shouldContinue = false;
+                    }
                 }
             }
             else {
@@ -229,6 +238,13 @@ export class N_for extends Node {
                     // so that if statements always return a value of None
                     if (res.error || (res.funcReturn !== undefined))
                         return res;
+                    if (res.shouldBreak) {
+                        res.shouldBreak = false;
+                        break;
+                    }
+                    if (res.shouldContinue) {
+                        res.shouldContinue = false;
+                    }
                 }
             }
             newContext.delete();
@@ -294,7 +310,7 @@ export class N_statements extends Node {
         return __awaiter(this, void 0, void 0, function* () {
             for (let item of this.items) {
                 const res = yield item.interpret(context);
-                if (res.error || (res.funcReturn !== undefined))
+                if (res.error || (res.funcReturn !== undefined) || res.shouldBreak || res.shouldContinue)
                     return res;
             }
             return None;
@@ -332,20 +348,25 @@ export class N_functionCall extends Node {
                 return new TypeError(this.startPos, this.endPos, 'function', typeof func.val);
         });
     }
-    genContext(context, args) {
+    genContext(context, paramNames) {
+        var _b;
         return __awaiter(this, void 0, void 0, function* () {
             const newContext = new Context();
             newContext.parent = context;
-            let i = 0;
-            for (let param of args) {
-                if (this.arguments.length - 1 < i)
-                    break;
-                let value = yield this.arguments[i].interpret(context);
-                if (value.error)
-                    return value.error;
-                newContext.set(param, value.val);
-                i++;
+            let args = [];
+            for (let i = 0; i < Math.max(paramNames.length, this.arguments.length); i++) {
+                let value = None;
+                if (this.arguments[i] !== undefined) {
+                    let res = yield this.arguments[i].interpret(context);
+                    if (res.error)
+                        return res.error;
+                    value = (_b = res.val) !== null && _b !== void 0 ? _b : None;
+                }
+                args.push(value);
+                if (paramNames[i] !== undefined)
+                    newContext.set(paramNames[i], value);
             }
+            newContext.set('args', args);
             return newContext;
         });
     }
@@ -360,7 +381,7 @@ export class N_functionCall extends Node {
                 return new TypeError(this.startPos, this.endPos, 'object', typeof this_, this_, '\'this\' must be an object');
             newContext.set('this', this_);
             const res = yield func.body.interpret(newContext);
-            if (res.funcReturn !== undefined && !(res.funcReturn instanceof Undefined)) {
+            if (res.funcReturn !== undefined) {
                 res.val = res.funcReturn;
                 res.funcReturn = undefined;
             }
@@ -475,11 +496,7 @@ export class N_class extends Node {
             return this;
         });
     }
-    genInstance(context, runInit = true, on = {
-        constructor: {
-            name: this.name
-        }
-    }) {
+    genInstance(context, runInit = true, on = { constructor: this }) {
         return __awaiter(this, void 0, void 0, function* () {
             function dealWithExtends(context_, classNode, instance) {
                 return __awaiter(this, void 0, void 0, function* () {
@@ -507,7 +524,8 @@ export class N_class extends Node {
                     instance = yield extendsClass.genInstance(context, false, instance);
                     if (instance instanceof ESError)
                         return instance;
-                    instance.constructor.name = constructor.name;
+                    // index access to prevent annoying wiggly red line
+                    instance.constructor = constructor;
                     return instance;
                 });
             }
@@ -534,6 +552,25 @@ export class N_class extends Node {
             }
             this.instances.push(instance);
             return instance;
+        });
+    }
+}
+export class N_fString extends Node {
+    constructor(startPos, endPos, parts) {
+        super(startPos, endPos);
+        this.parts = parts;
+    }
+    interpret_(context) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let out = '';
+            for (let part of this.parts) {
+                let res = yield part.interpret(context);
+                if (res.error)
+                    return res;
+                // 1 to prevent '' around string
+                out += str(res.val, 1);
+            }
+            return out;
         });
     }
 }
@@ -587,6 +624,30 @@ export class N_undefined extends Node {
     interpret_(context) {
         return __awaiter(this, void 0, void 0, function* () {
             return None;
+        });
+    }
+}
+export class N_break extends Node {
+    constructor(startPos, endPos) {
+        super(startPos, endPos);
+    }
+    interpret_(context) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const res = new interpretResult();
+            res.shouldBreak = true;
+            return res;
+        });
+    }
+}
+export class N_continue extends Node {
+    constructor(startPos, endPos) {
+        super(startPos, endPos);
+    }
+    interpret_(context) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const res = new interpretResult();
+            res.shouldContinue = true;
+            return res;
         });
     }
 }

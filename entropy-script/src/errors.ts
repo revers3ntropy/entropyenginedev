@@ -1,4 +1,5 @@
 import {Position} from "./position.js";
+import {str} from "./util.js";
 
 export class ESError {
     name: string;
@@ -43,7 +44,7 @@ export class TypeError extends ESError {
             endPos,
             'TypeError',
             `Expected type '${expectedType}', got type ${actualType} ${
-                typeof value === 'undefined'? '' : ` on value ${value}`
+                typeof value === 'undefined'? '' : ` on value ${str(value)}`
             } ${!detail ? '' : detail}`
         );
     }

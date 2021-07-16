@@ -2,12 +2,34 @@ import {Context} from "./context.js";
 import {str} from "./util.js";
 import * as n from './nodes.js';
 import {Undefined} from "./constants.js";
+import {TypeError} from "./errors.js";
+import {Position} from "./position.js";
 
 export const builtInFunctions: {[name: string]: (context: Context) => Promise<any>} = {
     'range': async context => {
         let start = context.get('start');
         let stop = context.get('stop');
-        const step = context.get('step') || 1;
+        let step = context.get('step') || 1;
+
+        if (step instanceof Undefined)
+            step = undefined;
+        if (stop instanceof Undefined)
+            stop = undefined;
+        if (start instanceof Undefined)
+            start = undefined;
+
+        for (let number of [start, stop, step]) {
+            if (!['undefined', 'number'].includes(typeof number))
+                return new TypeError(
+                    Position.unknown,
+                    Position.unknown,
+                    'undefined | number',
+                    typeof number,
+                    number,
+                    'running built in function "range"'
+                );
+        }
+
 
         const res: number[] = [];
 
@@ -23,6 +45,8 @@ export const builtInFunctions: {[name: string]: (context: Context) => Promise<an
         for (let i = start; i < stop; i += step) {
             res.push(i);
         }
+
+        console.log(res);
 
         return res;
     },

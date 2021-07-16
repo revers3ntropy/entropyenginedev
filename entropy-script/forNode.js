@@ -32,6 +32,7 @@ while (true) {
 	let out = res.val;
 
 	if (res.error) out = res.error.str;
+	if (out === undefined) out = '--undefined--'
 	if (out.length === 0) out = '';
 	if (out.length === 1) out = out[0];
 	if (out) console.log(out);

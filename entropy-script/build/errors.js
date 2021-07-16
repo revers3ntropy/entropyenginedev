@@ -1,4 +1,5 @@
 import { Position } from "./position.js";
+import { str } from "./util.js";
 export class ESError {
     constructor(startPos, endPos, name, details) {
         this.startPos = startPos;
@@ -27,7 +28,7 @@ export class ExpectedCharError extends ESError {
 }
 export class TypeError extends ESError {
     constructor(startPos, endPos, expectedType, actualType, value = '', detail = '') {
-        super(startPos, endPos, 'TypeError', `Expected type '${expectedType}', got type ${actualType} ${typeof value === 'undefined' ? '' : ` on value ${value}`} ${!detail ? '' : detail}`);
+        super(startPos, endPos, 'TypeError', `Expected type '${expectedType}', got type ${actualType} ${typeof value === 'undefined' ? '' : ` on value ${str(value)}`} ${!detail ? '' : detail}`);
     }
 }
 export class ImportError extends ESError {

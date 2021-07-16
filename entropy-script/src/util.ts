@@ -40,23 +40,25 @@ export function str (val: any, depth = 0): string {
     }
 
     if (typeof val === 'object') {
-        result += val.constructor.name;
-        result += ': ';
-
         if (Array.isArray(val)) {
             result += '[';
             for (let item of val) {
                 result += `${str(item, depth + 1)}, `;
             }
-            result = result.substring(0, result.length - 2);
+            if (val.length)
+                result = result.substring(0, result.length - 2);
             result += ']';
         } else {
+            result += val.constructor.name;
+            result += ': ';
             result += '{';
+            let i = 0;
             for (let item in val) {
+                i++;
                 if (val.hasOwnProperty(item) && !['this', 'this_', 'constructor', 'self'].includes(item))
                     result += `${item}: ${str(val[item], depth + 1)}, `;
             }
-            result = result.substring(0, result.length - 2);
+            if (i) result = result.substring(0, result.length - 2);
             result += '}';
         }
     } else if (typeof val === 'string' && depth !== 0) {

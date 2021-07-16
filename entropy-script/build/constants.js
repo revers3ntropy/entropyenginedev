@@ -102,7 +102,9 @@ export const KEYWORDS = [
     'func',
     'return',
     'class',
-    'extends'
+    'extends',
+    'continue',
+    'break'
 ];
 export const None = new Undefined();
 export const globalConstants = {

@@ -11,11 +11,23 @@ import { Context } from "./context.js";
 import { str } from "./util.js";
 import * as n from './nodes.js';
 import { Undefined } from "./constants.js";
+import { TypeError } from "./errors.js";
+import { Position } from "./position.js";
 export const builtInFunctions = {
     'range': (context) => __awaiter(void 0, void 0, void 0, function* () {
         let start = context.get('start');
         let stop = context.get('stop');
-        const step = context.get('step') || 1;
+        let step = context.get('step') || 1;
+        if (step instanceof Undefined)
+            step = undefined;
+        if (stop instanceof Undefined)
+            stop = undefined;
+        if (start instanceof Undefined)
+            start = undefined;
+        for (let number of [start, stop, step]) {
+            if (!['undefined', 'number'].includes(typeof number))
+                return new TypeError(Position.unknown, Position.unknown, 'undefined | number', typeof number, number, 'running built in function "range"');
+        }
         const res = [];
         if (!stop && stop !== 0) {
             for (let i = 0; i < start; i++) {
@@ -28,6 +40,7 @@ export const builtInFunctions = {
         for (let i = start; i < stop; i += step) {
             res.push(i);
         }
+        console.log(res);
         return res;
     }),
     'log': (context) => __awaiter(void 0, void 0, void 0, function* () {
