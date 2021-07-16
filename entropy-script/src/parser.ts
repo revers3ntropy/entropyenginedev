@@ -2,7 +2,7 @@ import {Token} from "./tokens.js";
 import * as n from './nodes.js';
 import {Node} from './nodes.js';
 import {ESError, InvalidSyntaxError} from "./errors.js";
-import {identifierChars, tokenType, tokenTypeString, tt} from "./constants.js";
+import {tokenType, tokenTypeString, tt} from "./constants.js";
 
 export class ParseResults {
     node: n.Node | undefined;
@@ -90,6 +90,17 @@ export class Parser {
         this.tokenIdx -= amount;
         this.currentToken = this.tokens[this.tokenIdx];
         return this.currentToken;
+    }
+
+    private consume (res: ParseResults, type: tokenType, errorMsg?: string) {
+        if (this.currentToken.type !== type)
+            return res.failure(new InvalidSyntaxError(
+                this.currentToken.startPos,
+                this.currentToken.endPos,
+                errorMsg ?? `Expected '${tokenTypeString[type]}' but got '${tokenTypeString[this.currentToken.type]}'`
+            ));
+
+        this.advance(res);
     }
 
     private clearEndStatements (res: ParseResults) {
@@ -180,17 +191,22 @@ export class Parser {
                     tok
                 );
 
+                let prevNode: Node = new n.N_undefined(startPos, this.currentToken.endPos);
+
                 let functionCall = false;
 
                 while ([tt.OPAREN, tt.OSQUARE, tt.DOT].includes(this.currentToken.type)) {
                     switch (this.currentToken.type) {
                         case tt.OPAREN:
                             functionCall = true;
-                            node = res.register(this.makeFunctionCall(node));
+                            const tempNode = node;
+                            node = res.register(this.makeFunctionCall(node, prevNode));
+                            prevNode = tempNode;
                             if (res.error) return res;
                             break;
 
                         case tt.OSQUARE:
+                            prevNode = node;
                             node = res.register(this.makeIndex(node));
                             if (res.error) return res;
                             break;
@@ -205,6 +221,7 @@ export class Parser {
                                     `Expected identifier after '.'`
                                 ));
 
+                            prevNode = node;
                             node = new n.N_indexed(
                                 this.currentToken.startPos,
                                 this.currentToken.endPos,
@@ -388,6 +405,11 @@ export class Parser {
             const exp = res.register(this.funcExpr());
             if (res.error) return res;
             return res.success(exp);
+
+        } else if (this.currentToken.matches(tokenType.KEYWORD, 'class')) {
+            const exp = res.register(this.classExpr());
+            if (res.error) return res;
+            return res.success(exp);
         }
 
 
@@ -419,7 +441,7 @@ export class Parser {
         return res.success(left);
     }
 
-    private makeFunctionCall (to: Node) {
+    private makeFunctionCall (to: Node, this_: Node = new n.N_undefined()) {
         const res = new ParseResults();
         let args: Node[] = [];
         const startPos = this.currentToken.startPos;
@@ -551,6 +573,11 @@ export class Parser {
         this.advance(res);
         const expr = res.register(this.expr());
         if (res.error) return res;
+
+        if (expr instanceof n.N_class)
+            expr.name = varName.value;
+        else if (expr instanceof n.N_function)
+            expr.name = varName.value;
 
         return res.success(new n.N_varAssign(startPos, this.currentToken.startPos, varName, expr, isGlobal));
     }
@@ -701,20 +728,11 @@ export class Parser {
         return res.success(new n.N_while(startPos, this.currentToken.startPos, condition, loop));
     }
 
-    private funcExpr (): ParseResults {
+    private funcCore (): ParseResults {
         const res = new ParseResults();
         const startPos = this.currentToken.startPos;
         let body: n.Node,
             args: string[] = [];
-
-        if (!this.currentToken.matches(tt.KEYWORD, 'func'))
-            return res.failure(new InvalidSyntaxError(
-                this.currentToken.startPos,
-                this.currentToken.endPos,
-                "Expected 'func'"
-            ));
-
-        this.advance(res);
 
         if (this.currentToken.type !== tt.OPAREN)
             return res.failure(new InvalidSyntaxError(
@@ -770,6 +788,86 @@ export class Parser {
         return res.success(new n.N_function(startPos, this.currentToken.endPos, body, args));
     }
 
+    private funcExpr (): ParseResults {
+        const res = new ParseResults();
+
+        if (!this.currentToken.matches(tt.KEYWORD, 'func'))
+            return res.failure(new InvalidSyntaxError(
+                this.currentToken.startPos,
+                this.currentToken.endPos,
+                "Expected 'func'"
+            ));
+
+        this.advance(res);
+
+        const func = res.register(this.funcCore());
+        if (res.error) return res;
+
+        return res.success(func);
+    }
+
+    private classExpr (name?: string): ParseResults {
+        const res = new ParseResults();
+        const startPos = this.currentToken.startPos;
+        const methods: n.N_function[] = [];
+        let init: n.N_function | undefined = undefined;
+        let extends_: Node | undefined;
+
+        if (!this.currentToken.matches(tt.KEYWORD, 'class'))
+            return res.failure(new InvalidSyntaxError(
+                this.currentToken.startPos,
+                this.currentToken.endPos,
+                "Expected 'class'"
+            ));
+        this.advance(res);
+
+        if (this.currentToken.matches(tt.KEYWORD, 'extends')) {
+            this.advance(res);
+
+            extends_ = res.register(this.expr());
+            if (res.error) return res;
+        }
+
+        this.consume(res, tt.OBRACES);
+        if (res.error) return res;
+
+        if (this.currentToken.type === tt.CBRACES) {
+            return res.success(new n.N_class(
+                startPos,
+                this.currentToken.startPos,
+                []
+            ));
+        }
+
+        while (true) {
+            if (this.currentToken.type !== tt.IDENTIFIER)
+                break;
+            let methodId = this.currentToken.value;
+            const isInit = methodId === 'init';
+            this.advance(res);
+
+            const func = res.register(this.funcCore());
+            if (res.error) return res;
+
+            func.name = methodId;
+
+            if (isInit)
+                init = func;
+            methods.push(func);
+        }
+
+        this.consume(res, tt.CBRACES);
+
+        return res.success(new n.N_class(
+            startPos,
+            this.currentToken.startPos,
+            methods,
+            extends_,
+            init,
+            name
+        ));
+    }
+
     private forExpr (): ParseResults {
         const res = new ParseResults();
         const startPos = this.currentToken.startPos;
@@ -787,14 +885,7 @@ export class Parser {
 
         this.advance(res);
 
-        if (this.currentToken.type !== tt.OPAREN)
-            return res.failure(new InvalidSyntaxError(
-                this.currentToken.startPos,
-                this.currentToken.endPos,
-                "Expected '(' after 'for'"
-            ));
-
-        this.advance(res);
+        this.consume(res, tt.OPAREN);
 
         if (this.currentToken.matches(tt.KEYWORD, 'global')) {
             isGlobalIdentifier = true;

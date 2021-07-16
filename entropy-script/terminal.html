@@ -61,13 +61,13 @@
     import {run, init} from "./build";
 	import {Test} from "./build/testFramework.js";
 	import './build/tests.js';
-	import {builtInFunctions} from "./build/builtInFunctions.js";
+	import {str} from "./build/util.js";
 
 	const input = $('#input');
 	const output = $('#output');
 
 	function outputFunc (message) {
-		output.html(`${builtInFunctions.str(message)} \n${output.html()}`);
+		output.html(`${str(message)} \n${output.html()}`);
 	}
 
 	localStorage.lastCommand = '';
@@ -92,6 +92,7 @@
 		let res = await run(input.val());
 
 		let out = res.val;
+		console.log(out);
 
 		if (res.error) out = res.error.str;
 		if (out.length === 1) out = out[0];

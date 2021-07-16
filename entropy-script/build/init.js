@@ -13,6 +13,7 @@ import { ImportError } from "./errors.js";
 import { Position } from "./position.js";
 import { run } from "./index.js";
 import { globalConstants } from "./constants.js";
+import { str } from "./util.js";
 export function initialise(globalContext, printFunc) {
     builtInFunctions['import'] = (context) => __awaiter(this, void 0, void 0, function* () {
         const url = context.get('url');
@@ -51,7 +52,7 @@ export function initialise(globalContext, printFunc) {
     });
     builtInArgs['import'] = ['url'];
     builtInFunctions['print'] = (context) => __awaiter(this, void 0, void 0, function* () {
-        printFunc('> ' + context.get('message'));
+        printFunc('> ' + str(context.get('message')));
     });
     builtInArgs['print'] = ['message'];
     for (let builtIn in builtInFunctions) {

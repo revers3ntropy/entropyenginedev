@@ -50,6 +50,11 @@
     import {run, init} from "./build";
 	import './build/tests.js';
 	import {str} from "./build/util.js";
+	import {globalConstants} from "./build/constants.js";
+
+	import * as ee from "../entropy-engine/1.0";
+
+	globalConstants.ee = ee;
 
 	const input = $('#input');
 	const output = $('#output');

@@ -11,7 +11,8 @@ import { ESError, TestFailed } from "./errors.js";
 import { run } from "./index.js";
 import { Context } from "./context.js";
 import { global } from "./constants.js";
-let now = (typeof performance === 'undefined') ? () => 0 : performance.now;
+import { str } from "./util.js";
+let now = (typeof window === 'undefined') ? () => 0 : performance.now;
 export class TestResult {
     constructor() {
         this.time = 0;
@@ -63,11 +64,11 @@ export class Test {
         Test.tests.push(new Test(test, Test.tests.length));
     }
     static testAll() {
-        var _a;
+        var _a, _b, _c;
         return __awaiter(this, void 0, void 0, function* () {
             const res = new TestResult();
-            if (typeof window === 'undefined' && typeof now === 'undefined')
-                now = (_a = (yield import('perf_hooks')).performance) === null || _a === void 0 ? void 0 : _a.now;
+            if (typeof window === 'undefined')
+                now = (_c = (_b = (_a = (yield import('perf_hooks'))) === null || _a === void 0 ? void 0 : _a.performance) === null || _b === void 0 ? void 0 : _b.now) !== null && _c !== void 0 ? _c : (() => 0);
             const time = now();
             for (let test of Test.tests) {
                 global.resetAsGlobal();
@@ -109,7 +110,7 @@ with code
         if (Array.isArray(result.val))
             for (let i = 0; i < result.val.length; i++) {
                 if (typeof result.val[i] === 'object' && !Array.isArray(result.val[i]))
-                    result.val[i] = (_b = (_a = result.val[i]) === null || _a === void 0 ? void 0 : _a.constructor) === null || _b === void 0 ? void 0 : _b.name;
+                    result.val[i] = ((_b = (_a = result.val[i]) === null || _a === void 0 ? void 0 : _a.constructor) === null || _b === void 0 ? void 0 : _b.name) || 'Object';
             }
         function test() {
             var _a, _b, _c;
@@ -118,7 +119,7 @@ with code
                     return false;
                 if (Array.isArray(expected))
                     return false;
-                return ((_c = (_b = (_a = result === null || result === void 0 ? void 0 : result.error) === null || _a === void 0 ? void 0 : _a.constructor) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : '') === expected;
+                return ((_c = (_b = (_a = result === null || result === void 0 ? void 0 : result.error) === null || _a === void 0 ? void 0 : _a.constructor) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : 'Error') === expected;
             }
             return arraysSame(expected, result.val);
         }
@@ -126,7 +127,6 @@ with code
         if (res)
             return true;
         const val = result.error || result.val;
-        console.log(expected, val);
-        return new TestFailed(`Expected '${expected}' but got '${val}' instead from test with code \n'${from}'\n`);
+        return new TestFailed(`Expected \n'${str(expected)}' \n but got \n'${str(val)}'\n instead from test with code \n'${from}'\n`);
     }));
 }

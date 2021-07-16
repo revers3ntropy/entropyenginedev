@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { None, tokenTypeString, tt, Undefined } from "./constants.js";
-import { ESError, InvalidSyntaxError, TypeError, ReferenceError } from "./errors.js";
+import { ESError, InvalidSyntaxError, ReferenceError, TypeError } from "./errors.js";
 import { Context } from "./context.js";
 import { Position } from "./position.js";
 import { deepClone } from "./util.js";
@@ -213,16 +213,12 @@ export class N_for extends Node {
                 return array;
             if (!Array.isArray(array.val) && typeof array.val !== 'string' && typeof array.val !== 'object')
                 return new TypeError(this.identifier.startPos, this.identifier.endPos, 'array | string', typeof array.val);
-            function iteration(element, self) {
-                return __awaiter(this, void 0, void 0, function* () {
-                });
-            }
             if (typeof array.val === 'object' && !Array.isArray(array.val)) {
                 for (let element in array.val) {
                     newContext.set(this.identifier.value, element, this.isGlobalId);
                     res = yield this.body.interpret(newContext);
                     // so that if statements always return a value of None
-                    if (res.error || res.funcReturn)
+                    if (res.error || (res.funcReturn !== undefined))
                         return res;
                 }
             }
@@ -231,7 +227,7 @@ export class N_for extends Node {
                     newContext.set(this.identifier.value, element, this.isGlobalId);
                     res = yield this.body.interpret(newContext);
                     // so that if statements always return a value of None
-                    if (res.error || res.funcReturn)
+                    if (res.error || (res.funcReturn !== undefined))
                         return res;
                 }
             }
@@ -249,10 +245,10 @@ export class N_array extends Node {
         return __awaiter(this, void 0, void 0, function* () {
             let interpreted = [];
             for (let item of this.items) {
-                const value = yield item.interpret(context);
-                if (value.error)
-                    return value;
-                interpreted.push(deepClone(value.val));
+                const res = yield item.interpret(context);
+                if (res.error || (res.funcReturn !== undefined))
+                    return res;
+                interpreted.push(deepClone(res.val));
             }
             return interpreted;
         });
@@ -298,7 +294,7 @@ export class N_statements extends Node {
         return __awaiter(this, void 0, void 0, function* () {
             for (let item of this.items) {
                 const res = yield item.interpret(context);
-                if (res.error || res.funcReturn)
+                if (res.error || (res.funcReturn !== undefined))
                     return res;
             }
             return None;
@@ -316,13 +312,24 @@ export class N_functionCall extends Node {
             let func = yield this.to.interpret(context);
             if (func.error)
                 return func;
-            if (func.val instanceof N_function) {
+            if (func.val instanceof N_function)
                 return yield this.runFunc(func.val, context);
-            }
             else if (func.val instanceof N_builtInFunction)
                 return yield this.runBuiltInFunction(func.val, context);
+            else if (func.val instanceof N_class)
+                return yield this.runConstructor(func.val, context);
+            else if (typeof func.val === 'function') {
+                let args = [];
+                for (let arg of this.arguments) {
+                    let value = yield arg.interpret(context);
+                    if (value.error)
+                        return value.error;
+                    args.push(value.val);
+                }
+                return yield func.val(...args);
+            }
             else
-                return new TypeError(this.startPos, this.endPos, "function", typeof func.val);
+                return new TypeError(this.startPos, this.endPos, 'function', typeof func.val);
         });
     }
     genContext(context, args) {
@@ -343,13 +350,17 @@ export class N_functionCall extends Node {
         });
     }
     runFunc(func, context) {
+        var _b;
         return __awaiter(this, void 0, void 0, function* () {
             const newContext = yield this.genContext(context, func.arguments);
             if (newContext instanceof ESError)
                 return newContext;
+            let this_ = (_b = func.this_) !== null && _b !== void 0 ? _b : None;
+            if (typeof this_ !== 'object')
+                return new TypeError(this.startPos, this.endPos, 'object', typeof this_, this_, '\'this\' must be an object');
+            newContext.set('this', this_);
             const res = yield func.body.interpret(newContext);
-            // console.log('return: ', res);
-            if (res.funcReturn && !(res.funcReturn instanceof Undefined)) {
+            if (res.funcReturn !== undefined && !(res.funcReturn instanceof Undefined)) {
                 res.val = res.funcReturn;
                 res.funcReturn = undefined;
             }
@@ -364,12 +375,23 @@ export class N_functionCall extends Node {
             return yield func.interpret(newContext);
         });
     }
+    runConstructor(constructor, context) {
+        var _b, _c;
+        return __awaiter(this, void 0, void 0, function* () {
+            const newContext = yield this.genContext(context, (_c = (_b = constructor === null || constructor === void 0 ? void 0 : constructor.init) === null || _b === void 0 ? void 0 : _b.arguments) !== null && _c !== void 0 ? _c : []);
+            if (newContext instanceof ESError)
+                return newContext;
+            return yield constructor.genInstance(newContext);
+        });
+    }
 }
 export class N_function extends Node {
-    constructor(startPos, endPos, body, argNames) {
+    constructor(startPos, endPos, body, argNames, name = '<anon func>', this_ = {}) {
         super(startPos, endPos);
         this.arguments = argNames;
         this.body = body;
+        this.name = name;
+        this.this_ = this_;
     }
     interpret_(context) {
         return this;
@@ -395,12 +417,14 @@ export class N_return extends Node {
     }
     interpret_(context) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!this.value)
-                return None;
+            const res = new interpretResult();
+            if (this.value === undefined) {
+                res.funcReturn = None;
+                return res;
+            }
             let val = yield this.value.interpret(context);
             if (val.error)
                 return val.error;
-            const res = new interpretResult();
             res.funcReturn = val.val;
             return res;
         });
@@ -413,7 +437,7 @@ export class N_indexed extends Node {
         this.index = index;
     }
     interpret_(context) {
-        var _a;
+        var _b;
         return __awaiter(this, void 0, void 0, function* () {
             let baseRes = yield this.base.interpret(context);
             if (baseRes.error)
@@ -431,9 +455,85 @@ export class N_indexed extends Node {
                 let valRes = yield this.value.interpret(context);
                 if (valRes.error)
                     return valRes;
-                base[index] = (_a = valRes.val) !== null && _a !== void 0 ? _a : None;
+                base[index] = (_b = valRes.val) !== null && _b !== void 0 ? _b : None;
             }
             return base[index];
+        });
+    }
+}
+export class N_class extends Node {
+    constructor(startPos, endPos, methods, extends_, init, name = '<anon class>') {
+        super(startPos, endPos);
+        this.init = init;
+        this.methods = methods;
+        this.name = name;
+        this.extends_ = extends_;
+        this.instances = [];
+    }
+    interpret_(context) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this;
+        });
+    }
+    genInstance(context, runInit = true, on = {
+        constructor: {
+            name: this.name
+        }
+    }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            function dealWithExtends(context_, classNode, instance) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    const constructor = instance.constructor;
+                    const classNodeRes = yield classNode.interpret(context);
+                    if (classNodeRes.error)
+                        return classNodeRes.error;
+                    if (!(classNodeRes.val instanceof N_class))
+                        return new TypeError(classNode.startPos, classNode.endPos, 'N_class', typeof classNodeRes.val, classNodeRes.val);
+                    const extendsClass = classNodeRes.val;
+                    context_.symbolTable['super'] = () => __awaiter(this, void 0, void 0, function* () {
+                        var _b, _c;
+                        const newContext = new Context();
+                        newContext.parent = context;
+                        newContext.symbolTable['this'] = instance;
+                        if (extendsClass.extends_ !== undefined) {
+                            let _a = yield dealWithExtends(newContext, extendsClass.extends_, instance);
+                            if (_a instanceof ESError)
+                                return _a;
+                        }
+                        const res_ = yield ((_c = (_b = extendsClass === null || extendsClass === void 0 ? void 0 : extendsClass.init) === null || _b === void 0 ? void 0 : _b.body) === null || _c === void 0 ? void 0 : _c.interpret(newContext));
+                        if (res_ && res_.error)
+                            return res_;
+                    });
+                    instance = yield extendsClass.genInstance(context, false, instance);
+                    if (instance instanceof ESError)
+                        return instance;
+                    instance.constructor.name = constructor.name;
+                    return instance;
+                });
+            }
+            let instance = on;
+            const newContext = new Context();
+            newContext.parent = context;
+            if (this.extends_ !== undefined) {
+                let _a = yield dealWithExtends(newContext, this.extends_, instance);
+                if (_a instanceof ESError)
+                    return _a;
+            }
+            for (let method of this.methods) {
+                // shallow clone of method with instance as this_
+                instance[method.name] = new N_function(method.startPos, method.endPos, method.body, method.arguments, method.name, instance);
+            }
+            if (runInit) {
+                newContext.symbolTable['this'] = instance;
+                if (this.init) {
+                    const res = yield this.init.body.interpret(newContext);
+                    // return value of init is ignored
+                    if (res.error)
+                        return res.error;
+                }
+            }
+            this.instances.push(instance);
+            return instance;
         });
     }
 }
@@ -481,7 +581,7 @@ export class N_variable extends Node {
     }
 }
 export class N_undefined extends Node {
-    constructor(startPos, endPos) {
+    constructor(startPos = Position.unknown, endPos = Position.unknown) {
         super(startPos, endPos);
     }
     interpret_(context) {

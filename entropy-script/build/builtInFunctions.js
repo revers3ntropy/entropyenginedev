@@ -7,6 +7,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { Context } from "./context.js";
+import { str } from "./util.js";
+import * as n from './nodes.js';
 import { Undefined } from "./constants.js";
 export const builtInFunctions = {
     'range': (context) => __awaiter(void 0, void 0, void 0, function* () {
@@ -28,41 +31,43 @@ export const builtInFunctions = {
         return res;
     }),
     'log': (context) => __awaiter(void 0, void 0, void 0, function* () {
-        const msg = context.get('message') || '';
+        var _a;
+        let msg = (_a = context.get('message')) !== null && _a !== void 0 ? _a : '';
+        msg = yield runBuiltIn('str', [msg]);
         console.log(msg);
-        return msg;
+        return context.get('message');
     }),
     'str': (context) => __awaiter(void 0, void 0, void 0, function* () {
         let val = context.get('val');
-        let result = '';
-        if (val instanceof Undefined) {
-            return 'Undefined';
+        return str(val);
+    }),
+    'type': (context) => __awaiter(void 0, void 0, void 0, function* () {
+        var _b;
+        let val = context.get('val');
+        switch (typeof val) {
+            case "function":
+                return 'function';
+            case "boolean":
+                return 'bool';
+            case "number":
+                return 'number';
+            case "string":
+                return 'string';
+            case "undefined":
+                return 'undefined';
+            case "object":
+                if (val instanceof n.N_function)
+                    return 'function';
+                else if (val instanceof n.N_class)
+                    return 'type';
+                else if (val instanceof Undefined)
+                    return 'undefined';
+                else if (Array.isArray(val))
+                    return 'array';
+                return (_b = val.constructor.name) !== null && _b !== void 0 ? _b : 'object';
+            default:
+                return typeof val;
         }
-        if (typeof val === 'object') {
-            result += val.constructor.name;
-            result += ': ';
-            if (Array.isArray(val)) {
-                result += '[';
-                for (let item of val) {
-                    result += `${yield builtInFunctions.str(item)}, `;
-                }
-                result = result.substring(0, result.length - 2);
-                result += ']';
-            }
-            else {
-                result += '{';
-                for (let item in val) {
-                    if (val.hasOwnProperty(item))
-                        result += `${item}: ${yield builtInFunctions.str(val[item])}, `;
-                }
-                result = result.substring(0, result.length - 2);
-                result += '}';
-            }
-        }
-        else {
-            result = `${val}`;
-        }
-        return result;
     })
 };
 export const builtInArgs = {
@@ -70,4 +75,16 @@ export const builtInArgs = {
     'range': ['start', 'stop', 'step'],
     'log': ['message'],
     'str': ['val'],
+    'type': ['val'],
 };
+export function runBuiltIn(name, args) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const tempCtx = new Context();
+        let i = 0;
+        for (let arg of builtInArgs[name]) {
+            tempCtx.set(arg, args[i]);
+            i++;
+        }
+        return yield builtInFunctions[name](tempCtx);
+    });
+}

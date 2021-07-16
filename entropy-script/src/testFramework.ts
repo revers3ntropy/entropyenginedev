@@ -2,8 +2,9 @@ import {ESError, TestFailed} from "./errors.js";
 import {run} from "./index.js";
 import {Context} from "./context.js";
 import {global} from "./constants.js";
+import {str} from "./util.js";
 
-let now = (typeof performance === 'undefined') ? () => 0 : performance.now;
+let now = (typeof window === 'undefined') ? () => 0 : performance.now;
 
 export class TestResult {
 
@@ -57,6 +58,7 @@ export class TestResult {
 export class Test {
     test: (env: Context) => Promise<boolean | ESError>;
     id: string | number;
+
     constructor (test: (env: Context) => Promise<boolean | ESError>, id: string | number = 'test') {
         this.id = id;
         this.test = test;
@@ -75,8 +77,8 @@ export class Test {
     static async testAll (): Promise<TestResult> {
         const res = new TestResult();
 
-        if (typeof window === 'undefined' && typeof now === 'undefined')
-            now = (await import('perf_hooks')).performance?.now;
+        if (typeof window === 'undefined')
+            now = (await import('perf_hooks'))?.performance?.now ?? (() => 0);
 
         const time = now();
 
@@ -125,7 +127,7 @@ with code
         if (Array.isArray(result.val))
             for (let i = 0; i < result.val.length; i++) {
                 if (typeof result.val[i] === 'object' && !Array.isArray(result.val[i]))
-                    result.val[i] = result.val[i]?.constructor?.name;
+                    result.val[i] = result.val[i]?.constructor?.name || 'Object';
             }
 
         function test () {
@@ -133,7 +135,7 @@ with code
                 if (!result.error) return false;
                 if (Array.isArray(expected)) return false;
 
-                return (result?.error?.constructor?.name ?? '') === expected;
+                return (result?.error?.constructor?.name ?? 'Error') === expected;
             }
             return arraysSame(expected, result.val);
         }
@@ -143,9 +145,8 @@ with code
 
         const val = result.error || result.val;
 
-        console.log(expected, val);
         return new TestFailed(
-            `Expected '${expected}' but got '${val}' instead from test with code \n'${from}'\n`
+            `Expected \n'${str(expected)}' \n but got \n'${str(val)}'\n instead from test with code \n'${from}'\n`
         );
 
     });

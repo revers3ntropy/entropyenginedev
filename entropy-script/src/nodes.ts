@@ -1,6 +1,6 @@
 import {None, tokenTypeString, tt, Undefined} from "./constants.js";
 import {Token} from "./tokens.js";
-import {ESError, InvalidSyntaxError, TypeError, ReferenceError} from "./errors.js";
+import {ESError, InvalidSyntaxError, ReferenceError, TypeError} from "./errors.js";
 import {Context} from "./context.js";
 import {Position} from "./position.js";
 import {deepClone} from "./util.js";
@@ -250,23 +250,19 @@ export class N_for extends Node {
             typeof array.val
         );
 
-        async function iteration (element: any, self: any) {
-
-        }
-
         if (typeof array.val === 'object' && !Array.isArray(array.val)) {
             for (let element in array.val) {
                 newContext.set(this.identifier.value, element, this.isGlobalId);
                 res = await this.body.interpret(newContext);
                 // so that if statements always return a value of None
-                if (res.error || res.funcReturn) return res;
+                if (res.error || (res.funcReturn !== undefined)) return res;
             }
         } else {
             for (let element of array.val) {
                 newContext.set(this.identifier.value, element, this.isGlobalId);
                 res = await this.body.interpret(newContext);
                 // so that if statements always return a value of None
-                if (res.error || res.funcReturn) return res;
+                if (res.error || (res.funcReturn !== undefined)) return res;
             }
         }
 
@@ -287,9 +283,9 @@ export class N_array extends Node {
         let interpreted: any[] = [];
 
         for (let item of this.items) {
-            const value = await item.interpret(context);
-            if (value.error) return value;
-            interpreted.push(deepClone(value.val));
+            const res = await item.interpret(context);
+            if (res.error || (res.funcReturn !== undefined)) return res;
+            interpreted.push(deepClone(res.val));
         }
 
         return interpreted;
@@ -340,7 +336,7 @@ export class N_statements extends Node {
     async interpret_ (context: Context) {
         for (let item of this.items) {
             const res = await item.interpret(context);
-            if (res.error || res.funcReturn) return res;
+            if (res.error || (res.funcReturn !== undefined)) return res;
         }
 
         return None;
@@ -349,7 +345,7 @@ export class N_statements extends Node {
 
 export class N_functionCall extends Node {
     arguments: Node[];
-    to: Node
+    to: Node;
 
     constructor(startPos: Position, endPos: Position, to: Node, args: Node[]) {
         super(startPos, endPos);
@@ -358,18 +354,33 @@ export class N_functionCall extends Node {
     }
 
     async interpret_ (context: Context): Promise<any> {
+
         let func = await this.to.interpret(context);
         if (func.error) return func;
 
-        if (func.val instanceof N_function) {
+        if (func.val instanceof N_function)
             return await this.runFunc(func.val, context);
-        }
 
         else if (func.val instanceof N_builtInFunction)
             return await this.runBuiltInFunction(func.val, context);
 
-        else
-            return new TypeError(this.startPos, this.endPos, "function", typeof func.val);
+        else if (func.val instanceof N_class)
+            return await this.runConstructor(func.val, context);
+
+        else if (typeof func.val === 'function') {
+
+            let args: any = [];
+
+            for (let arg of this.arguments) {
+                let value = await arg.interpret(context);
+                if (value.error) return value.error;
+                args.push(value.val);
+            }
+
+            return await func.val(...args);
+
+        } else
+            return new TypeError(this.startPos, this.endPos, 'function', typeof func.val);
     }
 
     async genContext (context: Context, args: string[]) {
@@ -391,9 +402,24 @@ export class N_functionCall extends Node {
     async runFunc (func: N_function, context: Context) {
         const newContext = await this.genContext(context, func.arguments);
         if (newContext instanceof ESError) return newContext;
+
+        let this_ = func.this_ ?? None;
+
+        if (typeof this_ !== 'object')
+            return new TypeError(
+                this.startPos,
+                this.endPos,
+                'object',
+                typeof this_,
+                this_,
+                '\'this\' must be an object'
+            );
+
+        newContext.set('this', this_);
+
         const res = await func.body.interpret(newContext);
-        // console.log('return: ', res);
-        if (res.funcReturn && !(res.funcReturn instanceof Undefined)) {
+
+        if (res.funcReturn !== undefined && !(res.funcReturn instanceof Undefined)) {
             res.val = res.funcReturn;
             res.funcReturn = undefined;
         }
@@ -405,15 +431,26 @@ export class N_functionCall extends Node {
         if (newContext instanceof ESError) return newContext;
         return await func.interpret(newContext);
     }
+
+    async runConstructor (constructor: N_class, context: Context) {
+        const newContext = await this.genContext(context, constructor?.init?.arguments ?? []);
+        if (newContext instanceof ESError) return newContext;
+        return await constructor.genInstance(newContext);
+    }
 }
 
 export class N_function extends Node {
     body: Node;
     arguments: string[];
-    constructor(startPos: Position, endPos: Position, body: Node, argNames: string[]) {
+    name: string;
+    this_: any;
+
+    constructor(startPos: Position, endPos: Position, body: Node, argNames: string[], name = '<anon func>', this_: any = {}) {
         super(startPos, endPos);
         this.arguments = argNames;
         this.body = body;
+        this.name = name;
+        this.this_ = this_;
     }
 
     interpret_ (context: Context): any {
@@ -444,11 +481,16 @@ export class N_return extends Node {
     }
 
     async interpret_ (context: Context) {
-        if (!this.value) return None;
+        const res = new interpretResult();
+
+        if (this.value === undefined)  {
+            res.funcReturn = None;
+            return res;
+        }
 
         let val = await this.value.interpret(context);
         if (val.error) return val.error;
-        const res = new interpretResult();
+
         res.funcReturn = val.val;
         return res;
     }
@@ -499,6 +541,114 @@ export class N_indexed extends Node {
         }
 
         return base[index];
+    }
+}
+
+export class N_class extends Node {
+
+    init: N_function | undefined;
+    methods: N_function[];
+    name: string;
+    extends_: Node | undefined;
+    instances: any[];
+
+    constructor(startPos: Position, endPos: Position, methods: N_function[], extends_?: Node, init?: N_function, name = '<anon class>') {
+        super(startPos, endPos);
+        this.init = init;
+        this.methods = methods;
+        this.name = name;
+        this.extends_ = extends_;
+        this.instances = [];
+    }
+
+    async interpret_ (context: Context) {
+        return this;
+    }
+
+    async genInstance
+    (context: Context, runInit=true, on = {
+        constructor: {
+            name: this.name
+        }
+    })
+        : Promise <
+            {constructor: {
+                name: string
+            }} |
+            ESError
+        >
+    {
+        async function dealWithExtends(context_: Context, classNode: Node, instance: any) {
+            const constructor = instance.constructor;
+            const classNodeRes = await classNode.interpret(context);
+            if (classNodeRes.error) return classNodeRes.error;
+            if (!(classNodeRes.val instanceof N_class))
+                return new TypeError(
+                    classNode.startPos,
+                    classNode.endPos,
+                    'N_class',
+                    typeof classNodeRes.val,
+                    classNodeRes.val
+                );
+            const extendsClass = classNodeRes.val;
+            context_.symbolTable['super'] = async () => {
+                const newContext = new Context();
+                newContext.parent = context;
+                newContext.symbolTable['this'] = instance;
+
+                if (extendsClass.extends_ !== undefined) {
+                    let _a = await dealWithExtends(newContext, extendsClass.extends_, instance);
+                    if (_a instanceof ESError) return _a;
+                }
+
+                const res_ = await extendsClass?.init?.body?.interpret(newContext);
+                if (res_ && res_.error) return res_;
+            };
+
+
+            instance = await extendsClass.genInstance(context, false, instance);
+            if (instance instanceof ESError) return instance;
+
+            instance.constructor.name = constructor.name;
+
+            return instance;
+        }
+
+        let instance: any = on;
+
+        const newContext = new Context();
+        newContext.parent = context;
+
+        if (this.extends_ !== undefined) {
+            let _a = await dealWithExtends(newContext, this.extends_, instance);
+            if (_a instanceof ESError) return _a;
+        }
+
+        for (let method of this.methods) {
+            // shallow clone of method with instance as this_
+            instance[method.name] = new N_function(
+                method.startPos,
+                method.endPos,
+                method.body,
+                method.arguments,
+                method.name,
+                instance
+            );
+        }
+
+        if (runInit) {
+            newContext.symbolTable['this'] = instance;
+
+            if (this.init) {
+                const res = await this.init.body.interpret(newContext);
+                // return value of init is ignored
+                if (res.error) return res.error;
+            }
+        }
+
+        this.instances.push(instance);
+
+        return instance;
     }
 }
 
@@ -559,7 +709,7 @@ export class N_variable extends Node {
 
 export class N_undefined extends Node {
 
-    constructor(startPos: Position, endPos: Position) {
+    constructor(startPos = Position.unknown, endPos = Position.unknown) {
         super(startPos, endPos);
     }
 

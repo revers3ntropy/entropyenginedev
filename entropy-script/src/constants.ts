@@ -127,6 +127,8 @@ export const KEYWORDS = [
     'in',
     'func',
     'return',
+    'class',
+    'extends'
 ];
 
 export const None = new Undefined();
@@ -135,5 +137,7 @@ export const globalConstants: {[name: string]: any} = {
     'false': false,
     'true': true,
     'null': 0,
-    'undefined': None
+    'undefined': None,
+
+    'maths': Math,
 }

@@ -3,7 +3,6 @@ import readline from 'readline';
 import {Test} from "./build/testFramework.js";
 import './build/tests.js';
 
-
 es.init(console.log);
 
 function askQuestion(query) {
@@ -33,6 +32,7 @@ while (true) {
 	let out = res.val;
 
 	if (res.error) out = res.error.str;
+	if (out.length === 0) out = '';
 	if (out.length === 1) out = out[0];
 	if (out) console.log(out);
 }

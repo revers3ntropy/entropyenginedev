@@ -2,9 +2,9 @@ import { expect } from "./testFramework.js";
 // maths logic
 expect([1.99], '1.99');
 expect([2], '1+1');
-expect([2], '1   +1  ');
-expect([22], '2+4*5');
-expect([30], '(2+4)*5');
+expect([2], '1   + 1  ');
+expect([22], '2 + 4 * 5');
+expect([30], '(2+4) * 5');
 expect([19], '3 + 4 ^ 2');
 // global constants
 expect([true], 'true');
@@ -242,4 +242,200 @@ expect(['Object', 'N_function', 'e'], `
     }};
     a.a;
     a.a()[1];
+`);
+// classes
+expect(['N_class'], `
+    var myClass = class {
+        init () {
+            
+        }
+        
+        publicFunction () {
+            
+        }
+    };
+`);
+expect(['N_class'], `
+    var myClass = class {
+        init (a) {
+            this.a = a;
+        }
+    };
+`);
+expect(['N_class', 'myClass', 3], `
+    var myClass = class {
+        init (a) {
+            this.a = a;
+        }
+    };
+    
+    var myInstance = myClass(3);
+    myInstance.a;
+`);
+expect(['N_class', 'myClass', 3, 'Undefined', 5], `
+    var myClass = class {
+        init (a) {
+            this.a = a;
+        }
+        
+        setA (a) {
+            this.a = a;
+        }
+    };
+    
+    var myInstance = myClass(3);
+    myInstance.a;
+    myInstance.setA(5);
+    myInstance.a;
+`);
+expect(['N_class', 'myClass', 3, 'Undefined', 10], `
+    var myClass = class {
+        init (a) {
+            this.a = a;
+        }
+        
+        setA (a) {
+            this.a = a;
+        }
+        
+        doThing () {
+            this.setA(10);
+        }
+    };
+    
+    var myInstance = myClass(3);
+    myInstance.a;
+    myInstance.doThing();
+    myInstance.a;
+`);
+expect(['N_class', 'myClass', 3, 'myClass', true, false, false], `
+    var myClass = class {
+        init (a) {
+            this.a = a;
+        }
+        
+        getThis () {
+            return this;
+        }
+    };
+    
+    var myInstance = myClass(3);
+    myInstance.a;
+    var this_ = myInstance.getThis();
+    this_ == myInstance;
+    this_ == myClass(3);
+    myInstance == myClass(3);
+`);
+expect(['N_class', 'N_class', 'childClass', 2, 3, 'childClass'], `
+    var parentClass = class {
+        init (a) {
+            log(a);
+            this.a = a;
+        }
+    };
+    var childClass = class extends parentClass {
+        init (a, b) {
+            super(a);
+            this.b = b;
+        }
+    };
+    var instance = childClass(2, 3);
+    instance.a;
+    instance.b;
+    instance.constructor.name;
+`);
+expect(['N_class', 'N_class', 'N_class', 'grandChildClass', 2, 3, 4, 'grandChildClass'], `
+    var parentClass = class {
+        init (a) {
+            this.a = a;
+        }
+    };
+    var childClass = class extends parentClass {
+        init (a, b) {
+            super(a);
+            this.b = b;
+        }
+    };
+    var grandChildClass = class extends childClass {
+        init (a, b, c) {
+            super(a, b);
+            this.c = c;
+        }
+    };
+    var instance = grandChildClass(2, 3, 4);
+    instance.a;
+    instance.b;
+    instance.c;
+    instance.constructor.name;
+`);
+expect(['N_class', 'N_class', 'N_class', 'N_class', 'greatGrandChildClass', 2, 3, 4, 5, 'greatGrandChildClass'], `
+    var parentClass = class {
+        init (a) {
+            this.a = a;
+        }
+    };
+    var childClass = class extends parentClass {
+        init (a, b) {
+            super(a);
+            this.b = b;
+        }
+    };
+    var grandChildClass = class extends childClass {
+        init (a, b, c) {
+            super(a, b);
+            this.c = c;
+        }
+    };
+    var greatGrandChildClass = class extends grandChildClass {
+        init (a, b, c, d) {
+            super(a, b, c);
+            this.d = d;
+        }
+    };
+    
+    var instance = greatGrandChildClass(2, 3, 4, 5);
+    instance.a;
+    instance.b;
+    instance.c;
+    instance.d;
+    instance.constructor.name;
+`);
+// vector library
+expect(['N_class', 'v2', 'v2', '3, 4', 'v2', '8, 10', false, 'v2', '8, 10', '9, 11'], `
+    var v2 = class {
+        init (x, y) {
+            this.x = x;
+            this.y = y;
+        }
+        
+        add (v) {
+            this.x = this.x + v.x;
+            this.y = this.y + v.y;
+            return this;
+        }
+        
+        scale (n) {
+            this.x = this.x * n;
+            this.y = this.y * n;
+            return this;
+        }
+       
+        clone () {
+            return v2(this.x, this.y);
+        }
+        
+        str () {
+            return this.x + ', ' + this.y;
+        }
+    };
+    
+    var pos = v2(0, 0);
+    pos.add(v2(3, 4));
+    pos.str();
+    pos.add(v2(1, 1)).scale(2);
+    pos.str();
+    pos.clone() == pos;
+    var clone = pos.clone().add(v2(1, 1));
+    pos.str();
+    clone.str();
 `);

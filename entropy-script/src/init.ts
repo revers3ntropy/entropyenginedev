@@ -5,6 +5,7 @@ import {ImportError} from "./errors.js";
 import {Position} from "./position.js";
 import {run} from "./index.js";
 import {globalConstants} from "./constants.js";
+import {str} from "./util.js";
 
 export function initialise (globalContext: Context, printFunc: (...args: any[]) => void) {
     builtInFunctions['import'] = async context => {
@@ -25,7 +26,6 @@ export function initialise (globalContext: Context, printFunc: (...args: any[]) 
             // @ts-ignore
             fetch_ = (await import('../../node_modules/node-fetch/lib/index.js')).default;
         }
-
 
         let result: any;
 
@@ -54,7 +54,7 @@ export function initialise (globalContext: Context, printFunc: (...args: any[]) 
     builtInArgs['import'] = ['url'];
 
     builtInFunctions['print'] = async context => {
-        printFunc('> ' + context.get('message'));
+        printFunc('> ' + str(context.get('message')));
     }
 
     builtInArgs['print'] = ['message'];

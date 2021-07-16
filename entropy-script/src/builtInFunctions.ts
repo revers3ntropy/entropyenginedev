@@ -1,4 +1,6 @@
 import {Context} from "./context.js";
+import {str} from "./util.js";
+import * as n from './nodes.js';
 import {Undefined} from "./constants.js";
 
 export const builtInFunctions: {[name: string]: (context: Context) => Promise<any>} = {
@@ -26,43 +28,45 @@ export const builtInFunctions: {[name: string]: (context: Context) => Promise<an
     },
 
     'log': async context => {
-        const msg = context.get('message') || '';
+        let msg = context.get('message') ?? '';
+        msg = await runBuiltIn('str', [msg]);
         console.log(msg);
-        return msg
+        return context.get('message');
     },
 
     'str': async context => {
         let val = context.get('val');
-        let result = '';
-        if (val instanceof Undefined) {
-            return 'Undefined';
+        return str(val);
+    },
+
+    'type': async context => {
+        let val = context.get('val');
+        switch (typeof val) {
+            case "function":
+                return 'function';
+            case "boolean":
+                return 'bool';
+            case "number":
+                return 'number';
+            case "string":
+                return 'string';
+            case "undefined":
+                return 'undefined';
+            case "object":
+                if (val instanceof n.N_function)
+                    return 'function';
+                else if (val instanceof n.N_class)
+                    return 'type';
+                else if (val instanceof Undefined)
+                    return 'undefined';
+                else if (Array.isArray(val))
+                    return 'array';
+
+                return val.constructor.name ?? 'object';
+
+            default:
+                return typeof val;
         }
-
-        if (typeof val === 'object') {
-            result += val.constructor.name;
-            result += ': ';
-
-            if (Array.isArray(val)) {
-                result += '[';
-                for (let item of val) {
-                    result += `${await builtInFunctions.str(item)}, `;
-                }
-                result = result.substring(0, result.length - 2);
-                result += ']';
-            } else {
-                result += '{';
-                for (let item in val) {
-                    if (val.hasOwnProperty(item))
-                        result += `${item}: ${await builtInFunctions.str(val[item])}, `;
-                }
-                result = result.substring(0, result.length - 2);
-                result += '}';
-            }
-        } else {
-            result = `${val}`;
-        }
-
-        return result;
     }
 }
 
@@ -71,4 +75,15 @@ export const builtInArgs: {[name: string]: string[]} = {
     'range': ['start', 'stop', 'step'],
     'log': ['message'],
     'str': ['val'],
+    'type': ['val'],
+}
+
+export async function runBuiltIn (name: string, args: any[]): Promise<any> {
+    const tempCtx = new Context();
+    let i = 0;
+    for (let arg of builtInArgs[name]) {
+        tempCtx.set(arg, args[i]);
+        i++;
+    }
+    return await builtInFunctions[name](tempCtx);
 }
