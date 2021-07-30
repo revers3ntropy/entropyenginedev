@@ -1,69 +1,37 @@
 import {Context} from "./context.js";
 import {str} from "./util.js";
 import * as n from './nodes.js';
-import {Undefined} from "./constants.js";
-import {TypeError} from "./errors.js";
+import {digits, None, Undefined} from "./constants.js";
+import {ESError} from "./errors.js";
 import {Position} from "./position.js";
 
-export const builtInFunctions: {[name: string]: (context: Context) => Promise<any>} = {
-    'range': async context => {
-        let start = context.get('start');
-        let stop = context.get('stop');
-        let step = context.get('step') || 1;
+export const builtInFunctions: {[name: string]: (context: Context) => any} = {
+    'range': context => {
+        let n = context.get('n');
 
-        if (step instanceof Undefined)
-            step = undefined;
-        if (stop instanceof Undefined)
-            stop = undefined;
-        if (start instanceof Undefined)
-            start = undefined;
+        if (n instanceof Undefined)
+            n = undefined;
 
-        for (let number of [start, stop, step]) {
-            if (!['undefined', 'number'].includes(typeof number))
-                return new TypeError(
-                    Position.unknown,
-                    Position.unknown,
-                    'undefined | number',
-                    typeof number,
-                    number,
-                    'running built in function "range"'
-                );
+        try {
+            return [...Array(n).keys()];
+        } catch (e) {
+            return new ESError(Position.unknown, Position.unknown, 'RangeError', `Cannot make range of length '${str(n)}'`);
         }
-
-
-        const res: number[] = [];
-
-        if (!stop && stop !== 0) {
-            for (let i = 0; i < start; i++) {
-                res.push(i);
-            }
-            return res;
-        }
-
-        if (start > stop) return res;
-
-        for (let i = start; i < stop; i += step) {
-            res.push(i);
-        }
-
-        console.log(res);
-
-        return res;
     },
 
-    'log': async context => {
+    'log': context => {
         let msg = context.get('message') ?? '';
-        msg = await runBuiltIn('str', [msg]);
+        msg = str(msg);
         console.log(msg);
         return context.get('message');
     },
 
-    'str': async context => {
+    'str': context => {
         let val = context.get('val');
         return str(val);
     },
 
-    'type': async context => {
+    'type': context => {
         let val = context.get('val');
         switch (typeof val) {
             case "function":
@@ -91,23 +59,93 @@ export const builtInFunctions: {[name: string]: (context: Context) => Promise<an
             default:
                 return typeof val;
         }
+    },
+
+    'contains': context => {
+        let arr = context.get('arr');
+        if(!Array.isArray(arr))
+            return false;
+        return ((~arr.indexOf(context.get('element'))) || None) || false;
+    },
+
+    'append': context => {
+        let arr = context.get('arr');
+        if (!Array.isArray(arr))
+            return arr;
+        for (let item of context.get('args')) {
+            arr.push(item);
+        }
+
+        return arr;
+    },
+
+    'strLower': context => {
+        return context.get('args')[0]?.toLowerCase() || '';
+    },
+
+    'strUpper': context => {
+        return context.get('args')[0]?.toLowerCase() || '';
+    },
+
+    'parseNum': context => {
+        let str = context.get('number');
+
+        if (typeof str == 'number') return str;
+
+        let idx = 0;
+        let numStr = '';
+        let dotCount = 0;
+
+        while (str[idx] !== undefined && (digits+'._').includes(str[idx])) {
+            if (str[idx] === '.') {
+                if (dotCount === 1)
+                    break;
+
+                dotCount++;
+                numStr += '.';
+
+                // use _ as a deliminator for sets of 0s - eg 1_000_000_000
+            } else {
+                numStr += str[idx];
+            }
+            idx++;
+        }
+
+        if (dotCount === 0)
+            return parseInt(numStr)
+        return parseFloat(numStr);
+    },
+
+    'throw': context => {
+        return new ESError(Position.unknown, Position.unknown, 'Thrown Error', 'Thrown error in code');
+    },
+
+    'len': context => {
+        let total = 0;
+        for (let item of context.get('args')) {
+            if (typeof item === 'string' || Array.isArray(item)) {
+                total += item.length;
+            }
+            else if (typeof item === 'object') {
+                for (let prop in item)
+                    total++;
+            }
+            else total++;
+        }
+
+        return total;
     }
 }
 
 export const builtInArgs: {[name: string]: string[]} = {
     'add': ['a', 'b'],
-    'range': ['start', 'stop', 'step'],
+    'range': ['n'],
     'log': ['message'],
     'str': ['val'],
     'type': ['val'],
-}
-
-export async function runBuiltIn (name: string, args: any[]): Promise<any> {
-    const tempCtx = new Context();
-    let i = 0;
-    for (let arg of builtInArgs[name]) {
-        tempCtx.set(arg, args[i]);
-        i++;
-    }
-    return await builtInFunctions[name](tempCtx);
+    'input': ['msg', 'cb'],
+    'import': ['url'],
+    'contains': ['arr', 'element'],
+    'parseNum': ['number'],
+    'append': ['arr'],
 }

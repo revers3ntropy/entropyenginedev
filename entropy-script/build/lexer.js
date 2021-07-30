@@ -1,7 +1,7 @@
 import { Position } from "./position.js";
-import { digits, identifierChars, KEYWORDS, singleCharTokens, singleLineComment, stringSurrounds, tt } from "./constants.js";
+import { digits, identifierChars, KEYWORDS, singleLineComment, stringSurrounds, } from "./constants.js";
 import { IllegalCharError } from "./errors.js";
-import { Token } from "./tokens.js";
+import { doubleCharTokens, singleCharTokens, Token, tripleCharTokens, tt } from "./tokens.js";
 export class Lexer {
     constructor(program) {
         this.text = program;
@@ -16,12 +16,6 @@ export class Lexer {
         if (!this.text)
             return [[new Token(this.position, this.position, tt.EOF)], undefined];
         const tokens = [];
-        const charStarts = {
-            '=': () => this.charEquals(),
-            '!': () => this.charExclamationMark(),
-            '>': () => this.charGreaterThan(),
-            '<': () => this.charLessThan(),
-        };
         while (this.currentChar !== undefined) {
             // add semi-colon after
             if (' \t\n'.includes(this.currentChar)) {
@@ -34,27 +28,27 @@ export class Lexer {
                 this.text[this.position.idx + 1] === singleLineComment[1]) {
                 this.comment();
             }
-            else if (singleCharTokens.hasOwnProperty(this.currentChar)) {
-                let startPos = this.position.clone;
-                let val = singleCharTokens[this.currentChar];
-                this.advance();
-                tokens.push(new Token(startPos, this.position, val));
-            }
             else if (identifierChars.includes(this.currentChar)) {
                 tokens.push(this.makeIdentifier());
-            }
-            else if (charStarts.hasOwnProperty(this.currentChar)) {
-                tokens.push(charStarts[this.currentChar]());
             }
             else if (stringSurrounds.includes(this.currentChar)) {
                 tokens.push(this.makeString());
             }
             else {
-                // unknown char
-                let startPos = this.position.clone;
-                let char = this.currentChar;
-                this.advance();
-                return [[], new IllegalCharError(startPos, this.position, char)];
+                const possibleAssignFirstChar = this.currentChar;
+                let token = this.unknownChar();
+                if (token) {
+                    if (token.type === tt.ASSIGN)
+                        token.value = possibleAssignFirstChar;
+                    tokens.push(token);
+                }
+                else {
+                    // unknown char
+                    let startPos = this.position.clone;
+                    let char = this.currentChar;
+                    this.advance();
+                    return [[], new IllegalCharError(startPos, this.position, char)];
+                }
             }
         }
         tokens.push(new Token(this.position, this.position, tt.EOF));
@@ -88,6 +82,12 @@ export class Lexer {
             if (this.currentChar === '\\') {
                 // skip over the character so that you can include the strClose string in the string
                 this.advance();
+                // @ts-ignore
+                if (this.currentChar === 'n') {
+                    str += '\n';
+                    this.advance();
+                    continue;
+                }
             }
             str += this.currentChar;
             this.advance();
@@ -107,45 +107,36 @@ export class Lexer {
             tokType = tt.KEYWORD;
         return new Token(posStart, this.position, tokType, idStr);
     }
-    charEquals() {
-        let startPos = this.position.clone;
-        this.advance();
-        let tokType = tt.ASSIGN;
-        if (this.currentChar === '=') {
-            tokType = tt.EQUALS;
-            this.advance();
+    unknownChar() {
+        if (this.currentChar === undefined)
+            return undefined;
+        for (let triple in tripleCharTokens) {
+            if (triple[0] === this.currentChar)
+                if (triple[1] === this.text[this.position.idx + 1])
+                    if (triple[2] === this.text[this.position.idx + 2]) {
+                        const startPos = this.position.clone;
+                        this.advance();
+                        this.advance();
+                        this.advance();
+                        return new Token(startPos, this.position.clone, tripleCharTokens[triple]);
+                    }
         }
-        return new Token(startPos, this.position, tokType);
-    }
-    charExclamationMark() {
-        let startPos = this.position.clone;
-        this.advance();
-        let tokType = tt.NOT;
-        if (this.currentChar === '=') {
-            tokType = tt.NOTEQUALS;
-            this.advance();
+        for (let double in doubleCharTokens) {
+            if (double[0] === this.currentChar)
+                if (double[1] === this.text[this.position.idx + 1]) {
+                    const startPos = this.position.clone;
+                    this.advance();
+                    this.advance();
+                    return new Token(startPos, this.position.clone, doubleCharTokens[double]);
+                }
         }
-        return new Token(startPos, this.position, tokType);
-    }
-    charGreaterThan() {
-        let startPos = this.position.clone;
-        this.advance();
-        let tokType = tt.GT;
-        if (this.currentChar === '=') {
-            tokType = tt.GTE;
+        if (singleCharTokens.hasOwnProperty(this.currentChar)) {
+            let startPos = this.position.clone;
+            let val = singleCharTokens[this.currentChar];
             this.advance();
+            return new Token(startPos, this.position, val);
         }
-        return new Token(startPos, this.position, tokType);
-    }
-    charLessThan() {
-        let startPos = this.position.clone;
-        this.advance();
-        let tokType = tt.LT;
-        if (this.currentChar === '=') {
-            tokType = tt.LTE;
-            this.advance();
-        }
-        return new Token(startPos, this.position, tokType);
+        return undefined;
     }
     comment() {
         this.advance();

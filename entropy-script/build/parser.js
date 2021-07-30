@@ -1,7 +1,8 @@
 import { Token } from "./tokens.js";
 import * as n from './nodes.js';
+import { N_undefined } from './nodes.js';
 import { InvalidSyntaxError } from "./errors.js";
-import { tokenType, tokenTypeString, tt } from "./constants.js";
+import { tokenType, tokenTypeString, tt } from "./tokens.js";
 export class ParseResults {
     constructor() {
         this.advanceCount = 0;
@@ -112,9 +113,10 @@ export class Parser {
         const startPos = this.currentToken.startPos;
         if (this.currentToken.matches(tt.KEYWORD, 'return')) {
             this.advance(res);
-            const expr = res.tryRegister(this.expr());
-            if (!expr)
-                this.reverse(res.reverseCount);
+            let expr = new N_undefined(this.currentToken.startPos, this.currentToken.startPos);
+            if (this.currentToken.type !== tt.ENDSTATEMENT) {
+                expr = res.register(this.expr());
+            }
             return res.success(new n.N_return(startPos, this.currentToken.startPos.clone, expr));
         }
         else if (this.currentToken.matches(tt.KEYWORD, 'break')) {
@@ -142,56 +144,7 @@ export class Parser {
                 this.advance(res);
                 return res.success(new n.N_string(startPos, tok.endPos, tok));
             case tt.IDENTIFIER:
-                this.advance(res);
-                let node = new n.N_variable(startPos, this.currentToken.endPos, tok);
-                let prevNode = new n.N_undefined(startPos, this.currentToken.endPos);
-                let functionCall = false;
-                while ([tt.OPAREN, tt.OSQUARE, tt.DOT].includes(this.currentToken.type)) {
-                    switch (this.currentToken.type) {
-                        case tt.OPAREN:
-                            functionCall = true;
-                            const tempNode = node;
-                            node = res.register(this.makeFunctionCall(node, prevNode));
-                            prevNode = tempNode;
-                            if (res.error)
-                                return res;
-                            break;
-                        case tt.OSQUARE:
-                            prevNode = node;
-                            node = res.register(this.makeIndex(node));
-                            if (res.error)
-                                return res;
-                            break;
-                        case tt.DOT:
-                            this.advance(res);
-                            // @ts-ignore
-                            if (this.currentToken.type !== tt.IDENTIFIER)
-                                return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `Expected identifier after '.'`));
-                            prevNode = node;
-                            node = new n.N_indexed(this.currentToken.startPos, this.currentToken.endPos, node, new n.N_string(this.currentToken.startPos, this.currentToken.endPos, this.currentToken));
-                            this.advance(res);
-                    }
-                }
-                if (this.currentToken.type === tt.ASSIGN) {
-                    if (functionCall) {
-                        return res.failure(new InvalidSyntaxError(startPos, this.currentToken.endPos, `Cannot assign to return value of function`));
-                    }
-                    this.advance(res);
-                    const value = res.register(this.expr());
-                    if (node instanceof n.N_variable) {
-                        node = new n.N_varAssign(startPos, this.currentToken.endPos, node.a, value, false);
-                    }
-                    else if (node instanceof n.N_indexed) {
-                        node.value = value;
-                    }
-                    else {
-                        return res.failure(new InvalidSyntaxError(startPos, this.currentToken.endPos, `Cannot have node of type ${this.currentToken.constructor.name}. 
-                            Expected either index or variable node.`));
-                    }
-                    if (res.error)
-                        return res;
-                }
-                return res.success(node);
+                return this.atomIdentifier(res, startPos, tok);
             case tt.OPAREN:
                 this.advance(res);
                 const expr = res.register(this.expr());
@@ -213,18 +166,70 @@ export class Parser {
                     return res;
                 return res.success(objectExpr);
             case tt.KEYWORD:
-                switch (tok.value) {
-                    case 'if':
-                        const expr = res.register(this.ifExpr());
-                        if (res.error)
-                            return res;
-                        return res.success(expr);
-                    default:
-                        return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `Invalid Identifier ${tok.value}`));
+                if (tok.value === 'if') {
+                    const expr = res.register(this.ifExpr());
+                    if (res.error)
+                        return res;
+                    return res.success(expr);
                 }
+                return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `Invalid Identifier ${tok.value}`));
             default:
                 return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `Expected number, identifier, '(', '+' or '-'`));
         }
+    }
+    atomIdentifier(res, startPos, tok) {
+        this.advance(res);
+        let node = new n.N_variable(startPos, this.currentToken.endPos, tok);
+        let prevNode = new n.N_undefined(startPos, this.currentToken.endPos);
+        let functionCall = false;
+        while ([tt.OPAREN, tt.OSQUARE, tt.DOT].includes(this.currentToken.type)) {
+            switch (this.currentToken.type) {
+                case tt.OPAREN:
+                    functionCall = true;
+                    const tempNode = node;
+                    node = res.register(this.makeFunctionCall(node, prevNode));
+                    prevNode = tempNode;
+                    if (res.error)
+                        return res;
+                    break;
+                case tt.OSQUARE:
+                    prevNode = node;
+                    node = res.register(this.makeIndex(node));
+                    if (res.error)
+                        return res;
+                    break;
+                case tt.DOT:
+                    this.advance(res);
+                    // @ts-ignore
+                    if (this.currentToken.type !== tt.IDENTIFIER)
+                        return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `Expected identifier after '.'`));
+                    prevNode = node;
+                    node = new n.N_indexed(this.currentToken.startPos, this.currentToken.endPos, node, new n.N_string(this.currentToken.startPos, this.currentToken.endPos, this.currentToken));
+                    this.advance(res);
+            }
+        }
+        if (this.currentToken.type === tt.ASSIGN) {
+            let assignType = this.currentToken.value;
+            if (functionCall) {
+                return res.failure(new InvalidSyntaxError(startPos, this.currentToken.endPos, `Cannot assign to return value of function`));
+            }
+            this.advance(res);
+            const value = res.register(this.expr());
+            if (node instanceof n.N_variable) {
+                node = new n.N_varAssign(startPos, this.currentToken.endPos, node.a, value, assignType, false);
+            }
+            else if (node instanceof n.N_indexed) {
+                node.value = value;
+                node.assignType = assignType;
+            }
+            else {
+                return res.failure(new InvalidSyntaxError(startPos, this.currentToken.endPos, `Cannot have node of type ${this.currentToken.constructor.name}. 
+                            Expected either index or variable node.`));
+            }
+            if (res.error)
+                return res;
+        }
+        return res.success(node);
     }
     power() {
         return this.binOp(() => this.atom(), [tokenType.POW], () => this.factor());
@@ -268,14 +273,20 @@ export class Parser {
     expr() {
         const res = new ParseResults();
         this.clearEndStatements(res);
-        if (this.currentToken.matches(tokenType.KEYWORD, 'var')) {
-            const exp = res.register(this.initiateVar(res, false));
+        if (this.currentToken.type === tt.KEYWORD && ['var', 'let'].includes(this.currentToken.value)) {
+            const exp = res.register(this.initiateVar(res, false, false));
             if (res.error)
                 return res;
             return res.success(exp);
         }
         else if (this.currentToken.matches(tokenType.KEYWORD, 'global')) {
-            const exp = res.register(this.initiateVar(res, true));
+            const exp = res.register(this.initiateVar(res, true, false));
+            if (res.error)
+                return res;
+            return res.success(exp);
+        }
+        else if (this.currentToken.matches(tokenType.KEYWORD, 'const')) {
+            const exp = res.register(this.initiateVar(res, false, true));
             if (res.error)
                 return res;
             return res.success(exp);
@@ -382,11 +393,11 @@ export class Parser {
         this.advance(res);
         return res.success(new n.N_indexed(startPos, this.currentToken.startPos, base, index));
     }
-    initiateVar(res, isGlobal) {
+    initiateVar(res, isGlobal, isConstant) {
         let startPos = this.currentToken.startPos;
         if (this.currentToken.type === tt.KEYWORD) {
-            if (['global', 'var'].indexOf(this.currentToken.value) === -1)
-                return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `Expected Identifier 'var' or 'global', not ${this.currentToken.value}`));
+            if (!['global', 'var', 'let', 'const'].includes(this.currentToken.value))
+                return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, `Expected Identifier 'var', 'let', 'const' or 'global', not ${this.currentToken.value}`));
             this.advance(res);
         }
         if (this.currentToken.type !== tokenType.IDENTIFIER) {
@@ -396,8 +407,13 @@ export class Parser {
         this.advance(res);
         // @ts-ignore doesn't like two different comparisons after each other with different values
         if (this.currentToken.type !== tt.ASSIGN) {
-            return res.success(new n.N_varAssign(startPos, this.currentToken.startPos, varName, new n.N_undefined(this.currentToken.startPos, this.currentToken.endPos), isGlobal));
+            if (isConstant)
+                return res.failure(new InvalidSyntaxError(startPos, this.currentToken.endPos, 'Cannot initialise constant to undefined'));
+            return res.success(new n.N_varAssign(startPos, this.currentToken.startPos, varName, new n.N_undefined(this.currentToken.startPos, this.currentToken.endPos), '=', isGlobal, 
+            // must be false ^
+            isConstant));
         }
+        let assignType = this.currentToken.value;
         this.advance(res);
         const expr = res.register(this.expr());
         if (res.error)
@@ -406,7 +422,7 @@ export class Parser {
             expr.name = varName.value;
         else if (expr instanceof n.N_function)
             expr.name = varName.value;
-        return res.success(new n.N_varAssign(startPos, this.currentToken.startPos, varName, expr, isGlobal));
+        return res.success(new n.N_varAssign(startPos, this.currentToken.startPos, varName, expr, assignType, isGlobal, isConstant));
     }
     bracesExp() {
         const res = new ParseResults();
@@ -561,6 +577,7 @@ export class Parser {
         if (res.error)
             return res;
         if (this.currentToken.type === tt.CBRACES) {
+            this.advance(res);
             return res.success(new n.N_class(startPos, this.currentToken.startPos, []));
         }
         while (true) {
@@ -575,7 +592,8 @@ export class Parser {
             func.name = methodId;
             if (isInit)
                 init = func;
-            methods.push(func);
+            else
+                methods.push(func);
         }
         this.consume(res, tt.CBRACES);
         return res.success(new n.N_class(startPos, this.currentToken.startPos, methods, extends_, init, name));
@@ -583,7 +601,7 @@ export class Parser {
     forExpr() {
         const res = new ParseResults();
         const startPos = this.currentToken.startPos;
-        let body, array, identifier, isGlobalIdentifier = false;
+        let body, array, identifier, isGlobalIdentifier = false, isConstIdentifier = false;
         if (!this.currentToken.matches(tt.KEYWORD, 'for'))
             return res.failure(new InvalidSyntaxError(this.currentToken.startPos, this.currentToken.endPos, "Expected 'for'"));
         this.advance(res);
@@ -592,7 +610,11 @@ export class Parser {
             isGlobalIdentifier = true;
             this.advance(res);
         }
-        else if (this.currentToken.matches(tt.KEYWORD, 'var')) {
+        else if (this.currentToken.matches(tt.KEYWORD, 'const')) {
+            isConstIdentifier = true;
+            this.advance(res);
+        }
+        else if (this.currentToken.matches(tt.KEYWORD, 'var') || this.currentToken.matches(tt.KEYWORD, 'let')) {
             this.advance(res);
         }
         // @ts-ignore - comparison again
@@ -614,7 +636,7 @@ export class Parser {
         if (res.error)
             return res;
         this.addEndStatement(res);
-        return res.success(new n.N_for(startPos, this.currentToken.startPos, body, array, identifier, isGlobalIdentifier));
+        return res.success(new n.N_for(startPos, this.currentToken.startPos, body, array, identifier, isGlobalIdentifier, isConstIdentifier));
     }
     array() {
         const res = new ParseResults();

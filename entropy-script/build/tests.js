@@ -20,21 +20,50 @@ expect([true], '2 + 2 == 4 | 3 + 2 == 2');
 expect([false], '2 + 2 == 4 & 3 + 2 == 2');
 expect([true], 'true & 3 - 1 == 2');
 expect([true], '!false');
+expect([true], '"hi" == "hi"');
+expect([true], '"hi" != "hijj"');
 // multi-line statements
 expect([true, false], '2==2; 2==5');
 // strings
 expect(['a', 'bc', 'defg'], '"a"; `bc`; \'defg\'');
 expect([`h'h`], `'h\\'h'`);
 // variables
-expect([1], 'var a = 1');
+expect([1, 2, 1], 'var a = 1; a = 2; var a = 1;');
 expect('ReferenceError', 'a');
 expect([1], 'global a = 1');
 expect([1], 'a = 1');
 expect(['Undefined'], 'var a;');
 expect([1, 2], 'var a = 1; a = a + 1;');
 expect('ReferenceError', 'var a = a + 1;');
-//expect([2, 2], 'var b = 2; b *= 2');
 expect(['Undefined', true], 'var a; a == undefined;');
+expect([1, 2], `let n = 1; n = 2;`);
+expect('TypeError', `const n = 1; n = 2;`);
+expect('TypeError', `const n = 1; const n = 2;`);
+expect(['aa', 'bb', true, 'Undefined', false], `
+let a = 'aa';
+let b = 'bb';
+let res = true;
+if (a == 'aa' & b != 'cc')
+    res = false;
+res;
+`);
+// maths assign
+expect([1, 2], `
+    var n = 1;
+    n += 1;
+`);
+expect([1, 50], `
+    var n = 1;
+    n *= 50;
+`);
+expect([6, 2], `
+    var n = 6;
+    n /= 3;
+`);
+expect(['hello', 'hello world'], `
+    var n = 'hello';
+    n += ' world';
+`);
 // if
 expect(['Undefined'], `
     if (!true & 1 | 7 + 2) {
@@ -104,6 +133,14 @@ expect([[[1, 2], 1, 2], 5, [[1, 5], 1, 2]], `
     arr[0][1] = 5;
     arr;
 `);
+expect(['Object', 2], `
+    n = {a: 1};
+    n.a += 1;
+`);
+expect('TypeError', `
+    n = 0;
+    n.n = 1;
+`);
 // for
 expect(['Undefined', 'Undefined', 2], `
     var output;
@@ -119,6 +156,13 @@ expect(['Undefined', 2], `
 expect(['Undefined', 'Undefined', 2], `
     var output;
     for (i in [0, 1, 2]) {
+        output = i;
+    }
+    output;
+`);
+expect(['Undefined', 'Undefined', 2], `
+    var output;
+    for (i in 3) {
         output = i;
     }
     output;
@@ -147,8 +191,8 @@ expect(['Undefined', 0, 'Undefined', 2, 2], `
     i_;
 `);
 // run built in functions
-expect(['hi'], `
-    log('hi')
+expect(['testing logging function'], `
+    log('testing logging function');
 `);
 // range
 expect([[0, 1, 2]], 'range(3)');
@@ -234,6 +278,20 @@ var myFunc = func (arg) {
     return arg;
 };
 myFunc();
+`);
+expect(['N_function', 'hello world'], `
+var myFunc = func (str1, str2, str3) {
+    return str1 + str2 + str3;
+};
+myFunc('hel', 'lo w', 'orld');
+`);
+expect(['N_function'], `
+global airport = func () {
+    var exists = false;
+    gg = false;
+    // wont get logged as not running function
+    log('hi');
+};
 `);
 // objects + properties
 expect(['Object', 1, 1, 1], `
@@ -443,14 +501,14 @@ expect(['N_class', 'v2', 'v2', '3, 4', 'v2', '8, 10', false, 'v2', '8, 10', '9, 
         }
         
         add (v) {
-            this.x = this.x + v.x;
-            this.y = this.y + v.y;
+            this.x += v.x;
+            this.y += v.y;
             return this;
         }
         
         scale (n) {
-            this.x = this.x * n;
-            this.y = this.y * n;
+            this.x *= n;
+            this.y *= n;
             return this;
         }
        

@@ -1,61 +1,33 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-import { Context } from "./context.js";
 import { str } from "./util.js";
 import * as n from './nodes.js';
-import { Undefined } from "./constants.js";
-import { TypeError } from "./errors.js";
+import { digits, None, Undefined } from "./constants.js";
+import { ESError } from "./errors.js";
 import { Position } from "./position.js";
 export const builtInFunctions = {
-    'range': (context) => __awaiter(void 0, void 0, void 0, function* () {
-        let start = context.get('start');
-        let stop = context.get('stop');
-        let step = context.get('step') || 1;
-        if (step instanceof Undefined)
-            step = undefined;
-        if (stop instanceof Undefined)
-            stop = undefined;
-        if (start instanceof Undefined)
-            start = undefined;
-        for (let number of [start, stop, step]) {
-            if (!['undefined', 'number'].includes(typeof number))
-                return new TypeError(Position.unknown, Position.unknown, 'undefined | number', typeof number, number, 'running built in function "range"');
+    'range': context => {
+        let n = context.get('n');
+        if (n instanceof Undefined)
+            n = undefined;
+        try {
+            return [...Array(n).keys()];
         }
-        const res = [];
-        if (!stop && stop !== 0) {
-            for (let i = 0; i < start; i++) {
-                res.push(i);
-            }
-            return res;
+        catch (e) {
+            return new ESError(Position.unknown, Position.unknown, 'RangeError', `Cannot make range of length '${str(n)}'`);
         }
-        if (start > stop)
-            return res;
-        for (let i = start; i < stop; i += step) {
-            res.push(i);
-        }
-        console.log(res);
-        return res;
-    }),
-    'log': (context) => __awaiter(void 0, void 0, void 0, function* () {
+    },
+    'log': context => {
         var _a;
         let msg = (_a = context.get('message')) !== null && _a !== void 0 ? _a : '';
-        msg = yield runBuiltIn('str', [msg]);
+        msg = str(msg);
         console.log(msg);
         return context.get('message');
-    }),
-    'str': (context) => __awaiter(void 0, void 0, void 0, function* () {
+    },
+    'str': context => {
         let val = context.get('val');
         return str(val);
-    }),
-    'type': (context) => __awaiter(void 0, void 0, void 0, function* () {
-        var _b;
+    },
+    'type': context => {
+        var _a;
         let val = context.get('val');
         switch (typeof val) {
             case "function":
@@ -77,27 +49,86 @@ export const builtInFunctions = {
                     return 'undefined';
                 else if (Array.isArray(val))
                     return 'array';
-                return (_b = val.constructor.name) !== null && _b !== void 0 ? _b : 'object';
+                return (_a = val.constructor.name) !== null && _a !== void 0 ? _a : 'object';
             default:
                 return typeof val;
         }
-    })
+    },
+    'contains': context => {
+        let arr = context.get('arr');
+        if (!Array.isArray(arr))
+            return false;
+        return ((~arr.indexOf(context.get('element'))) || None) || false;
+    },
+    'append': context => {
+        let arr = context.get('arr');
+        if (!Array.isArray(arr))
+            return arr;
+        for (let item of context.get('args')) {
+            arr.push(item);
+        }
+        return arr;
+    },
+    'strLower': context => {
+        var _a;
+        return ((_a = context.get('args')[0]) === null || _a === void 0 ? void 0 : _a.toLowerCase()) || '';
+    },
+    'strUpper': context => {
+        var _a;
+        return ((_a = context.get('args')[0]) === null || _a === void 0 ? void 0 : _a.toLowerCase()) || '';
+    },
+    'parseNum': context => {
+        let str = context.get('number');
+        if (typeof str == 'number')
+            return str;
+        let idx = 0;
+        let numStr = '';
+        let dotCount = 0;
+        while (str[idx] !== undefined && (digits + '._').includes(str[idx])) {
+            if (str[idx] === '.') {
+                if (dotCount === 1)
+                    break;
+                dotCount++;
+                numStr += '.';
+                // use _ as a deliminator for sets of 0s - eg 1_000_000_000
+            }
+            else {
+                numStr += str[idx];
+            }
+            idx++;
+        }
+        if (dotCount === 0)
+            return parseInt(numStr);
+        return parseFloat(numStr);
+    },
+    'throw': context => {
+        return new ESError(Position.unknown, Position.unknown, 'Thrown Error', 'Thrown error in code');
+    },
+    'len': context => {
+        let total = 0;
+        for (let item of context.get('args')) {
+            if (typeof item === 'string' || Array.isArray(item)) {
+                total += item.length;
+            }
+            else if (typeof item === 'object') {
+                for (let prop in item)
+                    total++;
+            }
+            else
+                total++;
+        }
+        return total;
+    }
 };
 export const builtInArgs = {
     'add': ['a', 'b'],
-    'range': ['start', 'stop', 'step'],
+    'range': ['n'],
     'log': ['message'],
     'str': ['val'],
     'type': ['val'],
+    'input': ['msg', 'cb'],
+    'import': ['url'],
+    'contains': ['arr', 'element'],
+    'parseNum': ['number'],
+    'append': ['arr'],
 };
-export function runBuiltIn(name, args) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const tempCtx = new Context();
-        let i = 0;
-        for (let arg of builtInArgs[name]) {
-            tempCtx.set(arg, args[i]);
-            i++;
-        }
-        return yield builtInFunctions[name](tempCtx);
-    });
-}

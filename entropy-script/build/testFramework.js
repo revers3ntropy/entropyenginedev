@@ -1,18 +1,8 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import { ESError, TestFailed } from "./errors.js";
 import { run } from "./index.js";
 import { Context } from "./context.js";
-import { global } from "./constants.js";
+import { global, now } from "./constants.js";
 import { str } from "./util.js";
-let now = (typeof window === 'undefined') ? () => 0 : performance.now;
 export class TestResult {
     constructor() {
         this.time = 0;
@@ -56,29 +46,22 @@ export class Test {
         this.test = test;
     }
     run(env) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.test(env);
-        });
+        return this.test(env);
     }
     static test(test) {
         Test.tests.push(new Test(test, Test.tests.length));
     }
     static testAll() {
-        var _a, _b, _c;
-        return __awaiter(this, void 0, void 0, function* () {
-            const res = new TestResult();
-            if (typeof window === 'undefined')
-                now = (_c = (_b = (_a = (yield import('perf_hooks'))) === null || _a === void 0 ? void 0 : _a.performance) === null || _b === void 0 ? void 0 : _b.now) !== null && _c !== void 0 ? _c : (() => 0);
-            const time = now();
-            for (let test of Test.tests) {
-                global.resetAsGlobal();
-                const testEnv = new Context();
-                testEnv.parent = global;
-                res.register(yield test.run(testEnv));
-            }
-            res.time = Math.round(now() - time);
-            return res;
-        });
+        const res = new TestResult();
+        let time = now();
+        for (let test of Test.tests) {
+            global.resetAsGlobal();
+            const testEnv = new Context();
+            testEnv.parent = global;
+            res.register(test.run(testEnv));
+        }
+        res.time = Math.round(now() - time);
+        return res;
     }
 }
 Test.tests = [];
@@ -99,9 +82,11 @@ function arraysSame(arr1, arr2) {
     return true;
 }
 export function expect(expected, from) {
-    Test.test((env) => __awaiter(this, void 0, void 0, function* () {
+    Test.test(env => {
         var _a, _b;
-        let result = yield run(from, env);
+        let result = run(from, {
+            env
+        });
         if (result.error && Array.isArray(expected))
             return new TestFailed(`Unexpected error encountered when running test. Expected '${expected}' but got error: 
 ${result.error.str}
@@ -128,5 +113,5 @@ with code
             return true;
         const val = result.error || result.val;
         return new TestFailed(`Expected \n'${str(expected)}' \n but got \n'${str(val)}'\n instead from test with code \n'${from}'\n`);
-    }));
+    });
 }

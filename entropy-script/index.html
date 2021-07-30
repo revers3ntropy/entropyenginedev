@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height: 100%">
 <head>
     <meta charset="UTF-8">
     <title>
@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width">
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 </head>
-<body style="text-align: center">
+<body style="text-align: center; height: 100%">
 <style>
     :root {
         --input-bg: rgb(255, 255, 255);
@@ -19,29 +19,37 @@
         padding-bottom: 0;
         margin-bottom: 10px;
         background-color: var(--input-bg);
-        height: 30px;
+        height: 80%;
         outline: none;
         font-family: Menlo,Monaco,Consolas,'Courier New',monospace;
         font-size: 13px;
         width: 100%;
         border: 1px solid #e7e7e7;
     }
+
+    #output {
+        text-align: left;
+        white-space: pre-line;
+        width: 100%;
+        padding-top: 0;
+        margin-top: 0;
+        border: none;
+        background-color: var(--input-bg);
+        font-family: Menlo,Monaco,Consolas,'Courier New',monospace;
+        font-size: 13px;
+    }
+
+    button {
+        border: none;
+        margin: 3px;
+        padding: 5px;
+    }
 </style>
 
 <textarea id="input" rows="5"></textarea>
 <button id="submit"> Run </button>
-<div id="output" style="
-    text-align: left;
-    white-space: pre-line;
-    width: 100%;
-    height: 90%;
-    padding-top: 0;
-    margin-top: 0;
-    border: none;
-    background-color: var(--input-bg);
-    font-family: Menlo,Monaco,Consolas,'Courier New',monospace;
-    font-size: 13px;
-"></div>
+<button id="perf-test"> Performance Test </button>
+<div id="output"></div>
 
 </body>
 </html>
@@ -52,19 +60,49 @@
 	import {str} from "./build/util.js";
 
 	const input = $('#input');
-	const output = $('#output');
+	const output = document.getElementById('output');
 	const submit = $('#submit');
 
+	const perfTestButton = $('#perf-test');
+
+	input.val(localStorage.last);
+
 	function outputFunc (message) {
-		output.html(`${str(message)} \n${output.html()}`);
+		const messageP = document.createElement('p');
+		messageP.textContent = str(message);
+		output.appendChild(messageP);
 	}
 
-    init(outputFunc);
+	localStorage.last ||= `print('hello world');`;
+
+    init(outputFunc, () => outputFunc('This does not support the input function.'));
 
 	submit.click(async e => {
-		output.html('');
-		let res = await run(input.val());
-		if (res.error) outputFunc(res.error.str);
+		output.innerHTML = '';
+		const res = run(input.val(), {
+			measurePerformance: true
+        })
+        if (res.error) outputFunc(res.error.str);
     });
+
+	const nIterations = 10;
+
+	perfTestButton.click(e => {
+		output.innerHTML = '';
+		const msg = input.val();
+		let totalTime = 0;
+		for (let i = 0; i < nIterations; i++) {
+			let res = run(msg);
+			if (res.error) outputFunc(res.error.str);
+			totalTime += res.timeData.total;
+        }
+		const finalOut = `${nIterations} iterations took an average of ${Number((totalTime / nIterations).toPrecision(2))}ms`;
+		outputFunc(finalOut);
+		console.log(finalOut);
+	});
+
+	setInterval(() => {
+		localStorage.last = input.val();
+    }, 250);
 
 </script>

@@ -66,9 +66,9 @@
 
     init(outputFunc);
 
-	submit.click(async e => {
+	submit.click(e => {
 		output.html('');
-		let res = await run(input.val());
+		let res = run(input.val());
 		if (res.error) outputFunc(res.error.str);
     });
 

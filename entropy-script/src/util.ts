@@ -1,6 +1,8 @@
 import {Undefined} from "./constants.js";
 import {Node} from "./nodes.js";
 
+export type enumDict<T extends number, U> = { [K in T]: U };
+
 export function deepClone(obj: any, hash = new WeakMap()): any {
     // Do not try to clone primitives or functions
     if (Object(obj) !== obj || obj instanceof Function)
@@ -25,6 +27,7 @@ export function deepClone(obj: any, hash = new WeakMap()): any {
 }
 
 export function str (val: any, depth = 0): string {
+    if (typeof val === 'string') return val;
     if (depth > 20) return '...';
     let result = '';
 
@@ -43,7 +46,12 @@ export function str (val: any, depth = 0): string {
         if (Array.isArray(val)) {
             result += '[';
             for (let item of val) {
-                result += `${str(item, depth + 1)}, `;
+                try {
+                    result += str(item, depth + 1)+`, `;
+                }
+                catch (e) {
+                    result += '<large property>, '
+                }
             }
             if (val.length)
                 result = result.substring(0, result.length - 2);
@@ -56,7 +64,7 @@ export function str (val: any, depth = 0): string {
             for (let item in val) {
                 i++;
                 if (val.hasOwnProperty(item) && !['this', 'this_', 'constructor', 'self'].includes(item))
-                    result += `${item}: ${str(val[item], depth + 1)}, `;
+                    result += `${item}: ${str(val[item], depth + 1) || ''}, `;
             }
             if (i) result = result.substring(0, result.length - 2);
             result += '}';
@@ -69,3 +77,5 @@ export function str (val: any, depth = 0): string {
 
     return result;
 }
+
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

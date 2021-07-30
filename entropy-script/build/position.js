@@ -17,7 +17,7 @@ export class Position {
         return new Position(this.idx, this.ln, this.col);
     }
     get str() {
-        return `${this.ln}:${this.col}`;
+        return `${this.ln + 1}:${this.col + 1}`;
     }
     static get unknown() {
         return new Position(-1, -1, -1);

@@ -1,9 +1,3 @@
-var myFunc = func (n, cb) {
-    while (!cb(n)) {
-        n = n - 1;
-    }
-    return n;
-};
-myFunc(20, func (n) {
-    return n < 5;
-});
+timer.start();
+for (let i in range(1_000_000)) {}
+timer.log();

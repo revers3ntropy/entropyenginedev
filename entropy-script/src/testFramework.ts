@@ -1,10 +1,8 @@
 import {ESError, TestFailed} from "./errors.js";
 import {run} from "./index.js";
 import {Context} from "./context.js";
-import {global} from "./constants.js";
+import {global, now} from "./constants.js";
 import {str} from "./util.js";
-
-let now = (typeof window === 'undefined') ? () => 0 : performance.now;
 
 export class TestResult {
 
@@ -56,40 +54,37 @@ export class TestResult {
 }
 
 export class Test {
-    test: (env: Context) => Promise<boolean | ESError>;
+    test: (env: Context) => boolean | ESError;
     id: string | number;
 
-    constructor (test: (env: Context) => Promise<boolean | ESError>, id: string | number = 'test') {
+    constructor (test: (env: Context) => boolean | ESError, id: string | number = 'test') {
         this.id = id;
         this.test = test;
     }
 
-    async run (env: Context) {
-        return await this.test(env);
+    run (env: Context) {
+        return this.test(env);
     }
 
     static tests: Test[] = [];
 
-    static test (test: (env: Context) => Promise<boolean | ESError>) {
+    static test (test: (env: Context) => boolean | ESError) {
         Test.tests.push(new Test(test, Test.tests.length));
     }
 
-    static async testAll (): Promise<TestResult> {
+    static testAll (): TestResult {
         const res = new TestResult();
 
-        if (typeof window === 'undefined')
-            now = (await import('perf_hooks'))?.performance?.now ?? (() => 0);
-
-        const time = now();
+        let time = now();
 
         for (let test of Test.tests) {
             global.resetAsGlobal();
             const testEnv = new Context();
             testEnv.parent = global;
-            res.register(await test.run(testEnv));
+            res.register(test.run(testEnv));
         }
 
-        res.time = Math.round(now() - time);
+        res.time = Math.round( now() - time);
 
         return res;
     }
@@ -115,8 +110,10 @@ function arraysSame (arr1: any[], arr2: any[]): boolean {
 }
 
 export function expect (expected: any[] | string, from: string) {
-    Test.test(async (env) => {
-        let result = await run(from, env);
+    Test.test(env => {
+        let result = run(from, {
+            env
+        });
 
         if (result.error && Array.isArray(expected)) return new TestFailed(
             `Unexpected error encountered when running test. Expected '${expected}' but got error: 

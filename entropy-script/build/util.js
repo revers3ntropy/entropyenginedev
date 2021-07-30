@@ -23,6 +23,8 @@ export function deepClone(obj, hash = new WeakMap()) {
     return Object.assign(result, ...Object.keys(obj).map(key => ({ [key]: deepClone(obj[key], hash) })));
 }
 export function str(val, depth = 0) {
+    if (typeof val === 'string')
+        return val;
     if (depth > 20)
         return '...';
     let result = '';
@@ -38,7 +40,12 @@ export function str(val, depth = 0) {
         if (Array.isArray(val)) {
             result += '[';
             for (let item of val) {
-                result += `${str(item, depth + 1)}, `;
+                try {
+                    result += str(item, depth + 1) + `, `;
+                }
+                catch (e) {
+                    result += '<large property>, ';
+                }
             }
             if (val.length)
                 result = result.substring(0, result.length - 2);
@@ -52,7 +59,7 @@ export function str(val, depth = 0) {
             for (let item in val) {
                 i++;
                 if (val.hasOwnProperty(item) && !['this', 'this_', 'constructor', 'self'].includes(item))
-                    result += `${item}: ${str(val[item], depth + 1)}, `;
+                    result += `${item}: ${str(val[item], depth + 1) || ''}, `;
             }
             if (i)
                 result = result.substring(0, result.length - 2);
@@ -67,3 +74,4 @@ export function str(val, depth = 0) {
     }
     return result;
 }
+export const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));

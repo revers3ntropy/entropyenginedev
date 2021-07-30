@@ -2,8 +2,8 @@ import * as es from './build/index.js';
 import readline from 'readline';
 import {Test} from "./build/testFramework.js";
 import './build/tests.js';
-
-es.init(console.log);
+import {str} from "./build/util.js";
+import {builtInFunctions} from "./build/builtInFunctions.js";
 
 function askQuestion(query) {
 	const rl = readline.createInterface({
@@ -17,23 +17,40 @@ function askQuestion(query) {
 	}));
 }
 
-while (true) {
-	const input = await askQuestion('>> ');
-	if (input === 'exit')
-		break;
-	if (input === 'test') {
+es.init(console.log, async (msg, cb) => cb(await askQuestion(msg)));
+
+
+while (1) {
+	const input = String(await askQuestion('>>> '));
+	if (input === 'exit') break;
+
+	else if (input === 'test') {
 		const res = await Test.testAll();
 		console.log(res.str());
 		continue;
 	}
 
-	let res = await es.run(input);
+	else if (/run [\w_\/.]+\.es/.test(input)) {
+		builtInFunctions['import']({get: () => input.substring(4)});
+		// run breaks out of the loop, to allow inputs
+		break;
+	}
+
+	else if (/run [\w_\/.]+/.test(input)) {
+		builtInFunctions['import']({get: () => input.substring(4) + '.es'});
+		// run breaks out of the loop, to allow inputs
+		break;
+	}
+
+	let res = es.run(input);
+
+	console.log(res);
 
 	let out = res.val;
 
-	if (res.error) out = res.error.str;
-	if (out === undefined) out = '--undefined--'
-	if (out.length === 0) out = '';
-	if (out.length === 1) out = out[0];
-	if (out) console.log(out);
+	if (out === undefined) out = '--undefined--';
+	if (out.length === 0)  out = '';
+	if (out.length === 1)  out = out[0];
+	if (res.error)         out = res.error.str;
+	if (out !== undefined) console.log(str(out));
 }

@@ -1,9 +1,32 @@
 import {initialise} from "./init.js";
+import {ESError, TypeError} from "./errors.js";
+import {Position} from "./position.js";
+
+export type symbolOptions = {
+    isConstant?: boolean;
+    isAccessible?: boolean;
+    global?: boolean;
+}
+
+export class ESSymbol {
+    isConstant: boolean;
+    value: any;
+    identifier: string;
+    isAccessible: boolean;
+
+    constructor (value: any, identifier: string, options: symbolOptions = {}) {
+        this.value = value;
+        this.identifier = identifier;
+        this.isConstant = options.isConstant ?? false;
+        this.isAccessible = options.isAccessible ?? true;
+    }
+}
 
 export class Context {
-    symbolTable: any;
+    private symbolTable: {[identifier: string]: ESSymbol};
     parent: Context | undefined;
     initialisedAsGlobal = false;
+    deleted = false;
 
     constructor () {
         this.symbolTable = {};
@@ -14,21 +37,39 @@ export class Context {
     }
 
     hasOwn (identifier: string) {
-        return this.symbolTable[identifier] !== undefined;
+        return this.symbolTable[identifier] instanceof ESSymbol;
     }
 
     get (identifier: string) {
-        let value = this.symbolTable[identifier];
-        if (value === undefined && this.parent)
-            value = this.parent.get(identifier);
-
-        return value;
+        let symbol = this.getSymbol(identifier);
+        if (symbol instanceof ESError || symbol == undefined) return symbol;
+        return symbol.value;
     }
 
-    set (identifier: string, value: any, globally = false) {
+    getSymbol (identifier: string): undefined | ESSymbol | ESError {
+        let symbol = this.symbolTable[identifier];
+        if (symbol !== undefined && !symbol.isAccessible)
+            return new TypeError(
+                Position.unknown,
+                Position.unknown,
+                'assessable',
+                'inaccessible',
+                symbol.identifier
+            );
+        if (symbol === undefined && this.parent) {
+            let res: any = this.parent.getSymbol(identifier);
+            if (res instanceof ESError)
+                return res;
+            symbol = res;
+        }
+
+        return symbol;
+    }
+
+    set (identifier: string, value: any, options: symbolOptions = {}) {
         let context: Context = this;
 
-        if (globally) {
+        if (options.global) {
             context = this.root;
         } else {
             // searches upwards to find the identifier, and if none can be found then it assigns it to the current context
@@ -38,21 +79,38 @@ export class Context {
             if (!context.hasOwn(identifier))
                 context = this;
         }
-        context.symbolTable[identifier] = value;
+        return context.setOwn(value, identifier, options);
+    }
 
+    setOwn (value: any, identifier: string, options: symbolOptions = {}) {
+        // is not global
+        if (options.global && !this.initialisedAsGlobal) options.global = false;
+        let symbol = this.getSymbol(identifier);
+        if (symbol instanceof ESError) return symbol;
+        if (symbol?.isConstant) {
+            return new TypeError(
+                Position.unknown,
+                Position.unknown,
+                'dynamic',
+                'constant',
+                identifier
+            );
+        }
+
+        this.symbolTable[identifier] = new ESSymbol(value, identifier, options);
+        return value;
     }
 
     remove (identifier: string) {
         delete this.symbolTable[identifier];
     }
 
-    delete () {
-        for (let symbol in this.symbolTable) {
+    clear () {
+        for (let symbol in this.symbolTable)
             this.remove(symbol);
-        }
 
-        delete this.symbolTable;
         this.parent = undefined;
+        this.deleted = true;
     }
 
     get root () {
@@ -67,11 +125,12 @@ export class Context {
     resetAsGlobal () {
         if (!this.initialisedAsGlobal) return;
 
-        const printFunc = this.get('print').func
+        const printFunc = this.root.get('print');
+        const inputFunc = this.root.get('input');
 
         this.symbolTable = {};
         this.initialisedAsGlobal = false;
 
-        initialise(this, printFunc);
+        initialise(this, printFunc?.func || console.log, inputFunc?.func || (() => {}));
     }
 }

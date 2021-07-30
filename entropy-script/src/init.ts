@@ -1,14 +1,15 @@
 import {builtInArgs, builtInFunctions} from "./builtInFunctions.js";
-import {N_builtInFunction} from "./nodes.js";
+import {N_builtInFunction, N_function, N_functionCall, N_string} from "./nodes.js";
 import {Context} from "./context.js";
 import {ImportError} from "./errors.js";
 import {Position} from "./position.js";
 import {run} from "./index.js";
 import {globalConstants} from "./constants.js";
 import {str} from "./util.js";
+import {Token, tt} from "./tokens.js";
 
-export function initialise (globalContext: Context, printFunc: (...args: any[]) => void) {
-    builtInFunctions['import'] = async context => {
+export function initialise (globalContext: Context, printFunc: (...args: any[]) => void, inputFunc: (msg: string, cb: (...arg: any[]) => any) => void) {
+    builtInFunctions['import'] = context => {
 
         const url = context.get('url');
 
@@ -18,54 +19,86 @@ export function initialise (globalContext: Context, printFunc: (...args: any[]) 
 
         if (!url) return error('No URL given');
 
-        let fetch_;
-
-        try {
-            fetch_ = fetch;
-        } catch (e) {
-            // @ts-ignore
-            fetch_ = (await import('../../node_modules/node-fetch/lib/index.js')).default;
-        }
-
-        let result: any;
 
         let pat = /^https?:\/\//i;
         if (pat.test(url)) {
 
-            result = await fetch_(url);
-            return await run(await result.text());
+            fetch(url)
+                .then(async (result: any) => {
 
-        } else {
-            try {
-                const fs = await import('fs');
+                const res = await run(await result.text(), {
+                    env: globalContext,
+                });
+                if (res.error)
+                    console.log(res.error.str);
+            });
+            return;
+        }
 
+        // node
+        try {
+
+            import('fs').then(async (fs: any) => {
                 // data is actually a string
                 const data: any = fs.readFileSync(url, {encoding:'utf8'});
-                return await run(data);
+                const res = await run(data, {
+                    env: globalContext,
+                });
 
-            } catch (e) {
-                return new ImportError(Position.unknown, Position.unknown, `
-                Could not import file ${url}
-            `)
-            }
+                if (res.error)
+                    console.log(res.error.str);
+            });
+
+
+        } catch (e) {
+            return new ImportError(Position.unknown, Position.unknown, `
+            Could not import file ${url}
+        `)
         }
     }
 
-    builtInArgs['import'] = ['url'];
-
     builtInFunctions['print'] = async context => {
-        printFunc('> ' + str(context.get('message')));
+        let output = '> ';
+        if (context instanceof Context) {
+            for (let arg of context.get('args'))
+                output += str(arg);
+        } else {
+            output += str(context);
+        }
+
+        printFunc(output);
     }
 
-    builtInArgs['print'] = ['message'];
+    builtInFunctions['input'] = async context => {
+        inputFunc(context.get('msg'), (msg) => {
+            let cb = context.get('cb');
+            if (cb instanceof N_function) {
+                let caller = new N_functionCall(Position.unknown, Position.unknown, cb, [
+                    new N_string(Position.unknown, Position.unknown, new Token(Position.unknown, Position.unknown, tt.STRING, msg))
+                ]);
+                let res = caller.interpret(context);
+                if (res.error)
+                    console.log(res.error.str);
+            } else if (typeof cb === 'function')
+                cb(msg);
+
+            return '\'input()\' does not return anything. Pass in a function as the second argument, which will take the user input as an argument.'
+        });
+    }
 
     for (let builtIn in builtInFunctions) {
         const node = new N_builtInFunction(builtInFunctions[builtIn], builtInArgs[builtIn] || []);
-        globalContext.set(builtIn, node, true);
+        globalContext.set(builtIn, node, {
+            global: true,
+            isConstant: true
+        });
     }
 
     for (let constant in globalConstants) {
-        globalContext.set(constant, globalConstants[constant], true);
+        globalContext.set(constant, globalConstants[constant], {
+            global: true,
+            isConstant: true
+        });
     }
 
     globalContext.initialisedAsGlobal = true;

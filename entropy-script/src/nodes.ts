@@ -1,9 +1,10 @@
-import {None, tokenTypeString, tt, Undefined} from "./constants.js";
+import {tokenTypeString, tt} from "./tokens.js";
 import {Token} from "./tokens.js";
 import {ESError, InvalidSyntaxError, ReferenceError, TypeError} from "./errors.js";
 import {Context} from "./context.js";
 import {Position} from "./position.js";
 import {deepClone, str} from "./util.js";
+import {None, now, Undefined} from "./constants.js";
 
 export class interpretResult {
     val: any | undefined;
@@ -16,15 +17,24 @@ export class interpretResult {
 export abstract class Node {
     startPos: Position;
     endPos: Position;
-    protected constructor (startPos: Position, endPos: Position) {
+    isTerminal;
+
+    static interprets = 0;
+    static totalTime = 0;
+    static maxTime = 0;
+
+
+    protected constructor (startPos: Position, endPos: Position, isTerminal=false) {
         this.endPos = endPos;
         this.startPos = startPos;
+        this.isTerminal = isTerminal;
     }
-    abstract interpret_ (context: Context): Promise<any>;
+    abstract interpret_ (context: Context): any;
 
-    async interpret (context: Context): Promise<interpretResult> {
+    interpret (context: Context): interpretResult {
+        const start = now();
         const res = new interpretResult();
-        const val = await this.interpret_(context);
+        const val = this.interpret_(context);
 
         if (val instanceof ESError)
             res.error = val;
@@ -39,9 +49,14 @@ export abstract class Node {
         } else
             res.val = val;
 
+        let time = now() - start;
+        Node.interprets++;
+        Node.totalTime += time;
+        if (time > Node.maxTime) Node.maxTime = time;
         return res;
     }
 }
+
 
 // --- NON-TERMINAL NODES ---
 
@@ -57,9 +72,9 @@ export class N_binOp extends Node {
         this.right = right;
     }
 
-    async interpret_(context: Context): Promise<any> {
-        const left = await this.left.interpret(context);
-        const right = await this.right.interpret(context);
+     interpret_(context: Context) {
+        const left = this.left.interpret(context);
+        const right = this.right.interpret(context);
 
         if (left.error) return left;
         if (right.error) return right;
@@ -111,8 +126,8 @@ export class N_unaryOp extends Node {
         this.opTok = opTok;
     }
 
-    async interpret_(context: Context) {
-        const res = await this.a.interpret(context);
+    interpret_(context: Context) {
+        const res = this.a.interpret(context);
         if (res.error) return res;
 
         switch (this.opTok.type) {
@@ -139,17 +154,63 @@ export class N_varAssign extends Node {
     value: Node;
     varNameTok: Token;
     isGlobal: boolean;
-    constructor(startPos: Position, endPos: Position, varNameTok: Token, value: Node, isGlobal=false) {
+    isConstant: boolean;
+    assignType: string;
+
+    constructor(startPos: Position, endPos: Position, varNameTok: Token, value: Node, assignType='=', isGlobal=false, isConstant=false) {
         super(startPos, endPos);
         this.value = value;
         this.varNameTok = varNameTok;
         this.isGlobal = isGlobal;
+        this.assignType = assignType;
+        this.isConstant = isConstant;
     }
 
-    async interpret_(context: Context): Promise<any> {
-        const res = await this.value.interpret(context);
+    interpret_(context: Context) {
+        const res = this.value.interpret(context);
         if (res.error) return res;
-        context.set(this.varNameTok.value, res.val, this.isGlobal);
+        if (this.assignType === '=') {
+            const setRes = context.set(this.varNameTok.value, res.val, {
+                global: this.isGlobal,
+                isConstant: this.isConstant
+            });
+            if (setRes instanceof ESError) return setRes;
+        }
+        else {
+            const currentVal = context.get(this.varNameTok.value);
+            if (currentVal instanceof ESError) return currentVal;
+            let newVal;
+            let assignVal = res.val;
+
+            switch (this.assignType[0]) {
+                case '*':
+                    newVal = currentVal * assignVal;
+                    break;
+                case '/':
+                    newVal = currentVal / assignVal;
+                    break;
+                case '+':
+                    newVal = currentVal + assignVal;
+                    break;
+                case '-':
+                    newVal = currentVal - assignVal;
+                    break;
+                default:
+                    return new ESError(
+                        this.startPos,
+                        this.endPos,
+                        'AssignError',
+                        `Cannot find assignType of ${this.assignType[0]}`
+                    );
+            }
+
+            let setRes = context.set(this.varNameTok.value, newVal, {
+                global: this.isGlobal,
+                isConstant: this.isConstant
+            });
+            if (setRes instanceof ESError) return setRes;
+            res.val = newVal;
+        }
         return res;
     }
 }
@@ -166,28 +227,27 @@ export class N_if extends Node {
         this.ifTrue = ifTrue;
     }
 
-    async interpret_(context: Context): Promise<any> {
+    interpret_(context: Context) {
         let newContext = new Context();
         newContext.parent = context;
         let res: any = None;
 
-        let compRes = await this.comparison.interpret(context);
+        let compRes = this.comparison.interpret(context);
         if (compRes.error) return compRes;
 
         if (compRes.val) {
-            res = await this.ifTrue.interpret(newContext);
+            res = this.ifTrue.interpret(newContext);
             // so that if statements always return a value of None
             res.val = None;
             if (res.error) return res;
 
         } else if (this.ifFalse) {
-            res = await this.ifFalse.interpret(newContext);
+            res = this.ifFalse.interpret(newContext);
             // so that if statements always return a value of None
             res.val = None;
             if (res.error) return res;
         }
 
-        newContext.delete();
         return res;
     }
 }
@@ -202,22 +262,20 @@ export class N_while extends Node {
         this.loop = loop;
     }
 
-    async interpret_(context: Context): Promise<any> {
+    interpret_(context: Context): any {
         let newContext = new Context();
         newContext.parent = context;
 
         while (true) {
-            let shouldLoop = await this.comparison.interpret(context);
+            let shouldLoop = this.comparison.interpret(context);
             if (shouldLoop.error) return shouldLoop;
 
             if (!shouldLoop.val) break;
 
-            let potentialError = await this.loop.interpret(newContext)
+            let potentialError = this.loop.interpret(newContext)
             if (potentialError.error) return potentialError;
             if (potentialError.shouldBreak) break;
         }
-
-        newContext.delete();
         return None;
     }
 }
@@ -227,61 +285,68 @@ export class N_for extends Node {
     body: Node;
     identifier: Token;
     isGlobalId: boolean;
+    isConstId: boolean;
 
-    constructor (startPos: Position, endPos: Position, body: Node, array: Node, identifier: Token, isGlobalIdentifier: boolean) {
+    constructor (startPos: Position, endPos: Position, body: Node, array: Node, identifier: Token, isGlobalIdentifier: boolean, isConstIdentifier: boolean) {
         super(startPos, endPos);
         this.body = body;
         this.array = array;
         this.identifier = identifier;
         this.isGlobalId = isGlobalIdentifier;
+        this.isConstId = isConstIdentifier;
     }
 
-    async interpret_ (context: Context): Promise<any> {
+    interpret_ (context: Context) {
         let newContext = new Context();
         newContext.parent = context;
         let res: any = None;
 
-        const array = await this.array.interpret(context);
+        const array = this.array.interpret(context);
         if (array.error) return array;
 
-        if (!Array.isArray(array.val) && typeof array.val !== 'string' && typeof array.val !== 'object') return new TypeError(
+
+        if (!Array.isArray(array.val) && !['string', 'number', 'object'].includes(typeof array.val)) return new TypeError(
             this.identifier.startPos,
             this.identifier.endPos,
             'array | string',
             typeof array.val
         );
 
-        if (typeof array.val === 'object' && !Array.isArray(array.val)) {
+        function iteration (body: Node, id: string, element: any, isGlobal: boolean, isConstant: boolean): 'break' | interpretResult | undefined {
+            newContext.set(id, element, {
+                global: isGlobal,
+                isConstant
+            });
+            res = body.interpret(newContext);
+            if (res.error || (res.funcReturn !== undefined)) return res;
+            if (res.shouldBreak) {
+                res.shouldBreak = false;
+                return 'break';
+            }
+            if (res.shouldContinue)
+                res.shouldContinue = false;
+        }
+
+        if (typeof array.val === 'number') {
+            for (let i = 0; i < array.val; i++) {
+                const res = iteration(this.body, this.identifier.value, i, this.isGlobalId, this.isConstId);
+                if (res === 'break') break;
+                if (res && (res.error || (res.funcReturn !== undefined))) return res;
+            }
+
+        } else if (typeof array.val === 'object' && !Array.isArray(array.val)) {
             for (let element in array.val) {
-                newContext.set(this.identifier.value, element, this.isGlobalId);
-                res = await this.body.interpret(newContext);
-                // so that if statements always return a value of None
-                if (res.error || (res.funcReturn !== undefined)) return res;
-                if (res.shouldBreak) {
-                    res.shouldBreak = false;
-                    break;
-                }
-                if (res.shouldContinue) {
-                    res.shouldContinue = false;
-                }
+                const res = iteration(this.body, this.identifier.value, element, this.isGlobalId, this.isConstId);
+                if (res === 'break') break;
+                if (res && (res.error || (res.funcReturn !== undefined))) return res;
             }
         } else {
             for (let element of array.val) {
-                newContext.set(this.identifier.value, element, this.isGlobalId);
-                res = await this.body.interpret(newContext);
-                // so that if statements always return a value of None
-                if (res.error || (res.funcReturn !== undefined)) return res;
-                if (res.shouldBreak) {
-                    res.shouldBreak = false;
-                    break;
-                }
-                if (res.shouldContinue) {
-                    res.shouldContinue = false;
-                }
+                const res = iteration(this.body, this.identifier.value, element, this.isGlobalId, this.isConstId);
+                if (res === 'break') break;
+                if (res && (res.error || (res.funcReturn !== undefined))) return res;
             }
         }
-
-        newContext.delete();
 
         return res;
     }
@@ -294,11 +359,11 @@ export class N_array extends Node {
         this.items = items;
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         let interpreted: any[] = [];
 
         for (let item of this.items) {
-            const res = await item.interpret(context);
+            const res = item.interpret(context);
             if (res.error || (res.funcReturn !== undefined)) return res;
             interpreted.push(deepClone(res.val));
         }
@@ -314,14 +379,14 @@ export class N_objectLiteral extends Node {
         this.properties = properties;
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         let interpreted: any = {};
 
         for (const [keyNode, valueNode] of this.properties) {
-            const value = await valueNode.interpret(context);
+            const value = valueNode.interpret(context);
             if (value.error) return value;
 
-            const key = await keyNode.interpret(context);
+            const key = keyNode.interpret(context);
             if (key.error) return key;
 
             interpreted[key.val] = deepClone(value.val);
@@ -336,7 +401,7 @@ export class N_emptyObject extends Node {
         super(startPos, endPos);
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         return {};
     }
 }
@@ -348,9 +413,9 @@ export class N_statements extends Node {
         this.items = items;
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         for (let item of this.items) {
-            const res = await item.interpret(context);
+            const res = item.interpret(context);
             if (res.error || (res.funcReturn !== undefined) || res.shouldBreak || res.shouldContinue) return res;
         }
 
@@ -368,60 +433,62 @@ export class N_functionCall extends Node {
         this.to = to;
     }
 
-    async interpret_ (context: Context): Promise<any> {
+    interpret_ (context: Context) {
 
-        let func = await this.to.interpret(context);
+        let func = this.to.interpret(context);
         if (func.error) return func;
 
         if (func.val instanceof N_function)
-            return await this.runFunc(func.val, context);
+            return this.runFunc(func.val, context);
 
         else if (func.val instanceof N_builtInFunction)
-            return await this.runBuiltInFunction(func.val, context);
+            return this.runBuiltInFunction(func.val, context);
 
         else if (func.val instanceof N_class)
-            return await this.runConstructor(func.val, context);
+            return this.runConstructor(func.val, context);
 
         else if (typeof func.val === 'function') {
 
             let args: any = [];
 
             for (let arg of this.arguments) {
-                let value = await arg.interpret(context);
+                let value = arg.interpret(context);
                 if (value.error) return value.error;
                 args.push(value.val);
             }
 
-            return await func.val(...args);
+            return func.val(...args);
 
         } else
             return new TypeError(this.startPos, this.endPos, 'function', typeof func.val);
     }
 
-    async genContext (context: Context, paramNames: string[]) {
+    genContext (context: Context, paramNames: string[]) {
         const newContext = new Context();
         newContext.parent = context;
 
         let args = [];
 
-        for (let i = 0; i < Math.max(paramNames.length, this.arguments.length); i++) {
+        let max = Math.max(paramNames.length, this.arguments.length);
+        for (let i = 0; i < max; i++) {
             let value = None;
             if (this.arguments[i] !== undefined) {
-                let res = await this.arguments[i].interpret(context);
+                let res = this.arguments[i].interpret(context);
                 if (res.error) return res.error;
                 value = res.val ?? None;
             }
             args.push(value);
             if (paramNames[i] !== undefined)
-                newContext.set(paramNames[i], value);
+                newContext.setOwn(value, paramNames[i]);
         }
 
-        newContext.set('args', args);
+        let setRes = newContext.setOwn(args, 'args');
+        if (setRes instanceof ESError) return setRes;
         return newContext;
     }
 
-    async runFunc (func: N_function, context: Context) {
-        const newContext = await this.genContext(context, func.arguments);
+    runFunc (func: N_function, context: Context) {
+        const newContext = this.genContext(context, func.arguments);
         if (newContext instanceof ESError) return newContext;
 
         let this_ = func.this_ ?? None;
@@ -436,9 +503,10 @@ export class N_functionCall extends Node {
                 '\'this\' must be an object'
             );
 
-        newContext.set('this', this_);
+        let setRes = newContext.set('this', this_);
+        if (setRes instanceof ESError) return setRes;
 
-        const res = await func.body.interpret(newContext);
+        const res = func.body.interpret(newContext);
 
         if (res.funcReturn !== undefined) {
             res.val = res.funcReturn;
@@ -447,16 +515,16 @@ export class N_functionCall extends Node {
         return res;
     }
 
-    async runBuiltInFunction (func: N_builtInFunction, context: Context) {
-        const newContext = await this.genContext(context, func.argNames);
+    runBuiltInFunction (func: N_builtInFunction, context: Context) {
+        const newContext = this.genContext(context, func.argNames);
         if (newContext instanceof ESError) return newContext;
-        return await func.interpret(newContext);
+        return func.interpret(newContext);
     }
 
-    async runConstructor (constructor: N_class, context: Context) {
-        const newContext = await this.genContext(context, constructor?.init?.arguments ?? []);
+    runConstructor (constructor: N_class, context: Context) {
+        const newContext = this.genContext(context, constructor?.init?.arguments ?? []);
         if (newContext instanceof ESError) return newContext;
-        return await constructor.genInstance(newContext);
+        return constructor.genInstance(newContext);
     }
 }
 
@@ -488,9 +556,9 @@ export class N_builtInFunction extends Node {
         this.argNames = argNames;
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         // never called except to execute, so can use this function
-        return await this.func(context);
+        return this.func(context);
     }
 }
 
@@ -501,7 +569,7 @@ export class N_return extends Node {
         this.value = value;
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         const res = new interpretResult();
 
         if (this.value === undefined)  {
@@ -509,7 +577,7 @@ export class N_return extends Node {
             return res;
         }
 
-        let val = await this.value.interpret(context);
+        let val = this.value.interpret(context);
         if (val.error) return val.error;
 
         res.funcReturn = val.val;
@@ -521,6 +589,7 @@ export class N_indexed extends Node {
     base: Node;
     index: Node;
     value: Node | undefined;
+    assignType: string | undefined;
 
     constructor(startPos: Position, endPos: Position, base: Node, index: Node) {
         super(startPos, endPos);
@@ -528,11 +597,11 @@ export class N_indexed extends Node {
         this.index = index;
     }
 
-    async interpret_ (context: Context) {
-        let baseRes = await this.base.interpret(context);
+    interpret_ (context: Context) {
+        let baseRes = this.base.interpret(context);
         if (baseRes.error) return baseRes;
 
-        let indexRes = await this.index.interpret(context);
+        let indexRes = this.index.interpret(context);
         if (indexRes.error) return indexRes;
 
         const index = indexRes.val;
@@ -547,18 +616,43 @@ export class N_indexed extends Node {
                 `With base ${base} and index ${index}`
             );
 
-        if (typeof base !== 'object' && typeof base !== 'string')
+        if (!['object', 'function', 'string'].includes(typeof base))
             return new TypeError(
                 this.startPos, this.endPos,
-                'object | array',
+                'object | array | string | function',
                 typeof base
             );
 
-        if (this.value) {
-            let valRes = await this.value.interpret(context);
+        if (this.value !== undefined) {
+            let valRes = this.value.interpret(context);
             if (valRes.error) return valRes;
 
-            base[index] = valRes.val ?? None;
+            const currentVal = base[index];
+            let newVal;
+            let assignVal = valRes.val;
+            this.assignType ??= '=';
+
+            switch (this.assignType[0]) {
+                case '*':
+                    newVal = currentVal * assignVal; break;
+                case '/':
+                    newVal = currentVal / assignVal; break;
+                case '+':
+                    newVal = currentVal + assignVal; break;
+                case '-':
+                    newVal = currentVal - assignVal; break;
+                case '=':
+                    newVal = assignVal;              break;
+                default:
+                    return new ESError(
+                        this.startPos,
+                        this.endPos,
+                        'AssignError',
+                        `Cannot find assignType of ${this.assignType[0]}`
+                    );
+            }
+
+            base[index] = newVal ?? None;
         }
 
         return base[index];
@@ -582,16 +676,16 @@ export class N_class extends Node {
         this.instances = [];
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         return this;
     }
 
-    async genInstance (context: Context, runInit=true, on = {constructor: this})
-        : Promise <{constructor: N_class } | ESError>
+    genInstance (context: Context, runInit=true, on = {constructor: this})
+        : {constructor: N_class } | ESError
     {
-        async function dealWithExtends(context_: Context, classNode: Node, instance: any) {
+        function dealWithExtends(context_: Context, classNode: Node, instance: any) {
             const constructor = instance.constructor;
-            const classNodeRes = await classNode.interpret(context);
+            const classNodeRes = classNode.interpret(context);
             if (classNodeRes.error) return classNodeRes.error;
             if (!(classNodeRes.val instanceof N_class))
                 return new TypeError(
@@ -602,22 +696,24 @@ export class N_class extends Node {
                     classNodeRes.val
                 );
             const extendsClass = classNodeRes.val;
-            context_.symbolTable['super'] = async () => {
+            let setRes = context_.setOwn( () => {
                 const newContext = new Context();
                 newContext.parent = context;
-                newContext.symbolTable['this'] = instance;
+                let setRes = newContext.setOwn(instance, 'this');
+                if (setRes instanceof ESError) return setRes;
 
                 if (extendsClass.extends_ !== undefined) {
-                    let _a = await dealWithExtends(newContext, extendsClass.extends_, instance);
+                    let _a = dealWithExtends(newContext, extendsClass.extends_, instance);
                     if (_a instanceof ESError) return _a;
                 }
 
-                const res_ = await extendsClass?.init?.body?.interpret(newContext);
+                const res_ = extendsClass?.init?.body?.interpret(newContext);
                 if (res_ && res_.error) return res_;
-            };
+            }, 'super');
+            if (setRes instanceof ESError) return setRes;
 
 
-            instance = await extendsClass.genInstance(context, false, instance);
+            instance = extendsClass.genInstance(context, false, instance);
             if (instance instanceof ESError) return instance;
 
             // index access to prevent annoying wiggly red line
@@ -632,7 +728,7 @@ export class N_class extends Node {
         newContext.parent = context;
 
         if (this.extends_ !== undefined) {
-            let _a = await dealWithExtends(newContext, this.extends_, instance);
+            let _a = dealWithExtends(newContext, this.extends_, instance);
             if (_a instanceof ESError) return _a;
         }
 
@@ -649,10 +745,10 @@ export class N_class extends Node {
         }
 
         if (runInit) {
-            newContext.symbolTable['this'] = instance;
+            newContext.setOwn(instance, 'this');
 
             if (this.init) {
-                const res = await this.init.body.interpret(newContext);
+                const res = this.init.body.interpret(newContext);
                 // return value of init is ignored
                 if (res.error) return res.error;
             }
@@ -671,10 +767,10 @@ export class N_fString extends Node {
         this.parts = parts;
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         let out = '';
         for (let part of this.parts) {
-            let res = await part.interpret(context);
+            let res = part.interpret(context);
             if (res.error) return res;
 
             // 1 to prevent '' around string
@@ -689,10 +785,10 @@ export class N_fString extends Node {
 export class N_number extends Node {
     a: Token;
     constructor(startPos: Position, endPos: Position, a: Token) {
-        super(startPos, endPos);
+        super(startPos, endPos, true);
         this.a = a;
     }
-    async interpret_ (context: Context): Promise<number | ESError> {
+    interpret_ (context: Context): number | ESError {
         if (typeof this.a.value !== 'number') return new TypeError(
             this.startPos, this.endPos,
             'number',
@@ -706,10 +802,10 @@ export class N_number extends Node {
 export class N_string extends Node {
     a: Token;
     constructor (startPos: Position, endPos: Position, a: Token) {
-        super(startPos, endPos);
+        super(startPos, endPos, true);
         this.a = a;
     }
-    async interpret_ (context: Context): Promise<string | ESError> {
+    interpret_ (context: Context): string | ESError {
         if (typeof this.a.value !== 'string') return new TypeError(
             this.startPos, this.endPos,
             'string',
@@ -723,18 +819,15 @@ export class N_string extends Node {
 export class N_variable extends Node {
     a: Token;
     constructor(startPos: Position, endPos: Position, a: Token) {
-        super(startPos, endPos);
+        super(startPos, endPos, true);
         this.a = a;
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         let val = context.get(this.a.value);
 
         if (val === undefined)
             return new ReferenceError(this.a.startPos, this.a.endPos, this.a.value);
-
-        if (val instanceof Undefined)
-            val = None;
 
         return val;
     }
@@ -743,20 +836,20 @@ export class N_variable extends Node {
 export class N_undefined extends Node {
 
     constructor(startPos = Position.unknown, endPos = Position.unknown) {
-        super(startPos, endPos);
+        super(startPos, endPos, true);
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         return None;
     }
 }
 
 export class N_break extends Node {
     constructor(startPos: Position, endPos: Position) {
-        super(startPos, endPos);
+        super(startPos, endPos, true);
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         const res = new interpretResult();
         res.shouldBreak = true;
         return res;
@@ -764,10 +857,10 @@ export class N_break extends Node {
 }
 export class N_continue extends Node {
     constructor(startPos: Position, endPos: Position) {
-        super(startPos, endPos);
+        super(startPos, endPos, true);
     }
 
-    async interpret_ (context: Context) {
+    interpret_ (context: Context) {
         const res = new interpretResult();
         res.shouldContinue = true;
         return res;
