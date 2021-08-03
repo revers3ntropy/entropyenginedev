@@ -7,6 +7,7 @@ import {v3} from "../../maths/v3.js";
 import {Body} from "../../components/body.js";
 import {N_any} from "../../scripting/EEScript/nodes.js";
 
+// function called when two sprites collide to trigger the onCollision event in all scripts
 function collideSprites (sprite1: Entity, sprite2: Entity) {
     for (let component of sprite1.components)
         if (component.type === 'Script')

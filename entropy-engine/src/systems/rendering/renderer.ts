@@ -65,9 +65,7 @@ export function renderAll (entities: Entity[], canvas: HTMLCanvasElement, ctx: C
     const canvasSize = getCanvasSize(canvas);
     const mid = canvasSize.clone.scale(0.5);
 
-
     renderBackground(ctx, canvasSize, backgroundTint, backgroundImage);
-
     if (!entities) return;
 
     if (!cameraEntity) {
@@ -108,6 +106,7 @@ export function renderAll (entities: Entity[], canvas: HTMLCanvasElement, ctx: C
 
         const renderPos = sprite.transform.position.clone.sub(cameraPos);
 
+        // passes through more arguments than any draw function needs, as they require different data
         sprite.getComponent<Renderer>('Renderer').draw({
             position: renderPos,
             transform: sprite.transform,

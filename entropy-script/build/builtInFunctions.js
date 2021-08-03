@@ -18,7 +18,6 @@ export const builtInFunctions = {
     'log': context => {
         var _a;
         let msg = (_a = context.get('message')) !== null && _a !== void 0 ? _a : '';
-        msg = str(msg);
         console.log(msg);
         return context.get('message');
     },

@@ -143,7 +143,20 @@ export class Scene {
 
     static scenes: Scene[] = [];
     
-    static active = 0;
+    static active_: number = 0;
+
+    // @ts-ignore
+    static set active (val: number | Scene) {
+        if (val instanceof Scene)
+            Scene.active_ = val.id;
+        else
+            Scene.active_ = val;
+    }
+
+    // @ts-ignore
+    static get active (): number {
+        return Scene.active_;
+    }
 
     static get activeScene (): Scene {
         if (this.scenes.length < 1)

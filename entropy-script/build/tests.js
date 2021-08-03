@@ -229,6 +229,33 @@ var myFunc = func (n) {
 };
 myFunc(10);
 `);
+// yield
+expect(['N_function', 1], `
+var myFunc = func () {
+    yield 1; 
+};
+myFunc();
+`);
+expect(['N_function', 'Undefined'], `
+var myFunc = func () {
+    yield 0;
+};
+myFunc();
+`);
+expect(['N_function', 2], `
+var myFunc = func () {
+    yield 0;
+    return 2
+};
+myFunc();
+`);
+expect(['N_function', 'Undefined'], `
+var myFunc = func () {
+    return;
+    return 2;
+};
+myFunc();
+`);
 // nesting
 expect(['N_function', 4], `
 var myFunc = func (n, cb) {

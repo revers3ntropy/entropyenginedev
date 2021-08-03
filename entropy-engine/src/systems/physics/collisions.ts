@@ -64,14 +64,14 @@ function circleCircleCollision (sprite1: Entity, sprite2: Entity, onCollision: (
     if (overlap <= 0)  return;
 
     // resolve collision
-    if (!sprite1.Static)
+    if (!sprite1.Static || !collider1.solid)
         transform1.position
             .add(
                 transform1.position.clone
                     .sub(transform2.position)
                     .scale(overlap / (dist * (sprite2.Static ? 1 : 2)) )
             );
-    if (!sprite2.Static)
+    if (!sprite2.Static || !collider2.solid)
         transform2.position
             .sub(
                 transform1.position.clone
@@ -183,14 +183,14 @@ function circleRectCollision (circle: Entity, rect: Entity, onCollision: () => v
     if (moveDirection.equals(v2.zero)) return;
 
     // resolve static collision
-    if (!circle.Static)
+    if (!circle.Static || !colliderCircle.solid)
         transformCircle.position.add(
             moveDirection.v3
                 .normalise()
                 .scale(overlap / (rect.Static ? 1 : 2))
         );
 
-    if (!rect.Static)
+    if (!rect.Static || !colliderRect.solid)
         transformRect.position.sub(
             moveDirection.v3
                 .normalise()
@@ -277,11 +277,11 @@ function rectRectCollision (sprite1: Entity, sprite2: Entity, onCollision: () =>
         overlap.x = 0;
 
     // resolve collision
-    if (!sprite1.Static)
+    if (!sprite1.Static || !collider1.solid)
         transform1.position.add(
             overlap.v3.scale(-1 / (sprite2.Static ? 1 : 2))
         );
-    if (!sprite2.Static)
+    if (!sprite2.Static || !collider2.solid)
         transform2.position.add(
             overlap.v3.scale(1 / (sprite1.Static ? 1 : 2))
         );
@@ -327,8 +327,6 @@ export function collide (sprite1: Entity, sprite2: Entity, scriptCollide: (sprit
 
     const collider1 = sprite1.getComponent<Collider>("Collider");
     const collider2 = sprite2.getComponent<Collider>("Collider");
-
-    if (!collider1.solid || !collider2.solid) return;
 
     let type1 = collider1.subtype;
     let type2 = collider2.subtype;

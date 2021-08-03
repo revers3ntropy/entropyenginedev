@@ -47,6 +47,7 @@ export function reRenderHierarchy () {
 
     let scenes = $('#scene-select');
 
+    // add the drop-down menu to the html
     for (let scene of Scene.scenes) {
         let isActive = scene.id === Scene.active;
 
@@ -58,9 +59,12 @@ export function reRenderHierarchy () {
     }
 
     $('#add-scene').click(() => {
-        Scene.create({
+        let ctx = Scene.activeScene.settings.ctx;
+        Scene.active = Scene.create({
             name: 'New Scene'
-        });
+        }).id;
+        // remember the context to that it can be immediately rendered without a reload of the settings
+        Scene.activeScene.settings.ctx = ctx;
         reRender();
         window.save();
     });
@@ -77,6 +81,7 @@ export function reRenderHierarchy () {
     let entities = '';
     let sceneEntities = Scene.activeScene.entities;
 
+    // draw the entities in the entity tree
     for (let entity of sceneEntities){
 
         if (!entity.transform.isRoot()) continue;
@@ -89,7 +94,7 @@ export function reRenderHierarchy () {
         `;
     }
 
-
+    // add the right-clickable area
     h.append(`
         <ul id="hierarchy-draggable-area">
             ${entities}
@@ -97,9 +102,11 @@ export function reRenderHierarchy () {
         <div id="create-entity-area" style="height: 100%; max-height: 100vw"></div>
     `);
 
+    // add the right click menu to each sprite in the DOM
     for (let i = 0; i < sceneEntities.length; i++) {
         const entity = sceneEntities[i];
 
+        // make the sprite select when clicked
         $(`#entitybutton${entity.id}`).click(() => {
             // stop a new spite being selected when the menu is up and an option is clicked
             if ($('#pop-up').css('visibility') === 'visible')
@@ -145,6 +152,7 @@ export function reRenderHierarchy () {
         `);
     }
 
+    // make it deselect all sprites when the right-clickable area is clicked
     $(`#create-entity-area`).click(() => {
         setSelected(null);
         reRender();

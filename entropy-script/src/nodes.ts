@@ -585,6 +585,30 @@ export class N_return extends Node {
     }
 }
 
+export class N_yield extends Node {
+    value: Node | undefined;
+    constructor(startPos: Position, endPos: Position, value: Node | undefined) {
+        super(startPos, endPos);
+        this.value = value;
+    }
+
+    interpret_ (context: Context) {
+        const res = new interpretResult();
+
+        if (this.value === undefined)  {
+            res.funcReturn = None;
+            return res;
+        }
+
+        let val = this.value.interpret(context);
+        if (val.error) return val.error;
+
+        if (val.val)
+            res.funcReturn = val.val;
+        return res;
+    }
+}
+
 export class N_indexed extends Node {
     base: Node;
     index: Node;

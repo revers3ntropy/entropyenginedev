@@ -30,6 +30,7 @@ export const KEYWORDS = [
     'break',
     'func',
     'return',
+    'yield',
     'class',
     'extends',
 ];

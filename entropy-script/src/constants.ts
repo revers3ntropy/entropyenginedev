@@ -29,6 +29,7 @@ export const KEYWORDS = [
 
     'func',
     'return',
+    'yield',
 
     'class',
     'extends',

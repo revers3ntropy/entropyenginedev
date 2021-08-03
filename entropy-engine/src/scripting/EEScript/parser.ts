@@ -23,6 +23,7 @@ import {
     N_varAssign,
     N_variable,
     N_while,
+    N_yield,
     Node
 } from './nodes.js';
 import {ESError, InvalidSyntaxError} from "./errors.js";
@@ -179,11 +180,18 @@ export class Parser {
 
         if (this.currentToken.matches(tt.KEYWORD, 'return')) {
             this.advance(res);
-
-            const expr = res.tryRegister(this.expr());
-            if (!expr)
-                this.reverse(res.reverseCount);
+            let expr: Node = new N_undefined(this.currentToken.startPos, this.currentToken.startPos);
+            if (this.currentToken.type !== tt.ENDSTATEMENT)
+                expr = res.register(this.expr());
             return res.success(new N_return(startPos, this.currentToken.startPos.clone, expr));
+
+            // yield has the same format as return
+        } else if (this.currentToken.matches(tt.KEYWORD, 'yield')) {
+            this.advance(res);
+            let expr: Node = new N_undefined(this.currentToken.startPos, this.currentToken.startPos);
+            if (this.currentToken.type !== tt.ENDSTATEMENT)
+                expr = res.register(this.expr());
+            return res.success(new N_yield(startPos, this.currentToken.startPos.clone, expr));
 
         } else if (this.currentToken.matches(tt.KEYWORD, 'break')) {
             this.advance(res);

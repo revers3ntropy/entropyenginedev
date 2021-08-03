@@ -158,10 +158,17 @@ export class Parser {
         if (this.currentToken.matches(tt.KEYWORD, 'return')) {
             this.advance(res);
             let expr: Node = new N_undefined(this.currentToken.startPos, this.currentToken.startPos);
-            if (this.currentToken.type !== tt.ENDSTATEMENT) {
+            if (this.currentToken.type !== tt.ENDSTATEMENT)
                 expr = res.register(this.expr());
-            }
             return res.success(new n.N_return(startPos, this.currentToken.startPos.clone, expr));
+
+            // yield has the same format as return
+        } else if (this.currentToken.matches(tt.KEYWORD, 'yield')) {
+            this.advance(res);
+            let expr: Node = new N_undefined(this.currentToken.startPos, this.currentToken.startPos);
+            if (this.currentToken.type !== tt.ENDSTATEMENT)
+                expr = res.register(this.expr());
+            return res.success(new n.N_yield(startPos, this.currentToken.startPos.clone, expr));
 
         } else if (this.currentToken.matches(tt.KEYWORD, 'break')) {
             this.advance(res);
