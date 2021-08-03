@@ -16,7 +16,8 @@ export abstract class Collider extends Component {
             name: 'solid',
             value: solid,
             description: 'If the collider should interact with other colliders or not',
-            default: true
+            default: true,
+            type: "boolean"
         });
 
         this.addPublic({

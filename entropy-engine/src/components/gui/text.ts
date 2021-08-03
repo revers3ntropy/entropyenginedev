@@ -62,7 +62,7 @@ export class GUIText extends GUIElement {
             name: 'fill',
             value: fill,
             description: 'Should the text be filled or hollow',
-            type: 'string',
+            type: 'boolean',
             default: true
         });
 

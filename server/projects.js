@@ -1,5 +1,6 @@
 const query = require('./sql').query,
     fs = require('fs'),
+    path = require('path'),
     fse = require('./node_modules/fs-extra'),
     dotenv = require('./node_modules/dotenv').config(),
     mv = require('./node_modules/mv'),
@@ -14,19 +15,18 @@ exports.shareProject = (url, req, res, body) => {
     query(`
 
     INSERT INTO projectAccess VALUES (${body.userID}, ${body.projectID}, ${body.level});
-    INSERT INTO projectSaves VALUES (${body.userID}, ${body.projectID}, null);
+    INSERT INTO projectSaves VALUES (${body.userID}, ${body.projectID}, CURRENT_TIMESTAMP);
     
     `);
 };
 
 exports.createProject = (url, req, res, body) => {
-
     query(`
 
         SELECT 
                FLOOR (1 + RAND() * ${idMax}) AS value 
         FROM 
-             projects 
+             projects
         HAVING 
             value NOT IN (
                SELECT 
@@ -64,10 +64,6 @@ exports.createProject = (url, req, res, body) => {
                 return;
             }
             console.log('made JSON file in ' + dir);
-        });
-
-        fs.appendFile(dir + '/scripts.js', emptyScripts, err => {
-            console.log('made scripts.js file in ' + dir);
         });
 
         fs.copyFile('../templates/globalState.txt', dir + '/globalState.json', err => {
@@ -220,7 +216,9 @@ exports.save = (url, req, res, body) => {
 
     fs.writeFileSync(dir + '/index.json', body.json);
 
-    fs.writeFileSync(dir + '/scripts.js', body.scripts);
+    for (let script of body.scripts) {
+        fs.writeFileSync(script.path, script.text);
+    }
 
     query(`INSERT INTO projectSaves VALUES(${body.userID}, ${body.projectID}, CURRENT_TIMESTAMP)`, () => {
         res.end(`{"result": "true"}`);
@@ -599,6 +597,31 @@ exports.upload = async (url, req, res) => {
             });
         });
     });
+};
 
+exports.findScript = (url, req, res, body) => {
+    function fromDir(startPath, filter){
 
-}
+        let paths = [];
+
+        if (!fs.existsSync(startPath)){
+            console.log("no dir ", startPath);
+            return;
+        }
+
+        let files = fs.readdirSync(startPath);
+        for (let i = 0; i<files.length; i++){
+            let filename = path.join(startPath, files[i]);
+            let stat = fs.lstatSync(filename);
+            if (stat.isDirectory()) {
+                paths = [...paths, ...fromDir(filename, filter)]; //recurse
+            }
+            else if (filename.indexOf(filter)>=0) {
+                paths = [...paths, filename];
+            }
+        }
+        return paths;
+    }
+    let paths = fromDir(`../projects/${body.projectID}/assets`,'.es');
+    res.end(JSON.stringify(paths));
+};

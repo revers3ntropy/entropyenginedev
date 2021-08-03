@@ -73,6 +73,11 @@ html {
     height: 100%;
 }
 
+#script-code {
+    width: calc(100% - 10px);
+    height: 100%;
+}
+
 #game {
     border: 1px solid black;
     grid-column: 2/4;

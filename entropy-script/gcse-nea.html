@@ -352,7 +352,7 @@ main_menu();
         	cb(runtimeInput.val());
         	runtimeInput.val('');
         });
-    });
+    }, ['https://entropyengine.dev/entropy-script/std.es']);
 
     output.innerHTML = '';
     const res = run(input.val(), {

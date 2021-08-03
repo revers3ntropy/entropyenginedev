@@ -1,8 +1,8 @@
+;/*
 import {Entity} from "../ECS/entity.js";
 import { Script } from '../components/scriptComponent.js';
 import { Transform } from '../index.js';
 import {publicField, publicFieldConfig} from "../publicField.js";
-
 export abstract class JSBehaviour {
     name: string | undefined;
     entity: Entity | undefined;
@@ -113,3 +113,4 @@ export abstract class JSBehaviour {
     abstract onMouseUp: () => void;
     abstract onClick: () => void;
 }
+ */

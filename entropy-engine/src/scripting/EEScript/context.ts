@@ -26,22 +26,27 @@ export class Context {
     private symbolTable: {[identifier: string]: ESSymbol};
     parent: Context | undefined;
     initialisedAsGlobal = false;
-    libs: string[] = [];
     deleted = false;
 
-    constructor () {
-        this.symbolTable = {};
+    constructor (fileName='__main__') {
+        this.symbolTable = {
+            __name__: new ESSymbol(fileName, '__name__', {
+                isConstant: true,
+                isAccessible: true,
+                global: true
+            }),
+        };
     }
 
     has (identifier: string) {
-        return this.get(identifier) !== undefined;
+        return this.getSymbol(identifier) !== undefined;
     }
 
     hasOwn (identifier: string) {
         return this.symbolTable[identifier] instanceof ESSymbol;
     }
 
-    get (identifier: string) {
+    get (identifier: string): undefined | ESError | any {
         let symbol = this.getSymbol(identifier);
         if (symbol instanceof ESError || symbol == undefined) return symbol;
         return symbol.value;
@@ -105,14 +110,16 @@ export class Context {
     remove (identifier: string) {
         delete this.symbolTable[identifier];
     }
-
-    clear () {
+/*
+    delete () {
         for (let symbol in this.symbolTable)
             this.remove(symbol);
 
         this.parent = undefined;
         this.deleted = true;
     }
+
+ */
 
     get root () {
         let parent: Context = this;
@@ -127,11 +134,10 @@ export class Context {
         if (!this.initialisedAsGlobal) return;
 
         const printFunc = this.root.get('print');
-        const inputFunc = this.root.get('input');
 
         this.symbolTable = {};
         this.initialisedAsGlobal = false;
 
-        initialise(this, printFunc?.func || console.log, inputFunc?.func || (() => {}), this.libs);
+        initialise(this, printFunc?.func || console.log);
     }
 }

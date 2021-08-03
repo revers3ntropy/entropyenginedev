@@ -200,6 +200,11 @@ export class v3 {
     }
 
     static fromArray (arr: any) {
+        if (!arr || !Array.isArray(arr) || arr.length !== 3) {
+            console.error('tried to initialise v3 from array with invalid value: ', arr);
+            return new v3(0, 0, 0);
+        }
+
         return new v3(arr[0], arr[1], arr[2]);
     }
 }

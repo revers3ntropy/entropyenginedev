@@ -1,8 +1,14 @@
 "use strict";
 
-import {projectID, scripts} from "./state.js";
+import {globalEESContext, projectID, scripts, scriptURLS} from "./state.js";
 import {reRender} from "./render/renderer.js";
 import {genCacheBust} from "../util.js";
+import {request} from "../request.js";
+import {nameFromScriptURL} from "../util.js";
+import {run} from "../entropy-engine/1.0/scripting/EEScript";
+import {N_ESBehaviour} from "../entropy-engine/1.0/scripting/EEScript/nodes.js";
+import {Entity} from "../entropy-engine/1.0";
+import {None} from "../entropy-engine/1.0/scripting/EEScript/constants.js";
 
 export const scriptTemplate = async scriptName => {
 	let template = await fetch('https://entropyengine.dev/templates/script.txt?c=' + genCacheBust());
@@ -24,6 +30,7 @@ window.blankScript = nameInputID => {
 	scriptTemplate(name)
 		.then(text => {
 			scripts[name] = text;
+			scriptURLS[name] = `../projects/${projectID}/assets/${name}.es`;
 			reRender();
 		});
 };
@@ -36,16 +43,72 @@ export function mapScripts (handler) {
 }
 
 export async function loadScripts () {
-	let stringScripts = await fetch(`../projects/${projectID}/scripts.js?c=${genCacheBust()}`);
-	stringScripts = await stringScripts.text();
+	const scriptPaths = await request('/find-scripts', {projectID});
 
-	// parse JS to find class definitions
-	const splitStringScripts = stringScripts.split('export class ');
-	// remove leading '';
-	splitStringScripts.shift();
+	for (let scriptPath of scriptPaths) {
+		let scriptRaw = await fetch(`${scriptPath}?${genCacheBust()}`);
+		scriptRaw = await scriptRaw.text();
 
-	for (let script of splitStringScripts) {
-		const name = script.split(' ')[0];
-		scripts[name] = 'export class ' + script;
+		const name = nameFromScriptURL(scriptPath);
+		scripts[name] = scriptRaw;
+		scriptURLS[name] = scriptPath;
 	}
+}
+
+export async function reloadScriptsOnEntities () {
+	const scriptPaths = await request('/find-scripts', {projectID});
+
+	let scriptNodes = {};
+	for (let scriptPath of scriptPaths) {
+		let scriptRaw = await fetch(`${scriptPath}?${genCacheBust()}`)
+			.catch(() => {
+				console.error(`Cannot get file ${scriptPath}`);
+			});
+		scriptRaw = await scriptRaw.text();
+		let name = nameFromScriptURL(scriptPath);
+		scriptURLS[name] = scriptPath;
+
+		let res = run(scriptRaw, {
+			env: globalEESContext,
+			fileName: name
+		});
+		if (res.error) {
+			console.error(res.error.str);
+			continue;
+		}
+
+		let node;
+
+		let foundESBehaviour = false;
+
+		for (let line of res.val) {
+			if (!(line instanceof N_ESBehaviour)) continue;
+			if (line.name !== name){
+				foundESBehaviour = true;
+				continue;
+			}
+			node = line;
+			break;
+		}
+
+		if (!(node instanceof N_ESBehaviour)) {
+			if (foundESBehaviour)
+				console.warn('Make sure that your script has the same name as the file for file ' + name);
+			console.error('Node not instance of N_ESBehaviour: ', node);
+			continue;
+		}
+
+		scriptNodes[name] = node;
+	}
+
+	for (const sprite of Entity.entities) {
+		for (const component of sprite.components) {
+			if (component.type !== 'Script') continue;
+
+			component.script = scriptNodes[component.name];
+			component.public ??= component.script.public;
+		}
+	}
+
+	reRender();
 }

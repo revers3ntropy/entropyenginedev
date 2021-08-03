@@ -10,15 +10,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { builtInArgs, builtInFunctions } from "./builtInFunctions.js";
 import { N_builtInFunction, N_function, N_functionCall, N_string } from "./nodes.js";
 import { Context } from "./context.js";
-import { ImportError } from "./errors.js";
+import { ImportError, TypeError } from "./errors.js";
 import { Position } from "./position.js";
 import { run } from "./index.js";
 import { globalConstants } from "./constants.js";
 import { str } from "./util.js";
 import { Token, tt } from "./tokens.js";
-export function initialise(globalContext, printFunc, inputFunc) {
+export function initialise(globalContext, printFunc, inputFunc, libs) {
     builtInFunctions['import'] = context => {
-        const url = context.get('url');
+        let url = '';
+        if (context instanceof Context)
+            url = context.get('url');
+        else if (typeof context === 'string')
+            url = context;
+        else
+            return new TypeError(Position.unknown, Position.unknown, 'string | Context', typeof context);
         function error(detail = 'Import Failed') {
             return new ImportError(Position.unknown, Position.unknown, url, detail + '. Remember that relative URLs are only allowed with node.js');
         }
@@ -40,12 +46,19 @@ export function initialise(globalContext, printFunc, inputFunc) {
         try {
             import('fs').then((fs) => __awaiter(this, void 0, void 0, function* () {
                 // data is actually a string
-                const data = fs.readFileSync(url, { encoding: 'utf8' });
-                const res = yield run(data, {
-                    env: globalContext,
-                });
-                if (res.error)
-                    console.log(res.error.str);
+                try {
+                    const data = fs.readFileSync(url, { encoding: 'utf8' });
+                    const res = yield run(data, {
+                        env: globalContext,
+                    });
+                    if (res.error)
+                        console.log(res.error.str);
+                }
+                catch (e) {
+                    console.log((new ImportError(Position.unknown, Position.unknown, `
+                        Could not import file ${url}
+                    `)).str);
+                }
             }));
         }
         catch (e) {
@@ -94,5 +107,10 @@ export function initialise(globalContext, printFunc, inputFunc) {
             isConstant: true
         });
     }
+    for (let lib of libs) {
+        // @ts-ignore
+        builtInFunctions['import'](lib);
+    }
+    globalContext.libs = libs;
     globalContext.initialisedAsGlobal = true;
 }

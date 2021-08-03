@@ -5,23 +5,22 @@ import {Script} from "../../components/scriptComponent.js";
 import {Entity} from "../../ECS/entity.js";
 import {v3} from "../../maths/v3.js";
 import {Body} from "../../components/body.js";
+import {N_any} from "../../scripting/EEScript/nodes.js";
 
 function collideSprites (sprite1: Entity, sprite2: Entity) {
     for (let component of sprite1.components)
         if (component.type === 'Script')
-            (component as Script).runMethod('onCollision', [sprite2]);
+            (component as Script).runMethod('onCollision', [new N_any(sprite2)]);
 
 
     for (let component of sprite2.components)
         if (component.type === 'Script')
-            (component as Script).runMethod('onCollision', [sprite1]);
+            (component as Script).runMethod('onCollision', [new N_any(sprite1)]);
 }
 
 System.systems.push(new System ({
     name: 'Physics',
-    Start: (scene: Scene) => {
-
-    },
+    Start: (scene: Scene) => {},
 
     Update: (scene: Scene) => {
         const entities = scene.entities;
@@ -56,9 +55,6 @@ System.systems.push(new System ({
             for (let i = 0; i < entities.length; i++)
                 for (let j = i+1; j < entities.length; j++)
                     collide(entities[i], entities[j], collideSprites);
-
-
-
     }
 
 }));

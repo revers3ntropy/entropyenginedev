@@ -1,8 +1,38 @@
 "use strict";
 
 import {urlParam} from "../util.js";
-import entropyEngine, {v2} from "../entropy-engine/index.js";
+import entropyEngine from "../entropy-engine/1.0/index.js";
+import * as ee from "../entropy-engine/1.0/index.js";
 import {reRender} from "./render/renderer.js";
+import {reloadScriptsOnEntities} from "./scripts.js";
+import {init as initEES} from "../entropy-engine/1.0/scripting/EEScript";
+import {global, globalConstants} from "../entropy-engine/1.0/scripting/EEScript/constants.js";
+
+export let globalEESContext = global;
+
+globalConstants['CircleCollider'] = ee.CircleCollider;
+globalConstants['RectCollider'] = ee.RectCollider;
+globalConstants['Script'] = ee.Script;
+globalConstants['TriangleV2'] = ee.TriangleV2;
+globalConstants['TriangleV3'] = ee.TriangleV3;
+globalConstants['MeshV2'] = ee.MeshV2;
+globalConstants['MeshV3'] = ee.MeshV3;
+globalConstants['Body'] = ee.Body;
+globalConstants['CircleRenderer'] = ee.CircleRenderer;
+globalConstants['RectRenderer'] = ee.RectRenderer;
+globalConstants['ImageRenderer2D'] = ee.ImageRenderer2D;
+globalConstants['MeshRenderer'] = ee.MeshRenderer;
+globalConstants['GUIBox'] = ee.GUIBox;
+globalConstants['GUIText'] = ee.GUIText;
+globalConstants['GUITextBox'] = ee.GUITextBox;
+globalConstants['GUIRect'] = ee.GUIRect;
+globalConstants['GUICircle'] = ee.GUICircle;
+globalConstants['GUIPolygon'] = ee.GUIPolygon;
+globalConstants['GUIImage'] = ee.GUIImage;
+globalConstants['Camera'] = ee.Camera;
+globalConstants['Transform'] = ee.Transform;
+
+initEES();
 
 export let redirectedFrom = urlParam('from');
 export const projectID = urlParam('p');
@@ -19,6 +49,7 @@ export const { run, background } = entropyEngine({
 
 // scripts script
 export const scripts = {};
+export const scriptURLS = {};
 
 window.switchScripts = script => {
 	state.currentScript = script;
@@ -53,8 +84,8 @@ export const state = {
 	eeReturns: {},
 	currentScript: '',
 	dragging: false,
-	dragStart: v2.zero,
-	dragEnd: v2.zero,
+	dragStart: ee.v2.zero,
+	dragEnd: ee.v2.zero,
 	sceneCamera: null,
 	selectedEntity: null,
 };
@@ -63,6 +94,8 @@ export const setSelected = sprite => state.selectedEntity = sprite;
 
 export const setState = newState => {
 	if (state === newState) return;
+
+	reloadScriptsOnEntities();
 
 	state.window = newState;
 	reRender();

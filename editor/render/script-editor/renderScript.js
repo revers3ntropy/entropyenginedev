@@ -20,7 +20,7 @@ export const renderScripts = (divID) => {
                         onMouseOver="this.style.backgroundColor='var(--input-hover-bg)'"
                         onMouseOut="this.style.backgroundColor='${name === state.currentScript ? 'var(--input-bg)':'var(--input-opposite-bg)'}'"
                     >
-                        ${name}.js
+                        ${name}.es
                     </button>
                 `).join('')}
                 <!-- for the spacing -->
@@ -37,17 +37,12 @@ export const renderScripts = (divID) => {
 
     if (scripts.length < 1) return;
     if (!state.currentScript) return;
-
-    const code = CodeMirror(document.getElementById(`script-editor`), {
-        value: scripts[state.currentScript] ?? '',
-        mode:  "javascript",
-        theme: 'darcula',
-        lineNumbers: true,
-        gutter: true
-    });
+    $('#script-editor').html(`
+        <textarea id="script-code">${scripts[state.currentScript] ?? ''}</textarea>
+    `);
 
     // save the new code locally
-    code.on('change', () => {
-        scripts[state.currentScript] = code.getValue();
+    $('#script-code').keyup(() => {
+        scripts[state.currentScript] = $('#script-code').val();
     });
 };

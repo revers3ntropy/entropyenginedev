@@ -1,29 +1,30 @@
 import {projectID, state} from '../../state.js';
 import {request} from '../../../request.js';
 import {reRender, rightClickOption, setRightClick} from "../renderer.js";
-import {cullString} from '../../../entropy-engine/util/general.js';
+import {cullString} from '../../../entropy-engine/1.0/util/general.js';
 
 const _asset_ = (fileName) => `
-			<div id="asset${fileName}" class="asset-container">
+
+	<div id="asset${fileName}" class="asset-container">
+		<div style="
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			width: 150px; height: 150px;
+		">
+			<div class="asset-image-container">
 				<div style="
-					display: flex;
-					justify-content: center;
-					align-items: center;
-					width: 150px; height: 150px;
-				">
-					<div class="asset-image-container">
-						<div style="
-							background: url(../projects/${projectID}/assets/${fileName}) no-repeat center center;
-							" class="asset-image">
-						</div>
-					</div>
-
+					background: url(../projects/${projectID}/assets/${fileName}) no-repeat center center;
+					" class="asset-image">
 				</div>
-				<p style="font-size: 20px; text-align: center; margin: 5px 0">
-					${cullString(fileName, 10)}
-				</p>
-
 			</div>
+
+		</div>
+		<p style="font-size: 20px; text-align: center; margin: 5px 0">
+			${cullString(fileName, 10)}
+		</p>
+
+	</div>
 
 `;
 
@@ -50,7 +51,7 @@ export const renderAssets = async div => {
 				enctype="multipart/form-data"
 				style="
 					border-radius: 10px;
-					border: 1px solid vaR(--text-colour);
+					border: 1px solid var(--text-colour);
 					padding: 10px;
 					display: flex;
 					align-items: center;

@@ -82,6 +82,7 @@ const handlers = {
     'folder-size': util.folderSizePublic,
     'public-projects': projects.publicProjectsFromUser,
     'has-build': projects.beenBuilt,
+    'find-scripts': projects.findScript,
 };
 
 // goes strait to these function without any data handling

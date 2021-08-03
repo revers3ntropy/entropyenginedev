@@ -1,13 +1,35 @@
-import {Token} from "./tokens.js";
-import * as n from './nodes.js';
-import {N_undefined, Node} from './nodes.js';
+import {Token, tokenType, tokenTypeString, tt} from "./tokens.js";
+import {
+    N_any,
+    N_array,
+    N_binOp,
+    N_break,
+    N_class,
+    N_continue,
+    N_emptyObject,
+    N_ESBehaviour,
+    N_for,
+    N_function,
+    N_functionCall,
+    N_if,
+    N_indexed,
+    N_number,
+    N_objectLiteral,
+    N_return,
+    N_statements,
+    N_string,
+    N_unaryOp,
+    N_undefined,
+    N_varAssign,
+    N_variable,
+    N_while,
+    Node
+} from './nodes.js';
 import {ESError, InvalidSyntaxError} from "./errors.js";
-import {tokenType, tokenTypeString, tt} from "./tokens.js";
 import {Position} from "./position";
-import {None} from "./constants";
 
 export class ParseResults {
-    node: n.Node | undefined;
+    node: Node | undefined;
     error: ESError | undefined;
 
     reverseCount: number;
@@ -40,7 +62,7 @@ export class ParseResults {
         return this.register(res);
     }
 
-    success (node: n.Node) {
+    success (node: Node) {
         this.node = node;
         return this;
     }
@@ -144,9 +166,9 @@ export class Parser {
 
         this.clearEndStatements(res);
 
-        let node = new n.N_statements(startPos, this.currentToken.startPos.clone, statements);
+        let node = new N_statements(startPos, this.currentToken.startPos.clone, statements);
         if (useArray)
-            node = new n.N_array(startPos, this.currentToken.startPos.clone, statements);
+            node = new N_array(startPos, this.currentToken.startPos.clone, statements);
 
         return res.success(node);
     }
@@ -157,19 +179,19 @@ export class Parser {
 
         if (this.currentToken.matches(tt.KEYWORD, 'return')) {
             this.advance(res);
-            let expr: Node = new N_undefined(this.currentToken.startPos, this.currentToken.startPos);
-            if (this.currentToken.type !== tt.ENDSTATEMENT) {
-                expr = res.register(this.expr());
-            }
-            return res.success(new n.N_return(startPos, this.currentToken.startPos.clone, expr));
+
+            const expr = res.tryRegister(this.expr());
+            if (!expr)
+                this.reverse(res.reverseCount);
+            return res.success(new N_return(startPos, this.currentToken.startPos.clone, expr));
 
         } else if (this.currentToken.matches(tt.KEYWORD, 'break')) {
             this.advance(res);
-            return res.success(new n.N_break(startPos, this.currentToken.startPos.clone));
+            return res.success(new N_break(startPos, this.currentToken.startPos.clone));
 
         } else if (this.currentToken.matches(tt.KEYWORD, 'continue')) {
             this.advance(res);
-            return res.success(new n.N_continue(startPos, this.currentToken.startPos.clone));
+            return res.success(new N_continue(startPos, this.currentToken.startPos.clone));
         }
 
         const expr = res.register(this.expr());
@@ -186,11 +208,11 @@ export class Parser {
         switch (tok.type) {
             case tt.NUMBER:
                 this.advance(res);
-                return res.success(new n.N_number(startPos, tok.endPos, tok));
+                return res.success(new N_number(startPos, tok.endPos, tok));
 
             case tt.STRING:
                 this.advance(res);
-                return res.success(new n.N_string(startPos, tok.endPos, tok));
+                return res.success(new N_string(startPos, tok.endPos, tok));
 
             case tt.IDENTIFIER:
                 return this.atomIdentifier(res, startPos, tok);
@@ -243,13 +265,13 @@ export class Parser {
     private atomIdentifier (res: ParseResults, startPos: Position, tok: Token) {
         this.advance(res);
 
-        let node: Node = new n.N_variable(
+        let node: Node = new N_variable(
             startPos,
             this.currentToken.endPos,
             tok
         );
 
-        let prevNode: Node = new n.N_undefined(startPos, this.currentToken.endPos);
+        let prevNode: Node = new N_undefined(startPos, this.currentToken.endPos);
 
         let functionCall = false;
 
@@ -280,11 +302,11 @@ export class Parser {
                         ));
 
                     prevNode = node;
-                    node = new n.N_indexed(
+                    node = new N_indexed(
                         this.currentToken.startPos,
                         this.currentToken.endPos,
                         node,
-                        new n.N_string(
+                        new N_string(
                             this.currentToken.startPos,
                             this.currentToken.endPos,
                             this.currentToken
@@ -306,8 +328,8 @@ export class Parser {
             this.advance(res);
             const value = res.register(this.expr());
 
-            if (node instanceof n.N_variable) {
-                node = new n.N_varAssign(
+            if (node instanceof N_variable) {
+                node = new N_varAssign(
                     startPos,
                     this.currentToken.endPos,
                     node.a,
@@ -316,7 +338,7 @@ export class Parser {
                     false
                 );
 
-            } else if (node instanceof n.N_indexed) {
+            } else if (node instanceof N_indexed) {
                 node.value = value;
                 node.assignType = assignType;
             } else {
@@ -349,7 +371,7 @@ export class Parser {
                 this.advance(res);
                 const factor = res.register(this.factor());
                 if (res.error) return res;
-                return res.success(new n.N_unaryOp(tok.startPos, factor.endPos, factor, tok));
+                return res.success(new N_unaryOp(tok.startPos, factor.endPos, factor, tok));
 
             default:
                 return this.power();
@@ -372,7 +394,7 @@ export class Parser {
 
             let node = res.register(this.expr());
             if (res.error) return res;
-            return res.success(new n.N_unaryOp(opTok.startPos, node.endPos, node, opTok));
+            return res.success(new N_unaryOp(opTok.startPos, node.endPos, node, opTok));
         }
 
         let node = res.register(this.binOp(
@@ -429,6 +451,11 @@ export class Parser {
             const exp = res.register(this.classExpr());
             if (res.error) return res;
             return res.success(exp);
+
+        } else if (this.currentToken.matches(tokenType.KEYWORD, 'script')) {
+            const exp = res.register(this.scriptExpr());
+            if (res.error) return res;
+            return res.success(exp);
         }
 
 
@@ -454,13 +481,13 @@ export class Parser {
             this.advance(res);
             const right = res.register(funcB());
             if (res.error) return res;
-            left = new n.N_binOp(left.startPos, right.endPos, left, opTok, right);
+            left = new N_binOp(left.startPos, right.endPos, left, opTok, right);
         }
 
         return res.success(left);
     }
 
-    private makeFunctionCall (to: Node, this_: Node = new n.N_undefined()) {
+    private makeFunctionCall (to: Node, this_: Node = new N_undefined()) {
         const res = new ParseResults();
         let args: Node[] = [];
         const startPos = this.currentToken.startPos;
@@ -478,7 +505,7 @@ export class Parser {
         if (this.currentToken.type === tt.CPAREN) {
             this.advance(res);
 
-            return res.success(new n.N_functionCall(startPos, this.currentToken.endPos, to, []));
+            return res.success(new N_functionCall(startPos, this.currentToken.endPos, to, []));
         }
 
         args.push(res.register(this.expr()));
@@ -505,7 +532,7 @@ export class Parser {
 
         this.advance(res);
 
-        return res.success(new n.N_functionCall(startPos, this.currentToken.endPos, to, args));
+        return res.success(new N_functionCall(startPos, this.currentToken.endPos, to, args));
     }
 
     private makeIndex (to: Node) {
@@ -547,7 +574,7 @@ export class Parser {
 
         this.advance(res);
 
-        return res.success(new n.N_indexed(
+        return res.success(new N_indexed(
             startPos, this.currentToken.startPos,
             base,
             index
@@ -588,10 +615,10 @@ export class Parser {
                     'Cannot initialise constant to undefined'
                 ));
 
-            return res.success(new n.N_varAssign(
+            return res.success(new N_varAssign(
                 startPos, this.currentToken.startPos,
                 varName,
-                new n.N_undefined(this.currentToken.startPos, this.currentToken.endPos),
+                new N_undefined(this.currentToken.startPos, this.currentToken.endPos),
                 '=',
                 isGlobal,
                 // must be false ^
@@ -605,12 +632,12 @@ export class Parser {
         const expr = res.register(this.expr());
         if (res.error) return res;
 
-        if (expr instanceof n.N_class)
+        if (expr instanceof N_class)
             expr.name = varName.value;
-        else if (expr instanceof n.N_function)
+        else if (expr instanceof N_function)
             expr.name = varName.value;
 
-        return res.success(new n.N_varAssign(
+        return res.success(new N_varAssign(
             startPos,
             this.currentToken.startPos,
             varName,
@@ -638,7 +665,7 @@ export class Parser {
         // @ts-ignore
         if (this.currentToken.type === tt.CBRACES) {
             this.advance(res);
-            return res.success(new n.N_undefined(this.currentToken.startPos, this.currentToken.endPos));
+            return res.success(new N_undefined(this.currentToken.startPos, this.currentToken.endPos));
         }
         const expr = res.register(this.statements());
         if (res.error) return res;
@@ -719,7 +746,7 @@ export class Parser {
 
         this.addEndStatement(res);
 
-        return res.success(new n.N_if(startPos, this.currentToken.startPos, condition, ifTrue, ifFalse));
+        return res.success(new N_if(startPos, this.currentToken.startPos, condition, ifTrue, ifFalse));
     }
 
     private whileExpr (): ParseResults {
@@ -764,13 +791,13 @@ export class Parser {
 
        this.addEndStatement(res);
 
-        return res.success(new n.N_while(startPos, this.currentToken.startPos, condition, loop));
+        return res.success(new N_while(startPos, this.currentToken.startPos, condition, loop));
     }
 
     private funcCore (): ParseResults {
         const res = new ParseResults();
         const startPos = this.currentToken.startPos;
-        let body: n.Node,
+        let body: Node,
             args: string[] = [];
 
         if (this.currentToken.type !== tt.OPAREN)
@@ -824,7 +851,7 @@ export class Parser {
         body = res.register(this.bracesExp());
         if (res.error) return res;
 
-        return res.success(new n.N_function(startPos, this.currentToken.endPos, body, args));
+        return res.success(new N_function(startPos, this.currentToken.endPos, body, args));
     }
 
     private funcExpr (): ParseResults {
@@ -848,8 +875,8 @@ export class Parser {
     private classExpr (name?: string): ParseResults {
         const res = new ParseResults();
         const startPos = this.currentToken.startPos;
-        const methods: n.N_function[] = [];
-        let init: n.N_function | undefined = undefined;
+        const methods: N_function[] = [];
+        let init: N_function | undefined = undefined;
         let extends_: Node | undefined;
 
         if (!this.currentToken.matches(tt.KEYWORD, 'class'))
@@ -872,7 +899,7 @@ export class Parser {
 
         if (this.currentToken.type === tt.CBRACES) {
             this.advance(res);
-            return res.success(new n.N_class(
+            return res.success(new N_class(
                 startPos,
                 this.currentToken.startPos,
                 [],
@@ -902,7 +929,7 @@ export class Parser {
 
         this.consume(res, tt.CBRACES);
 
-        return res.success(new n.N_class(
+        return res.success(new N_class(
             startPos,
             this.currentToken.startPos,
             methods,
@@ -912,11 +939,109 @@ export class Parser {
         ));
     }
 
+    private scriptExpr (): ParseResults {
+        const res = new ParseResults();
+        const startPos = this.currentToken.startPos;
+        const methods: N_function[] = [];
+        const publicVariables: N_objectLiteral[] = [];
+        let name: string | undefined;
+
+        if (!this.currentToken.matches(tt.KEYWORD, 'script'))
+            return res.failure(new InvalidSyntaxError(
+                this.currentToken.startPos,
+                this.currentToken.endPos,
+                "Expected 'script'"
+            ));
+        this.advance(res);
+
+        if (this.currentToken.type === tt.IDENTIFIER) {
+            name = this.currentToken.value;
+            this.advance(res);
+        }
+
+        this.consume(res, tt.OBRACES);
+        if (res.error) return res;
+
+        if (this.currentToken.type === tt.CBRACES) {
+            this.advance(res);
+            return res.success(new N_ESBehaviour(
+                startPos,
+                this.currentToken.startPos,
+                [],
+                undefined,
+                name
+            ));
+        }
+
+        while (true) {
+
+            if (this.currentToken.type === tt.OBRACES) {
+                let publicFieldNode = res.register(this.object());
+                if (res.error) return res;
+                publicVariables.push(publicFieldNode);
+            } else if (this.currentToken.type === tt.IDENTIFIER) {
+
+                let methodId = this.currentToken.value;
+                this.advance(res);
+
+                // @ts-ignore
+                if (this.currentToken.type === tt.ASSIGN) {
+                    this.advance(res);
+                    let expr = res.register(this.expr());
+                    if (res.error) return res;
+
+                    publicVariables.push(new N_objectLiteral(
+                        startPos,
+                        this.currentToken.startPos,
+                        [
+                            [
+                                new N_any('name'),
+                                new N_any(methodId)
+                            ],
+                            [
+                                new N_any('value'),
+                                expr
+                            ]
+                        ]
+                    ));
+
+                    this.consume(res, tt.ENDSTATEMENT);
+
+                // @ts-ignore
+                } else if (this.currentToken.type === tt.OPAREN) {
+                    const func = res.register(this.funcCore());
+                    if (res.error) return res;
+
+                    func.name = methodId;
+
+                    methods.push(func);
+                } else return res.failure(new InvalidSyntaxError(
+                    this.currentToken.startPos,
+                    this.currentToken.endPos,
+                    `Expected either '(' or '=', but got `
+                ));
+
+            } else break;
+
+        }
+
+        this.consume(res, tt.CBRACES);
+
+        return res.success(new N_ESBehaviour(
+            startPos,
+            this.currentToken.startPos,
+            methods,
+            undefined,
+            name,
+            publicVariables
+        ));
+    }
+
     private forExpr (): ParseResults {
         const res = new ParseResults();
         const startPos = this.currentToken.startPos;
-        let body: n.Node,
-            array: n.Node,
+        let body: Node,
+            array: Node,
             identifier: Token,
             isGlobalIdentifier = false,
             isConstIdentifier = false;
@@ -981,7 +1106,7 @@ export class Parser {
 
         this.addEndStatement(res);
 
-        return res.success(new n.N_for(
+        return res.success(new N_for(
             startPos, this.currentToken.startPos, body, array, identifier, isGlobalIdentifier, isConstIdentifier
         ));
     }
@@ -1004,7 +1129,7 @@ export class Parser {
         if (this.currentToken.type === tt.CSQUARE) {
             this.advance(res);
 
-            return res.success(new n.N_array(startPos, this.currentToken.endPos, []));
+            return res.success(new N_array(startPos, this.currentToken.endPos, []));
         }
 
         elements.push(res.register(this.expr()));
@@ -1031,7 +1156,7 @@ export class Parser {
 
         this.advance(res);
 
-        return res.success(new n.N_array(startPos, this.currentToken.endPos, elements));
+        return res.success(new N_array(startPos, this.currentToken.endPos, elements));
 
     }
 
@@ -1052,7 +1177,7 @@ export class Parser {
         // @ts-ignore
         if (this.currentToken.type === tt.CBRACES) {
             this.advance(res);
-            return res.success(new n.N_emptyObject(startPos, this.currentToken.endPos));
+            return res.success(new N_emptyObject(startPos, this.currentToken.endPos));
         }
         // @ts-ignore
         while (true) {
@@ -1064,7 +1189,7 @@ export class Parser {
             // @ts-ignore
             if (this.currentToken.type === tt.IDENTIFIER) {
                 keyType = 'id';
-                key = new n.N_string(
+                key = new N_string(
                     this.currentToken.startPos,
                     this.currentToken.endPos,
                     this.currentToken
@@ -1074,7 +1199,7 @@ export class Parser {
             // @ts-ignore
             } else if (this.currentToken.type === tt.STRING) {
                 keyType = 'string';
-                key = new n.N_string(
+                key = new N_string(
                     this.currentToken.startPos,
                     this.currentToken.endPos,
                     this.currentToken
@@ -1131,7 +1256,7 @@ export class Parser {
                 // reverse back to the identifier
                 this.reverse();
 
-                value = new n.N_variable (
+                value = new N_variable (
                     this.currentToken.startPos,
                     this.currentToken.endPos,
                     this.currentToken,
@@ -1155,7 +1280,7 @@ export class Parser {
 
         this.advance(res);
 
-        return res.success(new n.N_objectLiteral(startPos, this.currentToken.endPos, properties));
+        return res.success(new N_objectLiteral(startPos, this.currentToken.endPos, properties));
 
     }
 }

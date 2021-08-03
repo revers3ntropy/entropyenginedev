@@ -1,16 +1,19 @@
-import { Entity } from './ECS/entity.js'
+import { Entity } from './ECS/entity.js';
 import {v2, v3} from "./maths/maths.js";
 import {Component} from "./ECS/component.js";
-import {Script} from "./components/scriptComponent.js"
+import {Script} from "./components/scriptComponent.js";
 // all components
 import {CircleCollider, RectCollider} from './components/colliders.js';
 import {Body} from './components/body.js';
-import {CircleRenderer, ImageRenderer2D, RectRenderer, MeshRenderer} from './components/renderComponents.js'
-import {GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox} from './components/gui/gui.js'
-import {Camera} from './components/camera.js'
+import {CircleRenderer, ImageRenderer2D, RectRenderer, MeshRenderer} from './components/renderComponents.js';
+import {GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox} from './components/gui/gui.js';
+import {Camera} from './components/camera.js';
 import { Transform} from "./components/transform.js";
 import {defaultSceneSettings, Scene, sceneSettings} from './ECS/scene.js';
 import {rgba} from "./util/colour.js";
+import {nameFromScriptURL} from './util/general.js';
+import {run} from "./scripting/EEScript/index.js";
+import {N_ESBehaviour} from "./scripting/EEScript/nodes.js";
 
 // reference everything so the ts compiler will think that it is being used and wont delete the import
 CircleCollider; RectCollider;
@@ -19,8 +22,7 @@ CircleRenderer; RectRenderer; ImageRenderer2D; MeshRenderer;
 GUIBox; GUIText; GUITextBox; GUIRect; GUICircle; GUIPolygon; GUIImage;
 Camera;
 
-const limit = 200000;
-const cacheBust = Math.floor(Math.random() * (limit+1));
+const cacheBust = Math.floor(Math.random() * 200001);
 
 function isV2(o: any) {
 
@@ -70,8 +72,8 @@ function componentPropProcessor (propName: any, componentJSON: any, component: C
     if (isV2(componentJSON[propName])) {
         component[propName] = v2.fromArray(componentJSON[propName]);
         return;
-    }
-    else if (isV3(componentJSON[propName])) {
+
+    } else if (isV3(componentJSON[propName])) {
         component[propName] = v3.fromArray(componentJSON[propName]);
         return;
     }
@@ -84,9 +86,12 @@ function dealWithTransform (transformJSON: any) {
 
     const transform = new Transform({});
 
-    transform.position = v3.fromArray(transformJSON['position']);
-    transform.scale = v3.fromArray(transformJSON['scale']);
-    transform.rotation = v3.fromArray(transformJSON['rotation']);
+    if (transformJSON['position'])
+        transform.position = v3.fromArray(transformJSON['position']);
+    if (transformJSON['scale'])
+        transform.scale = v3.fromArray(transformJSON['scale']);
+    if (transformJSON['rotation'])
+        transform.rotation = v3.fromArray(transformJSON['rotation']);
 
     return {parentInfo, transform};
 }
@@ -98,13 +103,35 @@ async function dealWithScriptComponent (componentJSON: any): Promise<Script | un
     // use either a specified name or the name of the file (found using some regex)
     const className = componentJSON['name'] || componentJSON['className']
     // gets name of file
-    path.replace(/^.*[\\\/]/, '')
-        // gets everything before the '.extension'
-        .split('.')[0];
 
-    let file: any;
+    let scriptNode: undefined | N_ESBehaviour;
+
     try {
-        file = await import(`${path}?${cacheBust}`);
+        let scriptData = await fetch(`${path}?${cacheBust}`);
+        let scriptRaw = await scriptData.text();
+        let name = nameFromScriptURL(path);
+
+        let res = run(scriptRaw);
+        if (res.error) {
+            console.log(res.error.str);
+            return;
+        }
+
+        let node;
+
+        for (let line of res.val) {
+            if (!(line instanceof N_ESBehaviour)) continue;
+            if (line.name !== name) continue;
+            node = line;
+            break;
+        }
+
+        if (!(node instanceof N_ESBehaviour)) {
+            console.error('Node not instance of N_ESBehaviour: ', node)
+            return;
+        }
+
+        scriptNode = node;
     } catch (e) {
         console.error(`Script Error: ${e}`);
         return;
@@ -112,7 +139,7 @@ async function dealWithScriptComponent (componentJSON: any): Promise<Script | un
     // evaluate the script name as JS code, like when instantiating the component
     try {
         const script = new Script({
-            script: new (file[className])()
+            script: scriptNode
         });
         script.name = className;
         script.scriptName = className;
@@ -171,19 +198,19 @@ async function componentProccessor(componentJSON: any): Promise<Component|undefi
     return component;
 }
 
-export async function getSpriteFromJSON (JSON: any) {
+export async function getEntityFromJSON (JSON: any) {
     /*
         Needs MUCH more error checking as you can pass anything as the JSON into it
      */
-    const name: string = JSON['name'] ?? `sprite ${Entity.entities.length}`;
-    const tag: string = JSON['tag'] ?? 'sprite';
+    const name: string = JSON['name'] ?? `entity ${Entity.entities.length}`;
+    const tag: string = JSON['tag'] ?? 'entity';
     const Static: boolean = JSON['Static'] ?? false;
 
     const componentsJSON = JSON['components'] ?? [];
     let components: Component[] = [];
 
     const transformJSON = JSON['transform'];
-    const {parentInfo, transform} = dealWithTransform(transformJSON);
+    const {parentInfo, transform} = dealWithTransform(transformJSON || {});
     // components
     for (let componentJSON of componentsJSON) {
         const component = await componentProccessor(componentJSON);
@@ -193,7 +220,7 @@ export async function getSpriteFromJSON (JSON: any) {
     }
 
     return {
-        sprite: new Entity({
+        entity: new Entity({
             name,
             components,
             transform,
@@ -223,18 +250,21 @@ export function setParentFromInfo (parentInfo: {type: string, name: string}, chi
 }
 
 
-export async function spritesFromJSON (JSON: any) {
+export async function entitiesFromJSON (JSON: any) {
 
     let parentPairs: {[key: string]: {type: string, name: string}} = {};
 
-    for (let spriteJSON of JSON) {
-        let sprite = await getSpriteFromJSON(spriteJSON);
-        parentPairs[sprite.sprite.name] = sprite.parentInfo;
-        Entity.entities.push(sprite.sprite);
+    for (let entityJSON of JSON) {
+        let entity = await getEntityFromJSON(entityJSON);
+        parentPairs[entity.entity.name] = entity.parentInfo;
+        Entity.entities.push(entity.entity);
     }
 
     // deal with parent-child stuff once all entities have been initialised
     for (let childName in parentPairs) {
+        // no parent has been specified
+        if (!parentPairs[childName]) continue;
+
         setParentFromInfo(parentPairs[childName], Entity.find(childName)?.transform);
     }
 }

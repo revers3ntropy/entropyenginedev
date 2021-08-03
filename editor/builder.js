@@ -1,21 +1,38 @@
-import {Entity, Scene} from "../entropy-engine";
-import {scripts, projectID} from "./state.js";
+import {Entity, Scene} from "../entropy-engine/1.0";
+import {scripts, projectID, scriptURLS} from "./state.js";
 import {request} from '../request.js';
 import {sleep} from '../util.js';
 
 // needed for it to actually import and run this script
 export const myExport = 0;
 
+function buildScripts () {
+    let scriptReturn = [];
+    for (let script in scripts) {
+        let path = scriptURLS[script];
+        let text = scripts[script];
+
+        if (path === undefined || text === undefined) {
+            console.log(scriptURLS);
+            console.error(`Cannot find either script path or text for script ${script}. Path: ${path}, text: ${text}`)
+            continue;
+        }
+        scriptReturn.push({path, text});
+    }
+
+    return scriptReturn;
+}
+
 window.backgroundSave = async () => {
     // raw save, no visible changes
     await request('/save-project', {
         projectID,
-        scripts: buildScriptsJS(scripts),
+        scripts: buildScripts(),
         userID: localStorage.id,
         json: `
         {
             "canvasID": "myCanvas",
-            "sprites": [
+            "entities": [
                 ${await buildSpritesJSON(projectID)}
             ],
             "scenes": [
@@ -56,7 +73,7 @@ const buildSpritesJSON = async projectID => {
         // deal with scripts
         for (const component of spriteJSON['components']) {
             if (component.type === 'Script') {
-                component.path = `https://entropyengine.dev/projects/${projectID}/scripts.js`;
+                component.path = scriptURLS[component.name || component.scriptName];
             }
         }
 
@@ -74,16 +91,3 @@ function buildScenesJSON () {
     
     return scenes.join(',\n');
 }
-
-// just combines all the scripts into a string string
-const buildScriptsJS = scripts => {
-    let file = `
-    import { v2, JSBehaviour } from '../../entropy-engine/index.js';
-    import * as ee from '../../entropy-engine/index.js';
-    `;
-
-    for (let name in scripts)
-        file += `\n${scripts[name]}`;
-
-    return file;
-};

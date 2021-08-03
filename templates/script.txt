@@ -1,21 +1,16 @@
-export class NAME extends JSBehaviour {
-    constructor() {
-        super();
 
-        // visible in the editor, accessible by this.publicVariable
-        this.addPublic({
-            name: 'publicVariable',
-            value: ''
-        });
+script NAME {
+    init () {
+
     }
 
     Start () {
-        // runs once before the first frame
+
 
     }
 
+
     Update () {
-        // runs once per frame, before anything else is run
 
     }
 }

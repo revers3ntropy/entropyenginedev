@@ -276,6 +276,19 @@ myFunc(20, func (n) {
     return n < 5; 
 });
 `);
+expect(['N_function', 'N_function', 1], `
+var myFunc = func (cb) {
+    return cb();
+};
+
+var myOtherFunc = func () {
+    let a = 1;
+    return myFunc(func () {
+        return a;
+    });
+};
+myOtherFunc();
+`);
 expect(['N_function', 0], `
 var myFunc = func (arr) {
     for (var n in arr) {

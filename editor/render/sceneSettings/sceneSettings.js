@@ -1,4 +1,4 @@
-import {Scene} from "../../../entropy-engine";
+import {Scene} from "../../../entropy-engine/1.0";
 
 window.changeSceneSettings = (key, id) => {
 	const value = $(`#${id}`).val();

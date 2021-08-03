@@ -13,6 +13,7 @@ export class ESSymbol {
 export class Context {
     constructor() {
         this.initialisedAsGlobal = false;
+        this.libs = [];
         this.deleted = false;
         this.symbolTable = {};
     }
@@ -90,6 +91,6 @@ export class Context {
         const inputFunc = this.root.get('input');
         this.symbolTable = {};
         this.initialisedAsGlobal = false;
-        initialise(this, (printFunc === null || printFunc === void 0 ? void 0 : printFunc.func) || console.log, (inputFunc === null || inputFunc === void 0 ? void 0 : inputFunc.func) || (() => { }));
+        initialise(this, (printFunc === null || printFunc === void 0 ? void 0 : printFunc.func) || console.log, (inputFunc === null || inputFunc === void 0 ? void 0 : inputFunc.func) || (() => { }), this.libs);
     }
 }

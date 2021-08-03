@@ -4,9 +4,17 @@ import * as n from './nodes.js';
 import {digits, None, Undefined} from "./constants.js";
 import {ESError} from "./errors.js";
 import {Position} from "./position.js";
+import {N_class} from "./nodes.js";
+import {v3} from "../../maths/v3.js";
+import {v2} from "../../maths/v2.js";
 
-export const builtInFunctions: {[name: string]: (context: Context) => any} = {
-    'range': context => {
+import {rgb, rgba} from "../../util/colour.js";
+
+export const builtInFunctions: {[name: string]: ((context: Context) => any) | any} = {
+    v2,
+    v3,
+    rgb, rgba,
+    'range': (context: Context) => {
         let n = context.get('n');
 
         if (n instanceof Undefined)
@@ -19,18 +27,18 @@ export const builtInFunctions: {[name: string]: (context: Context) => any} = {
         }
     },
 
-    'log': context => {
+    'log': (context: Context) => {
         let msg = context.get('message') ?? '';
         console.log(msg);
         return context.get('message');
     },
 
-    'str': context => {
+    'str': (context: Context) => {
         let val = context.get('val');
         return str(val);
     },
 
-    'type': context => {
+    'type': (context: Context) => {
         let val = context.get('val');
         switch (typeof val) {
             case "function":
@@ -60,14 +68,32 @@ export const builtInFunctions: {[name: string]: (context: Context) => any} = {
         }
     },
 
-    'contains': context => {
+    'instanceOf':  (context: Context) => {
+        let val = context.get('val');
+        let type = context.get('type');
+
+        if (!(type instanceof N_class))
+            return false;
+
+        if (type.name === val.constructor.name)
+            return true;
+
+        while (type.extends_ !== undefined) {
+            if (type.name === val.constructor.name)
+                return true;
+
+            type = type.extends_;
+        }
+    },
+
+    'contains': (context: Context) => {
         let arr = context.get('arr');
         if(!Array.isArray(arr))
             return false;
         return ((~arr.indexOf(context.get('element'))) || None) || false;
     },
 
-    'append': context => {
+    'append': (context: Context) => {
         let arr = context.get('arr');
         if (!Array.isArray(arr))
             return arr;
@@ -78,15 +104,15 @@ export const builtInFunctions: {[name: string]: (context: Context) => any} = {
         return arr;
     },
 
-    'strLower': context => {
+    'strLower': (context: Context) => {
         return context.get('args')[0]?.toLowerCase() || '';
     },
 
-    'strUpper': context => {
+    'strUpper': (context: Context) => {
         return context.get('args')[0]?.toLowerCase() || '';
     },
 
-    'parseNum': context => {
+    'parseNum': (context: Context) => {
         let str = context.get('number');
 
         if (typeof str == 'number') return str;
@@ -115,11 +141,11 @@ export const builtInFunctions: {[name: string]: (context: Context) => any} = {
         return parseFloat(numStr);
     },
 
-    'throw': context => {
+    'throw': (context: Context) => {
         return new ESError(Position.unknown, Position.unknown, 'Thrown Error', 'Thrown error in code');
     },
 
-    'len': context => {
+    'len': (context: Context) => {
         let total = 0;
         for (let item of context.get('args')) {
             if (typeof item === 'string' || Array.isArray(item)) {
@@ -142,8 +168,6 @@ export const builtInArgs: {[name: string]: string[]} = {
     'log': ['message'],
     'str': ['val'],
     'type': ['val'],
-    'input': ['msg', 'cb'],
-    'import': ['url'],
     'contains': ['arr', 'element'],
     'parseNum': ['number'],
     'append': ['arr'],

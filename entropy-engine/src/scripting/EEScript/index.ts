@@ -7,13 +7,15 @@ import {Position} from "./position.js";
 import {interpretResult} from "./nodes.js";
 import {Node} from "./nodes.js";
 
-export function init (printFunc: (...args: any) => void = console.log, inputFunc: (msg: string, cb: (...arg: any[]) => any) => void, libs: string[]) {
-    initialise(global, printFunc, inputFunc, libs);
+export function init (printFunc: (...args: any) => void = console.log) {
+    initialise(global, printFunc);
 }
+
 
 export function run (msg: string, {
     env = global,
-    measurePerformance = false
+    measurePerformance = false,
+    fileName = '__main__',
 }={}): interpretResult | any {
 
     Node.maxTime = 0;
@@ -45,7 +47,7 @@ export function run (msg: string, {
         return res;
     }
 
-    const lexer = new Lexer(msg);
+    const lexer = new Lexer(msg, fileName);
     const [tokens, error] = lexer.generate();
     if (error) {
         const res_ = new interpretResult();

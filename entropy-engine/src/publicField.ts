@@ -36,12 +36,11 @@ export class publicField<T> {
         this.default = config.default;
         this.assetType = config.assetType;
 
-        if (this.array) {
-            if (this.value)
+        if (this.array)
+            if (this.value) {
                 if (!Array.isArray(this.value))
                     this.value = [this.value];
-                else
-                    this.value = [];
-        }
+            } else
+                this.value = [];
     }
 }

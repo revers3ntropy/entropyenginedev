@@ -1,5 +1,4 @@
 {
-  "compileOnSave": true,
   "compilerOptions": {
     "module": "es2020",
     "target": "es6",
@@ -7,63 +6,5 @@
     "lib": [ "es2016", "dom" ],
     "strict": true,
   },
-  "files": [
-    "./src/components/camera.ts",
-    "./src/components/renderComponents.ts",
-    "./src/components/renderer.ts",
-    "./src/components/renderers2D.ts",
-    "./src/components/renderers3D.ts",
-    "./src/components/scriptComponent.ts",
-    "./src/components/colliders.ts",
-    "./src/components/transform.ts",
-    "./src/components/body.ts",
-    "./src/components/soundEmitter.ts",
-
-    "./src/components/gui/gui.ts",
-    "./src/components/gui/box.ts",
-    "./src/components/gui/circle.ts",
-    "./src/components/gui/image.ts",
-    "./src/components/gui/polygon.ts",
-    "./src/components/gui/text.ts",
-    "./src/components/gui/textbox.ts",
-    "./src/components/gui/rect.ts",
-    "./src/components/multiplayer.ts",
-
-    "./src/ECS/component.ts",
-    "./src/ECS/entity.ts",
-    "./src/ECS/scene.ts",
-    "./src/ECS/system.ts",
-
-    "./src/systems/physics/collisions.ts",
-    "./src/systems/physics/physics.ts",
-
-    "./src/systems/rendering/3d/drawTriangle.ts",
-    "./src/systems/rendering/3d/renderMesh.ts",
-    "./src/systems/rendering/3d/projectTri.ts",
-    "./src/systems/rendering/debugRenderer.ts",
-    "./src/systems/rendering/basicShapes.ts",
-    "./src/systems/rendering/renderer.ts",
-    "./src/systems/rendering/startAnimation.ts",
-
-    "./src/systems/entities/entityController.ts",
-
-    "./src/scripting/scripts.ts",
-
-    "./src/util/colour.ts",
-    "./src/util/general.ts",
-
-    "./src/maths/maths.ts",
-    "./src/maths/matrix.ts",
-    "./src/maths/meshV2.ts",
-    "./src/maths/meshV3.ts",
-    "./src/maths/triangleV2.ts",
-    "./src/maths/triangleV3.ts",
-    "./src/maths/v2.ts",
-    "./src/maths/v3.ts",
-
-    "./src/input.ts",
-    "./src/JSONprocessor.ts",
-    "./src/license.ts",
-    "./src/index.ts"
-  ]
+  "include": ["./src/**/*"]
 }

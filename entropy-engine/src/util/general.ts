@@ -64,7 +64,7 @@ export function JSONifyComponent (component: any, type? : string) {
         if (value instanceof v2 || value instanceof v3)
             value = value.array;
         else if (value.isColour) {
-            value = value.json
+            value = value.json;
         }
 
         json[property] = value;
@@ -104,4 +104,14 @@ export function cullString (str: string, cutoff: number) {
         newStr += '...';
 
     return newStr;
+}
+
+export function nameFromScriptURL (path: string): string {
+    // ../projects/12345/assets/folder/script.es for example
+    let file = path.substring(path.lastIndexOf('/') + 1);
+    return file.substring(0, file.length-3);
+}
+
+export function genCacheBust (): number {
+    return Math.ceil(Math.random() * 10000);
 }

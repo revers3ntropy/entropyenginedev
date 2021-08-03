@@ -6,8 +6,8 @@ import { ESError } from "./errors.js";
 import { Position } from "./position.js";
 import { interpretResult } from "./nodes.js";
 import { Node } from "./nodes.js";
-export function init(printFunc = console.log, inputFunc) {
-    initialise(global, printFunc, inputFunc);
+export function init(printFunc = console.log, inputFunc, libs) {
+    initialise(global, printFunc, inputFunc, libs);
 }
 export function run(msg, { env = global, measurePerformance = false } = {}) {
     Node.maxTime = 0;

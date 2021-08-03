@@ -1,7 +1,6 @@
-import {scripts, state, projectID} from "../../state.js";
-import {JSBehaviour} from "../../../entropy-engine"; JSBehaviour;
+import {scripts, state} from "../../state.js";
 import {reRender} from "../renderer.js";
-import {genCacheBust} from '../../../util.js';
+import {reloadScriptsOnEntities} from "../../scripts.js";
 
 import {_componentProperty_} from "./property.js";
 import {_component_} from "./component.js";
@@ -14,7 +13,9 @@ import {
     CircleRenderer, ImageRenderer2D, RectRenderer,
     GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox,
     Camera
-} from '../../../entropy-engine';Script;
+} from '../../../entropy-engine';
+
+Script;
 
 
 const allComponents = {
@@ -75,7 +76,7 @@ export function reRenderInspector () {
 
     for (let p in state.selectedEntity) {
         if (!state.selectedEntity.hasOwnProperty(p)) continue;
-        if (['components', 'transform', 'name', 'id'].includes(p)) continue;
+        if (!['tag', 'Static'].includes(p)) continue;
 
         i.append(_componentProperty_(state.selectedEntity, p, 'nocomponent'));
     }
@@ -112,16 +113,11 @@ export function reRenderInspector () {
                 const component = new Script({});
                 state.selectedEntity.addComponent(component);
 
-                import(`../../../projects/${projectID}/scripts.js?c=${genCacheBust()}`)
-                    .then (scripts => {
-                        component.script = new (scripts[scriptName])();
-                        component.subtype = component.script?.constructor?.name || scriptName;
-                        reRender();
-                    });
-
                 // new property defined just on these Script components
                 component.scriptName = scriptName;
                 component.name = scriptName;
+
+                reloadScriptsOnEntities();
             }
             
             reRender();

@@ -1,24 +1,28 @@
 import {Component} from '../ECS/component.js';
-import {JSBehaviour} from '../scripting/scripts.js';
+import {global} from '../scripting/EEScript/constants.js';
 import { v2, v3 } from '../maths/maths.js';
+import {N_ESBehaviour, N_functionCall, Node} from '../scripting/EEScript/nodes.js';
+import {Position} from "../scripting/EEScript/position.js";
+import {Context} from "../scripting/EEScript/context.js";
+import {ESError} from "../scripting/EEScript/errors.js";
+import {Scene} from "../ECS/scene.js";
+import {Entity} from "../ECS/entity.js";
 
 export class Script extends Component {
     static runStartMethodOnInit = false;
 
-    script: JSBehaviour | undefined;
+    script: N_ESBehaviour | undefined;
     // only used in the visual editor for downloading the script name
     scriptName = '';
     name = '';
 
     constructor(config: {
-        script: JSBehaviour | undefined,
+        script: N_ESBehaviour | undefined,
     }) {
-        super("Script", config.script?.constructor?.name ?? 'noscript')
+        super("Script", config.script?.name ?? 'noscript')
         this.script = config.script;
 
-        this.public = this?.script?.public || [];
-
-        if (Script.runStartMethodOnInit){
+        if (Script.runStartMethodOnInit) {
             this.runMethod('Start', []);
         }
     }
@@ -56,34 +60,59 @@ export class Script extends Component {
             // assume that the script src is in scripts.js
             'path': 'scripts.js',
             'name': this?.scriptName || this.script?.constructor.name,
-            'scriptName': this?.scriptName || this.script?.constructor.name,
+            'scriptName': this?.script?.name || this?.scriptName || this.script?.constructor.name,
             'public': this.jsonPublic(),
         }
     }
 
-    setScript (script: JSBehaviour) {
+    setScript (script: N_ESBehaviour) {
         this.script = script;
-        this.subtype = this.script.constructor.name;
+        this.subtype = this.script.name;
 
         if (Script.runStartMethodOnInit)
             this.runMethod('Start', []);
     }
 
-    runMethod (functionName: string, args: any[]) {
+    genContext (file: string): Context | ESError {
+        let context = new Context(file);
 
-        // @ts-ignore
-        if (typeof this.script[functionName] !== 'function') {
-            // @ts-ignore
-            this.script[functionName] = (...args: any) => {};
+        context.parent = global;
+        let setRes = context.setOwn(this.script, 'this');
+        if (setRes instanceof ESError) return setRes;
+
+        if (this?.script?.entity) {
+            setRes = context.setOwn(this?.script?.entity, 'entity');
+            if (setRes instanceof ESError) return setRes;
+
+            setRes = context.setOwn(this?.script?.entity.transform, 'transform');
+            if (setRes instanceof ESError) return setRes;
         }
 
-        try {
-            // @ts-ignore
-            this.script[functionName](...args);
-        } catch (E) {
-            console.error(`Failed to run magic method '${functionName}' on JSBehaviour '${this.subtype}': ${E}`);
-        }
+        setRes = context.setOwn(Scene.activeScene.broadcast, 'broadcast');
+        if (setRes instanceof ESError) return setRes;
 
+        setRes = context.setOwn(Entity, 'Entity');
+        if (setRes instanceof ESError) return setRes;
+        setRes = context.setOwn(Scene, 'Scene');
+        if (setRes instanceof ESError) return setRes;
+
+        return context;
+    }
+
+    runMethod (functionName: string, args: Node[]) {
+        for (let method of this?.script?.methods ?? []) {
+            if (method.name !== functionName) continue;
+
+            const caller = new N_functionCall(Position.unknown, Position.unknown, method, args);
+            let context = this.genContext(method.startPos.file);
+            if (context instanceof ESError)
+                return console.error(context.str);
+
+
+            const res = caller.interpret(context);
+            if (res.error) console.error(res.error.str);
+            return;
+        }
     }
 
     Update () {}

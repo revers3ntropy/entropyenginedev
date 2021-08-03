@@ -20,6 +20,6 @@ export class Position {
         return `${this.ln + 1}:${this.col + 1}`;
     }
     static get unknown() {
-        return new Position(-1, -1, -1);
+        return new Position(-2, -2, -2);
     }
 }

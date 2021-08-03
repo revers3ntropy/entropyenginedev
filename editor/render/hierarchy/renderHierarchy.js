@@ -1,22 +1,22 @@
 import {state, setSelected} from "../../state.js";
-import {Scene, Entity, Transform} from "../../../entropy-engine";
+import {Scene, Entity, Transform} from "../../../entropy-engine/1.0";
 import {reRender, rightClickOption, setRightClick} from "../renderer.js";
-import {setRightClickAddSpriteMenu} from "./rightClickCreateMenu.js";
+import {setRightClickAddEntityMenu} from "./rightClickCreateMenu.js";
 
-const _entity_ = (sprite, selected) => `
-    <div style="margin: 0; padding: 0" id="sprite${sprite.id}">
+const _entity_ = (entity, selected) => `
+    <div style="margin: 0; padding: 0" id="entity${entity.id}">
         <button
             class="empty-button"
             style="
                 background-color: ${selected ? 'var(--input-bg)' : 'var(--input-opposite-bg)'};
                 border-bottom: 2px solid vaR(--bg);
             "
-            id="spritebutton${sprite.id}"
+            id="entitybutton${entity.id}"
         >
-            ${sprite.name}
+            ${entity.name}
         </button>
-        <div id="childrenOf${sprite.id}" style="padding-left: 20px">
-            ${sprite.transform.children
+        <div id="childrenOf${entity.id}" style="padding-left: 20px">
+            ${entity.transform.children
                 .map(child => _entity_(child, Object.is(state.selectedEntity, child))
             ).join('')}
         </div>
@@ -94,22 +94,22 @@ export function reRenderHierarchy () {
         <ul id="hierarchy-draggable-area">
             ${entities}
         </ul>
-        <div id="create-sprite-area" style="height: 100%; max-height: 100vw"></div>
+        <div id="create-entity-area" style="height: 100%; max-height: 100vw"></div>
     `);
 
     for (let i = 0; i < sceneEntities.length; i++) {
-        const sprite = sceneEntities[i];
+        const entity = sceneEntities[i];
 
-        $(`#spritebutton${sprite.id}`).click(() => {
+        $(`#entitybutton${entity.id}`).click(() => {
             // stop a new spite being selected when the menu is up and an option is clicked
             if ($('#pop-up').css('visibility') === 'visible')
                 return;
 
-            setSelected(sprite);
+            setSelected(entity);
             reRender();
         });
 
-        setRightClick(`spritebutton${sprite.id}`, sprite, `
+        setRightClick(`entitybutton${entity.id}`, entity, `
             ${rightClickOption('delete', () => {
                 state.selectedEntity.delete();
                 for (let child of state.selectedEntity.transform.children) {
@@ -134,9 +134,8 @@ export function reRenderHierarchy () {
                 reRender();
             })}
             ${rightClickOption('add child', async () => {
-    
-                Entity.newSprite({
-                    name: 'New Sprite',
+                Entity.newEntity({
+                    name: 'New Entity',
                     transform: new Transform({
                         parent: state.selectedEntity.transform
                     })
@@ -146,10 +145,10 @@ export function reRenderHierarchy () {
         `);
     }
 
-    $(`#create-sprite-area`).click(() => {
+    $(`#create-entity-area`).click(() => {
         setSelected(null);
         reRender();
     });
 
-    setRightClickAddSpriteMenu('create-entity-area');
+    setRightClickAddEntityMenu('create-entity-area');
 }

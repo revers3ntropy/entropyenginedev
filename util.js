@@ -108,3 +108,9 @@ export function unixTimeAgo (time) {
         ) - time
     );
 }
+
+export function nameFromScriptURL (path) {
+    // ../projects/12345/assets/folder/script.es for example
+    let file = path.substring(path.lastIndexOf('/')+1);
+    return file.substring(0, file.length-3);
+}

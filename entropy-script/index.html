@@ -75,7 +75,7 @@
 
 	localStorage.last ||= `print('hello world');`;
 
-    init(outputFunc, () => outputFunc('This does not support the input function.'));
+    init(outputFunc, () => outputFunc('This does not support the input function.'), ['https://entropyengine.dev/entropy-script/std.es']);
 
 	submit.click(async e => {
 		output.innerHTML = '';

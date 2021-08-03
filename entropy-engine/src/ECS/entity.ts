@@ -1,7 +1,7 @@
 ﻿import { Component } from './component.js'
 import { Body} from "../components/body.js"
 import {Script} from "../components/scriptComponent.js"
-import {getSpriteFromJSON, setParentFromInfo} from "../JSONprocessor.js";
+import {getEntityFromJSON, setParentFromInfo} from "../JSONprocessor.js";
 import { Transform } from '../components/transform.js';
 
 export type entityConfig = {
@@ -20,14 +20,125 @@ export class Entity {
     transform: Transform;
     Static: boolean;
 
+    getComponent: <Type extends Component> (type: string, subType?: string) => Type;
+    getSceneID: () => number;
+    getClone: (cb: (clone: Entity) => any) => Promise<Entity>;
+    addComponent: (toAdd: Component) => void;
+    hasComponent: (type: string, subType?: string) => boolean;
+    getComponents: <Type extends Component> (type: string, subType?: string) => Type[];
+
     constructor (config: entityConfig) {
-        this.tag = config.tag ?? 'sprite';
+        this.tag = config.tag ?? 'entity';
         this.name = config.name ?? 'new entity';
         this.components = config.components ?? [];
         this.transform = config.transform ?? new Transform({})
         this.Static = config.Static ?? false
 
         this.id = this.generateID();
+
+
+        this.getComponent = <Type extends Component> (type: string, subType = ''): Type => {
+
+            if (!(this instanceof Entity))
+                throw new Error(`Running getComponent method in invalid context. this: ${this}`);
+
+            if (type.toLowerCase() === 'transform')
+                return this.transform as unknown as Type;
+
+            // returns the first component of passed type
+            let component: any = this.components.find(c => (
+                c.type === type &&
+                (c.subtype === subType || subType === '')
+            ) || c.subtype === type);
+
+            // as scripts are going to be handled differently, check them next
+            if (component === undefined)
+                component = this.getComponents('Script').find(c =>
+                    c.subtype === subType || c.subtype === type
+                )
+
+            if (component === undefined)
+                throw new Error(`Cannot find component of type ${type} on entity ${this.name}`);
+
+            if (component instanceof Script)
+                component = component.script;
+
+            return component as Type;
+        };
+
+        this.getSceneID = () => this.sceneID;
+
+        this.getClone = async (cb: (clone: Entity) => any) => {
+            const {entity, parentInfo} = await getEntityFromJSON(this.json());
+            setParentFromInfo(parentInfo, entity.transform);
+            cb(entity);
+            return entity;
+        };
+
+        this.addComponent = (toAdd: Component) => {
+            /*
+                Checks if the component is viable on the entity, and if it is not,
+                then refuses to add it or overrides the problematic component.
+                For example, if you try to add a rectRenderer while a CircleRenderer already exists,
+                the CircleRenderer will be deleted and then the RectRenderer will be added
+             */
+            if (toAdd.type === 'transform') return;
+
+            for (const component of this.components) {
+
+                if (component.type === 'GUIElement'){
+                    if (toAdd.type !== 'Renderer')
+                        continue;
+
+                    if (!['Renderer', 'Body', 'Camera'].includes(toAdd.type))
+                        continue;
+                }
+
+                if (toAdd.type === 'GUIElement') {
+                    // favour the listed types rather than a GUIElement
+                    if (['Renderer', 'Body', 'Camera', 'Collider'].includes(component.type))
+                        return;
+                }
+
+                if (component.type !== toAdd.type)
+                    continue;
+
+                if (component.subtype !== toAdd.subtype)
+                    continue;
+
+                // remove offending component
+                this.components.splice(this.components.indexOf(component),1);
+            }
+            this.components.push(toAdd);
+        };
+
+        this.hasComponent = (type: string, subType = ''): boolean => {
+            if (type.toLowerCase() === 'transform') return true;
+
+            for (let c of this.components)
+                if (
+                    (
+                        c.type === type &&
+                        (c.subtype === subType || subType === '')
+                    ) || c.subtype === type
+                )
+                    return true;
+
+            return false;
+        };
+
+        this.getComponents = <Type extends Component> (type: string, subType=''): Type[] => {
+            // returns all components of that type
+            let components: Type[] = [];
+
+            for (const component of this.components)
+                if (
+                    component.type === type &&
+                    (component.subtype === subType || subType === '')
+                ) components.push(component as Type);
+
+            return components;
+        };
     }
 
     get sceneID (): number {
@@ -46,7 +157,7 @@ export class Entity {
     generateID (): number {
         let id = 0;
 
-        let idsInUse = Entity.entities.map(sprite => sprite.id);
+        let idsInUse = Entity.entities.map(entity => entity.id);
 
         function getID () {
             return Math.floor(Math.random() * 10**5);
@@ -58,108 +169,14 @@ export class Entity {
         return id;
     }
 
-    addComponent (toAdd: Component) {
-        /*
-            Checks if the component is viable on the entity, and if it is not,
-            then refuses to add it or overrides the problematic component.
-            For example, if you try to add a rectRenderer while a CircleRenderer already exists,
-            the CircleRenderer will be deleted and then the RectRenderer will be added
-         */
-        if (toAdd.type === 'transform') return;
-
-        for (const component of this.components) {
-
-            if (component.type === 'GUIElement'){
-                if (toAdd.type !== 'Renderer')
-                    continue;
-
-                if (!['Renderer', 'Body', 'Camera'].includes(toAdd.type)) 
-                    continue;
-            }
-
-            if (toAdd.type === 'GUIElement') {
-                // favour the listed types rather than a GUIElement
-                if (['Renderer', 'Body', 'Camera', 'Collider'].includes(component.type))
-                    return;
-            }
-
-            if (component.type !== toAdd.type)
-                continue;
-
-            if (component.subtype !== toAdd.subtype)
-                continue;
-            
-            // remove offending component
-            this.components.splice(this.components.indexOf(component),1);
-        }
-        this.components.push(toAdd);
-    }
-
-    hasComponent (type: string, subType = ''): boolean {
-        if (type.toLowerCase() === 'transform') return true;
-
-        for (let c of this.components)
-            if (
-                (
-                    c.type === type &&
-                    (c.subtype === subType || subType === '')
-                ) || c.subtype === type
-            )
-                return true;
-
-        return false;
-    }
-
-
-    getComponent <Type extends Component> (type: string, subType = ''): Type {
-        if (type.toLowerCase() === 'transform')
-            return this.transform as unknown as Type;
-
-        // returns the first component of passed type
-        let component = this.components.find(c => (
-            c.type === type &&
-            (c.subtype === subType || subType === '')
-        ) || c.subtype === type);
-
-        // as scripts are going to be handled differently, check them next
-        if (component === undefined)
-            component = this.getComponents('Script').find(c =>
-                c.subtype === subType || c.subtype === type
-            )
-
-        if (component === undefined)
-            throw new Error(`Cannot find component of type ${type} on sprite ${this.name}`);
-
-        return component as Type;
-    }
-
-    getComponents <Type extends Component> (type: string, subType=''): Type[] {
-        // returns all components of that type
-        let components: Type[] = [];
-
-        for (const component of this.components)
-            if (
-                component.type === type &&
-                (component.subtype === subType || subType === '')
-            ) components.push(component as Type);
-
-        return components;
-    }
-
     delete () {
         for (let i = 0; i < Entity.entities.length; i++) {
-            const sprite = Entity.entities[i];
+            const entity = Entity.entities[i];
 
-            if (!Object.is(sprite, this)) continue;
+            if (!Object.is(entity, this)) continue;
 
             delete Entity.entities.splice(i, 1)[0];
         }
-    }
-
-    async getClone () {
-        const {sprite, parentInfo} = await getSpriteFromJSON(this.json());
-        setParentFromInfo(parentInfo, sprite.transform);
-        return sprite;
     }
 
     json (): any {
@@ -175,34 +192,33 @@ export class Entity {
     // -------------- static stuff ------------
     static entities: Entity[] = [];
 
-    static newSprite(setup: entityConfig) {
-        const newSprite = new Entity(setup);
-        Entity.entities.push(newSprite);
-        return newSprite;
+    static newEntity(setup: entityConfig) {
+        const newEntity = new Entity(setup);
+        Entity.entities.push(newEntity);
+        return newEntity;
     }
+    static new = Entity.newEntity;
 
     static find (name = "") {
-        const sprite = Entity.entities.find((sprite: Entity) => {
-            return sprite.name === name;
-        });
+        const entity = Entity.entities.find((entity: Entity) => entity.name === name);
 
-        if (!sprite)
+        if (!entity)
             return undefined;
 
-        return sprite as Entity;
+        return entity as Entity;
     }
 
     static findWithTag (tag: string) {
-        let sprites: Entity[] = [];
-        Entity.loop((sprite: Entity) => {
-            if (sprite.tag === tag)
-                sprites.push(sprite);
+        let entities: Entity[] = [];
+        Entity.loop((entity: Entity) => {
+            if (entity.tag === tag)
+                entities.push(entity);
         });
-        return sprites;
+        return entities;
     }
 
-    static loop (handler: (sprite: Entity) => void) {
-        for (const sprite of Entity.entities)
-            handler(sprite);
+    static loop (handler: (entity: Entity) => void) {
+        for (const entity of Entity.entities)
+            handler(entity);
     }
 }

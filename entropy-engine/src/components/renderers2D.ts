@@ -72,8 +72,7 @@ export class CircleRenderer extends Renderer2D {
 }
 
 export class RectRenderer extends Renderer2D {
-    Start(transform: Transform): void {
-    }
+    Start(transform: Transform): void {}
 
     // @ts-ignore
     height: number;
@@ -134,8 +133,7 @@ export class RectRenderer extends Renderer2D {
 }
 
 export class ImageRenderer2D extends Renderer2D {
-    Start(transform: Transform): void {
-    }
+    Start(transform: Transform): void {}
 
     // @ts-ignore
     height: number;
@@ -145,11 +143,11 @@ export class ImageRenderer2D extends Renderer2D {
     url: string;
 
     constructor ({
-                     height = 1,
-                     offset = new v2(0, 0),
-                     width= 1,
-                     url= '',
-                 }) {
+         height = 1,
+         offset = new v2(0, 0),
+         width= 1,
+         url= '',
+     }) {
         super("ImageRenderer2D", offset);
 
         this.addPublic({

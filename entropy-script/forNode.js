@@ -17,7 +17,7 @@ function askQuestion(query) {
 	}));
 }
 
-es.init(console.log, async (msg, cb) => cb(await askQuestion(msg)));
+es.init(console.log, async (msg, cb) => cb(await askQuestion(msg)), ['./std.es']);
 
 
 while (1) {
@@ -31,20 +31,18 @@ while (1) {
 	}
 
 	else if (/run [\w_\/.]+\.es/.test(input)) {
-		builtInFunctions['import']({get: () => input.substring(4)});
+		builtInFunctions['import'](input.substring(4));
 		// run breaks out of the loop, to allow inputs
 		break;
 	}
 
 	else if (/run [\w_\/.]+/.test(input)) {
-		builtInFunctions['import']({get: () => input.substring(4) + '.es'});
+		builtInFunctions['import'](input.substring(4) + '.es');
 		// run breaks out of the loop, to allow inputs
 		break;
 	}
 
 	let res = es.run(input);
-
-	console.log(res);
 
 	let out = res.val;
 

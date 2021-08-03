@@ -1,9 +1,9 @@
 import {reRender, rightClickOption, setRightClick} from "../renderer.js";
 import {setSelected, state} from "../../state.js";
-import {Entity, v3} from "../../../entropy-engine";
-import * as ee from "../../../entropy-engine";
+import {Entity, v3} from "../../../entropy-engine/1.0";
+import * as ee from "../../../entropy-engine/1.0";
 
-export function setRightClickAddSpriteMenu(divID) {
+export function setRightClickAddEntityMenu(divID) {
 	setRightClick(divID, state.selectedEntity, `
         <p style="
             background-color: vaR(--input-bg); 
@@ -14,11 +14,11 @@ export function setRightClickAddSpriteMenu(divID) {
             Create
         </p>
         ${rightClickOption('empty', () => {
-			setSelected(Entity.newSprite({}));
+			setSelected(Entity.newEntity({}));
 			reRender();
 		})}
         ${rightClickOption('square', () => {
-			setSelected(Entity.newSprite({
+			setSelected(Entity.newEntity({
 				name: 'square',
 				transform: new ee.Transform({
 					scale: new v3(100, 100, 100)
@@ -31,7 +31,7 @@ export function setRightClickAddSpriteMenu(divID) {
 			reRender();
 		})}
         ${rightClickOption('circle', () => {
-			setSelected(Entity.newSprite({
+			setSelected(Entity.newEntity({
 				name: 'circle',
 				transform: new ee.Transform({
 					scale: new v3(50, 1, 1)
@@ -44,7 +44,7 @@ export function setRightClickAddSpriteMenu(divID) {
 			reRender();
 		})}
         ${rightClickOption('camera', () => {
-			setSelected(Entity.newSprite({
+			setSelected(Entity.newEntity({
 				name: 'camera',
 				components: [
 					new ee.Camera({}),
@@ -54,7 +54,7 @@ export function setRightClickAddSpriteMenu(divID) {
 		})}
         
         ${rightClickOption('cube', () => {
-			setSelected(Entity.newSprite({
+			setSelected(Entity.newEntity({
 				name: 'cube',
 				components: [
 					new ee.MeshRenderer({

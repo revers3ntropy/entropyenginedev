@@ -126,9 +126,7 @@ export function renderAll (entities: Entity[], canvas: HTMLCanvasElement, ctx: C
 
 System.systems.push(new System ({
     name: 'Renderer',
-    Start: (scene: Scene) => {
-
-    },
+    Start: (scene: Scene) => {},
 
     Update: (scene: Scene) => {
         const ctx = scene.settings.ctx;

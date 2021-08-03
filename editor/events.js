@@ -9,10 +9,10 @@ import {
 } from "./state.js";
 
 import {reRender, reRenderCanvas, reRenderCanvasDebug, reRenderSceneToolbar} from "./render/renderer.js";
-import {rect} from "../entropy-engine/systems/rendering/basicShapes.js";
-import {v2, Entity, Scene, Camera} from '../entropy-engine';
-import {genCacheBust} from '../util.js';
-import {getMousePos} from "../entropy-engine/input.js";
+import {rect} from "../entropy-engine/1.0/systems/rendering/basicShapes.js";
+import {v2, Entity, Scene, Camera} from '../entropy-engine/1.0';
+import {getMousePos} from "../entropy-engine/1.0/input.js";
+import {reloadScriptsOnEntities} from "./scripts.js";
 
 window.addEventListener('click', () => {
     $('#pop-up').css('visibility', 'hidden');
@@ -78,6 +78,7 @@ $(document).keydown(event => {
 
 window.run = async () => {
     await window.backgroundSave();
+    await reloadScriptsOnEntities();
 
     setState(gameView);
     reRender();
@@ -101,14 +102,6 @@ window.run = async () => {
     };
 
     $('#save, #build-button, #share').remove();
-
-    const allScripts = await import(`../projects/${projectID}/scripts.js?c=${genCacheBust()}`);
-
-    Scene.activeScene.loopThroughScripts((script, sprite) => {
-        const className = script.name || script.scriptName;
-        const scriptClass = allScripts[className];
-        script.script = new scriptClass();
-    });
 
     state.eeReturns.run();
 };

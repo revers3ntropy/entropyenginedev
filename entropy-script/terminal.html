@@ -76,7 +76,7 @@
 
 	localStorage.lastCommand ||= '';
 
-    init(outputFunc, () => outputFunc('This does not support the input function.'));
+    init(outputFunc, () => outputFunc('This does not support the input function.'), ['https://entropyengine.dev/entropy-script/std.es']);
 
 	$('#test').on('click', () => {
 		const res = Test.testAll();

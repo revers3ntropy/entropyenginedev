@@ -578,7 +578,7 @@ export class Parser {
             return res;
         if (this.currentToken.type === tt.CBRACES) {
             this.advance(res);
-            return res.success(new n.N_class(startPos, this.currentToken.startPos, []));
+            return res.success(new n.N_class(startPos, this.currentToken.startPos, [], undefined, undefined, name));
         }
         while (true) {
             if (this.currentToken.type !== tt.IDENTIFIER)

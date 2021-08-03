@@ -1,8 +1,8 @@
 "use strict";
-import entropyEngine, * as ee from "../entropy-engine";
-import {Entity, spritesFromJSON} from "../entropy-engine";
-import {initialiseScenes} from '../entropy-engine/JSONprocessor.js';
-import {cullString} from '../entropy-engine/util/general.js';
+import entropyEngine, * as ee from "../entropy-engine/1.0";
+import {Entity, entitiesFromJSON} from "../entropy-engine/1.0";
+import {initialiseScenes} from '../entropy-engine/1.0/JSONprocessor.js';
+import {cullString} from '../entropy-engine/1.0/util/general.js';
 
 import {genCacheBust, mustBeSignedIn} from '../util.js';
 import {request} from '../request.js';
@@ -10,7 +10,7 @@ import {request} from '../request.js';
 import {reRender} from './render/renderer.js';
 import "./builder.js";
 import './events.js';
-import {loadScripts} from "./scripts.js";
+import {loadScripts, reloadScriptsOnEntities} from "./scripts.js";
 import './state.js';
 import {state, scripts, redirectedFrom, projectID, setSelected} from './state.js';
 
@@ -49,22 +49,11 @@ async function initFromFiles (id) {
 
     state.eeReturns = entropyEngine(config);
 
-    await spritesFromJSON(data['sprites']);
+    await entitiesFromJSON(data['entities'] || []);
 
     setSelected(Entity.entities[0]);
 
-    import(`../projects/${projectID}/scripts.js?c=${genCacheBust()}`)
-        .then (scripts => {
-            for (const sprite of Entity.entities) {
-                for (const component of sprite.components) {
-                    if (component.type !== 'Script') continue;
-
-                    component.script = new (scripts[component.name || component.scriptName])();
-                    component.public ??= component.script.public;
-                }
-            }
-            reRender();
-        });
+    await reloadScriptsOnEntities();
 
     ee.Camera.main = state.sceneCamera;
     ee.Scene.active = parseInt(sessionStorage.sceneID) || 0;
@@ -100,7 +89,8 @@ checkCredentials(async accessLevel => {
     switch (redirectedFrom) {
         case 'import':
         case 'assets':
-            setState(assets);
+            state.window = assets;
+            reRender();
             break;
 
         default:

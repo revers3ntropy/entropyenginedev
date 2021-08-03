@@ -5,7 +5,7 @@ import {Collider} from './components/colliders.js'
 import { license } from "./license.js"
 import {getMousePos, input, setMousePos} from "./input.js"
 import { GUIElement, GUITextBox } from "./components/gui/gui.js"
-import { spritesFromJSON, initialiseScenes } from './JSONprocessor.js'
+import { entitiesFromJSON, initialiseScenes } from './JSONprocessor.js'
 import {Camera} from "./components/camera.js"
 import {getCanvasStuff, setCanvasSize} from "./util/general.js"
 import {rgb} from './util/colour.js'
@@ -26,9 +26,8 @@ export { CircleRenderer, RectRenderer, ImageRenderer2D, MeshRenderer } from './c
 export { GUIBox, GUIText, GUITextBox, GUIRect, GUICircle, GUIPolygon, GUIImage } from './components/gui/gui.js'
 export { input } from './input.js'
 export { Camera } from './components/camera.js'
-export { spritesFromJSON } from './JSONprocessor.js'
+export { entitiesFromJSON } from './JSONprocessor.js'
 export {Transform} from './components/transform.js'
-export {JSBehaviour} from './scripting/scripts.js'
 export {Scene} from './ECS/scene.js'
 export {System} from './ECS/system.js';
 
@@ -164,9 +163,7 @@ export default function entropyEngine ({
     }
 
     async function tick () {
-
         System.Update(Scene.activeScene);
-
         window.requestAnimationFrame(tick);
     }
 
@@ -175,9 +172,7 @@ export default function entropyEngine ({
         window.requestAnimationFrame(tick);
     }
 
-    return {
-        run
-    };
+    return {run};
 }
 
 // cache busting
@@ -207,7 +202,7 @@ export async function runFromJSON (path: string, config: any = {}) {
 
     const returns = entropyEngine(config);
     
-    await spritesFromJSON(data['sprites']);
+    await entitiesFromJSON(data['sprites']);
 
     await returns.run();
 

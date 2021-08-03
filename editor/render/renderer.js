@@ -1,6 +1,6 @@
-import { Scene, v2, Camera, System } from "../../entropy-engine";
-import {rect} from "../../entropy-engine/systems/rendering/basicShapes.js";
-import {renderDebug, renderSelectedOutline, drawCameraViewArea} from '../../entropy-engine/systems/rendering/debugRenderer.js';
+import { Scene, v2, Camera, System } from "../../entropy-engine/1.0";
+import {rect} from "../../entropy-engine/1.0/systems/rendering/basicShapes.js";
+import {renderDebug, renderSelectedOutline, drawCameraViewArea} from '../../entropy-engine/1.0/systems/rendering/debugRenderer.js';
 
 import {
     ctx, canvas,

@@ -13,10 +13,12 @@ export class Lexer {
     private readonly text: string;
     private currentChar: string | undefined;
     private readonly position: Position;
+    private readonly file: string;
 
-    constructor (program: string) {
+    constructor (program: string, fileName: string) {
         this.text = program;
-        this.position = new Position(-1, 0, -1);
+        this.position = new Position(-1, 0, -1, fileName);
+        this.file = fileName;
         this.advance();
     }
 
@@ -110,12 +112,6 @@ export class Lexer {
             if (this.currentChar === '\\') {
                 // skip over the character so that you can include the strClose string in the string
                 this.advance();
-                // @ts-ignore
-                if (this.currentChar === 'n') {
-                    str += '\n';
-                    this.advance();
-                    continue;
-                }
             }
             str += this.currentChar;
             this.advance();
