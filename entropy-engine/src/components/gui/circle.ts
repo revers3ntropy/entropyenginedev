@@ -1,4 +1,4 @@
-import {rgb} from "../../util/colour.js";
+import {rgb, colour} from "../../util/colour.js";
 import {Transform} from "../transform.js";
 import {circle} from "../../systems/rendering/basicShapes.js";
 import {GUIElement} from "./gui.js";
@@ -6,7 +6,7 @@ import {v2} from "../../maths/v2.js";
 
 export class GUICircle extends GUIElement {
     // @ts-ignore
-    colour: string;
+    colour: colour;
     // @ts-ignore
     radius: number
 
@@ -32,7 +32,7 @@ export class GUICircle extends GUIElement {
         const radius = this.radius * transform.scale.x;
 
         if (radius <= 0) return;
-        circle(ctx, transform.position.v2, radius, this.colour);
+        circle(ctx, transform.position.v2, radius, this.colour.rgba);
     }
 
     touchingPoint(point: v2, ctx: CanvasRenderingContext2D, transform: Transform): boolean {

@@ -7,7 +7,7 @@ export class v3 {
 
     w: number;
 
-    constructor(x: number, y: number = x, z: number = x, w=1) {
+    constructor (x: number, y: number = x, z: number = x, w=1) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -15,35 +15,35 @@ export class v3 {
         this.w = w;
     }
 
-    add (v: v3): v3 {
+    add = (v: v3): v3 => {
         this.x += v?.x || 0;
         this.y += v?.y || 0;
         this.z += v?.z || 0;
         return this;
     }
 
-    sub (v: v3): v3 {
+    sub = (v: v3): v3 => {
         this.x -= v.x || 0;
         this.y -= v.y || 0;
         this.z -= v.z || 0;
         return this;
     }
 
-    mul (v: v3): v3 {
+    mul = (v: v3): v3 => {
         this.x *= v.x;
         this.y *= v.y;
         this.z *= v.z;
         return this;
     }
 
-    scale (factor: number): v3 {
+    scale = (factor: number): v3 => {
         this.x *= factor;
         this.y *= factor;
         this.z *= factor;
         return this;
     }
 
-    div (v: v3): v3 {
+    div = (v: v3): v3 => {
 
         if (v.x !== 0)
             this.x /= v.x;
@@ -57,11 +57,11 @@ export class v3 {
         return this;
     }
 
-    distTo (v: v3): number {
+    distTo = (v: v3): number => {
         return this.clone.sub(v).magnitude;
     }
 
-    diff (v: v3) {
+    diff = (v: v3) => {
         return new v3(
             Math.abs(this.x - v.x),
             Math.abs(this.y - v.y),
@@ -77,7 +77,7 @@ export class v3 {
         return Math.sqrt(dot);
     }
 
-    normalise (): v3 {
+    normalise = (): v3 => {
         const m = this.magnitude;
 
         if (m !== 0)
@@ -96,7 +96,7 @@ export class v3 {
         return `x: ${this.x} \ny: ${this.y} \nz: ${this.z}`;
     }
 
-    equals (v: v3): boolean {
+    equals = (v: v3): boolean => {
         return (
             v.x === this.x &&
             v.y === this.y &&
@@ -104,7 +104,7 @@ export class v3 {
         )
     }
 
-    isInCuboid (rectPos: v3, rectDimensions: v3): boolean {
+    isInCuboid = (rectPos: v3, rectDimensions: v3): boolean => {
         /*
          Checks to see if the point is inside the top, right and front face of the cuboid,
          and if it is in all three then it is inside the cuboid
@@ -128,23 +128,23 @@ export class v3 {
         );
     }
 
-    set (to: v3): v3 {
+    set = (to: v3): v3 => {
         this.x = to.x;
         this.y = to.y;
         this.z = to.z;
         return this;
     }
 
-    apply (m: (v: number) => number) {
+    apply = (m: (v: number) => number) => {
         this.x = m(this.x);
         this.y = m(this.y);
         this.z = m(this.z);
     }
 
-    dot (v: v3): number {
+    dot = (v: v3): number => {
         return this.x * v.x + this.y * v.y + this.z * v.z;
     }
-    cross (v: v3): number {
+    cross = (v: v3): number => {
         return this.x * v.y - this.y * v.x - this.z * v.z;
     }
 
@@ -152,7 +152,7 @@ export class v3 {
         return this.clone.scale(-1);
     }
 
-    toInt (): v3 {
+    toInt = (): v3 => {
         this.apply(Math.round);
         return this;
     }
@@ -200,11 +200,6 @@ export class v3 {
     }
 
     static fromArray (arr: any) {
-        if (!arr || !Array.isArray(arr) || arr.length !== 3) {
-            console.error('tried to initialise v3 from array with invalid value: ', arr);
-            return new v3(0, 0, 0);
-        }
-
         return new v3(arr[0], arr[1], arr[2]);
     }
 }

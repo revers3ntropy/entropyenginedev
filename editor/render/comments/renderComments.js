@@ -1,6 +1,6 @@
 import {request} from '../../../request.js';
 import {comment as commentComponent} from '../../../globalComponents.js';
-import {projectID} from '../../state.js';
+import {apiToken, projectID} from '../../state.js';
 
 export function renderComments (div) {
 
@@ -30,9 +30,8 @@ export function renderComments (div) {
 	`);
 
 	function refreshComments (username) {
-		request('/get-comments', {
-			public: false,
-			projectID
+		request('/get-comments', apiToken, {
+			public: false
 		}).then(comments => {
 			$('#num-comments').html(comments.length);
 
@@ -43,9 +42,8 @@ export function renderComments (div) {
 			commentsDIV.html('');
 
 			for (let comment of comments) {
-				commentsDIV.append(
-					commentComponent(comment, comment.username === username)
-				);
+				let html = commentComponent(comment, comment.username === username);
+				commentsDIV.append(html);
 
 				// have to do this here
 				if (comment.username !== username) continue;
@@ -55,7 +53,7 @@ export function renderComments (div) {
 					$(`#comment-${comment._id}-menu`).hide();
 					$(`#comment-${comment._id}`).hide();
 
-					request('/delete-comment', {
+					request('/delete-comment', apiToken, {
 						commentID: comment._id
 					}).then(() => {
 						refreshComments(username);
@@ -67,26 +65,22 @@ export function renderComments (div) {
 
 	const addMessage = $("#add-comment");
 
-	request('/get-username', {
-		userID: localStorage.id
-	}).then(username => {
+	request('/get-username', apiToken)
+		.then(username => {
+			addMessage.keyup(event => {
+				if (event.keyCode !== 13) return;
 
-		addMessage.keyup(event => {
-			if (event.keyCode !== 13) return;
+				const content = addMessage.val();
+				addMessage.val('');
 
-			const content = addMessage.val();
-			addMessage.val('');
-
-			request('/comment', {
-				content,
-				projectID,
-				public: false,
-				userID: localStorage.id
-			}).then(() => {
-				refreshComments(username.username);
+				request('/comment', apiToken, {
+					content,
+					public: false,
+				}).then(() => {
+					refreshComments(username.username);
+				});
 			});
-		});
 
-		refreshComments(username.username);
-	});
+			refreshComments(username.username);
+		});
 }

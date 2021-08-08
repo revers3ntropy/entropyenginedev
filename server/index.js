@@ -24,17 +24,18 @@ const PORT = 50_001;
         data: object - the JSON passed through
  */
 const handlers = {
-    'robots.text': (url, req, res) => {
+    'robots.text': ({res}) => {
         // block all bots from backend entirely
         res.end(`
             User-agent: *
             Disallow: /
         `);
     },
+    'favicon.ico': () => 0,
 
     // Debug
-    'ping': (m, req, res, body) => res.end('{"ok": "true"}'),
-    'log': (url, req, res, body) => console.log(body),
+    'ping': ({res}) => res.end('{"ok": "true"}'),
+    'log': ({body}) => console.log(body),
     
     // accounts
     'delete-account': accounts.delete,
@@ -112,7 +113,7 @@ async function serverResponse (req, res) {
         if (rawPaths.includes(url[1])) {
             url.shift();
             const handler = handlers[url[0]];
-            handler(url, req, res);
+            handler({url, req, res});
             return;
         }
 
@@ -141,8 +142,9 @@ async function serverResponse (req, res) {
             url.shift();
 
             const handler = handlers[url[0]];
+            let token = body.token;
 
-            handler(url, req, res, body);
+            handler({url, res, body, req, token});
         });
     } catch(e) {
         console.log(`ERROR IN URL ${req.url}: ${e}`);
@@ -150,6 +152,7 @@ async function serverResponse (req, res) {
 
 }
 
-https.createServer(options, serverResponse).listen(PORT, () => {
-    console.log(`Server started on port ` + PORT);
-});
+https.createServer(options, serverResponse)
+    .listen(PORT, () => {
+        console.log(`Server started on port ` + PORT);
+    });

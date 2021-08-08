@@ -13,7 +13,7 @@ import {
     CircleRenderer, ImageRenderer2D, RectRenderer,
     GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox,
     Camera
-} from '../../../entropy-engine';
+} from '../../../entropy-engine/1.0';
 
 Script;
 
@@ -100,24 +100,22 @@ export function reRenderInspector () {
         if ($('.add-component-popup').length) return;
 
         window.addComponent = type => {
-            type = type.split(':');
-
-            // normal
-            if (type.length === 1)
-                state.selectedEntity.addComponent(new (eval(type[0]))({}));
-
-            // scripts
-            else if (type[0] === 'Script') {
-                // slice off the surrounding ''
-                const scriptName = type[1].slice(2, type[1].length-1);
+            try {
+                state.selectedEntity.addComponent(new (eval(type))({}));
+            } catch(e) {
+                // scripts
                 const component = new Script({});
-                state.selectedEntity.addComponent(component);
+                if (!state.selectedEntity.addComponent(component)) return;
 
                 // new property defined just on these Script components
-                component.scriptName = scriptName;
-                component.name = scriptName;
+                component.scriptName = type;
+                component.name = type;
 
-                reloadScriptsOnEntities();
+                reloadScriptsOnEntities()
+                    .then(async () => {
+                        await window.backgroundSave();
+                        window.location.reload();
+                    });
             }
             
             reRender();
@@ -145,7 +143,7 @@ export function reRenderInspector () {
 
                 if (group === 'Scripts') {
                     for (let name in scripts)
-                        html += _button_(`Script: '${name}'`);
+                        html += _button_(`${name}`);
                     continue;
                 }
 

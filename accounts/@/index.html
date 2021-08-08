@@ -74,7 +74,8 @@
 <script type="module">
 
     import {urlParam} from '../../util.js';
-    import {request} from '../../request.js';
+	import {APIToken, request} from '../../request.js';
+    let apiToken = new APIToken({});
 
     let username = urlParam('u');
 
@@ -84,14 +85,10 @@
 
 	let projects = $('#projects');
 
-	request('/public-projects', {
-		username,
-        userID: localStorage.id
-	}).then(async projectNames => {
+	request('/public-projects', apiToken, {username})
+    .then(async projectNames => {
 
-        const myUsername = (await request('/get-username', {
-            userID: localStorage.id
-        })).username;
+        const myUsername = (await request('/get-username', apiToken)).username;
 
 		for (let projectName of projectNames) {
 
@@ -122,9 +119,9 @@
 
             `);
 
-			const editors = await request(`/get-project-editors`, {
-				projectID: projectName._id
-			});
+			const editors = await request(`/get-project-editors`, new APIToken({
+                project: projectName._id
+            }));
 
 			const editorsHTML = () => {
 				// these are just my projects, always have 'me' first

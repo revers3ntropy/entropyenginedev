@@ -94,7 +94,7 @@
             return;
         }
 
-        const usernameExists = await request('/username-exists', {username});
+        const usernameExists = await request('/username-exists', undefined, {username});
         if (usernameExists.exists === '1') {
             error.html('That username already exists');
             return;
@@ -114,7 +114,7 @@
             return;
         }
 
-        request('/new-user', {
+       await request('/new-user', undefined, {
             username,
             password,
             name,

@@ -38,9 +38,9 @@ export const _component_ = (component, i) => {
 	let j = 0;
 	for (let property of component.public) {
 		let name = component.type;
-		if (name === 'Script') {
-			name += `: ${component?.scriptName || component?.name || component.subtype}`;
-		}
+		if (name === 'Script')
+			name = component?.scriptName || component?.name || component.subtype;
+
 		componentHTML.append(`
                 <div style="border-bottom: 1px solid vaR(--input-bg); margin-bottom: 4px">
                     ${_componentProperty_(

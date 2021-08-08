@@ -7,6 +7,7 @@ import {reRender} from "./render/renderer.js";
 import {reloadScriptsOnEntities} from "./scripts.js";
 import {init as initEES} from "../entropy-engine/1.0/scripting/EEScript";
 import {global, globalConstants} from "../entropy-engine/1.0/scripting/EEScript/constants.js";
+import {APIToken} from "../request.js";
 
 export let globalEESContext = global;
 
@@ -36,6 +37,10 @@ initEES();
 
 export let redirectedFrom = urlParam('from');
 export const projectID = urlParam('p');
+
+export const apiToken = new APIToken({
+	project: projectID
+});
 
 window.parseBool = string => string === 'true';
 

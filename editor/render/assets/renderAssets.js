@@ -1,4 +1,4 @@
-import {projectID, state} from '../../state.js';
+import {apiToken, projectID, state} from '../../state.js';
 import {request} from '../../../request.js';
 import {reRender, rightClickOption, setRightClick} from "../renderer.js";
 import {cullString} from '../../../entropy-engine/1.0/util/general.js';
@@ -29,16 +29,14 @@ const _asset_ = (fileName) => `
 `;
 
 export const renderAssets = async div => {
-	const projectAssets = await request('/get-assets', {
-		projectID
-	});
+	const projectAssets = await request('/get-assets', apiToken);
 	let assetsHTML = '';
 
 	for (const asset of projectAssets) {
 		assetsHTML += _asset_(asset.fileName);
 	}
 
-	const projectSize = await request('/folder-size', {
+	const projectSize = await request('/folder-size', apiToken, {
 		path: `../projects/${projectID}/`
 	});
 
@@ -88,8 +86,7 @@ export const renderAssets = async div => {
 
 		setRightClick(`asset${file}`, state.selectedEntity, `
 			${rightClickOption(`delete_asset_${file}`, () => {
-				request('/delete-asset', {
-					projectID,
+				request('/delete-asset', apiToken, {
 					fileName: file
 				}).then(value => {
 					// once it has actually been deleted, then re-render

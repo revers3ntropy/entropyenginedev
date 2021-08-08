@@ -28,9 +28,8 @@ export const builtInFunctions: {[name: string]: ((context: Context) => any) | an
     },
 
     'log': (context: Context) => {
-        let msg = context.get('message') ?? '';
-        console.log(msg);
-        return context.get('message');
+        console.log(...context.get('args'));
+        return context.get('args');
     },
 
     'str': (context: Context) => {
@@ -165,7 +164,6 @@ export const builtInFunctions: {[name: string]: ((context: Context) => any) | an
 export const builtInArgs: {[name: string]: string[]} = {
     'add': ['a', 'b'],
     'range': ['n'],
-    'log': ['message'],
     'str': ['val'],
     'type': ['val'],
     'contains': ['arr', 'element'],

@@ -2,14 +2,14 @@ const query = require('./sql').query;
 
 const idMax = parseInt(process.env.SEC_IDMAX);
 
-exports.report = (url, req, res, body) => {
+exports.report = ({body, token}) => {
 	query(`
 
 	INSERT INTO 
 	    reports 
 	VALUES (
-	        null, 
-	        ${body.userID}, 
+	        null,
+	        ${token.user},
 	        "${body.type}", 
 	        "${body.issueID}", 
 	        "${body.problem}", 
@@ -19,7 +19,7 @@ exports.report = (url, req, res, body) => {
 	`);
 };
 
-exports.getReport = (url, req, res, body) => {
+exports.getReport = ({res, body}) => {
 	query(`
 		SELECT 
 			users.username,
@@ -41,7 +41,7 @@ exports.getReport = (url, req, res, body) => {
 	});
 };
 
-exports.comment = (url, req, res, body) => {
+exports.comment = ({res, body, token}) => {
 	query(`
 
         SELECT 
@@ -60,8 +60,8 @@ exports.comment = (url, req, res, body) => {
                 comments
             VALUES(
                 ${id},
-                ${body.userID},
-                ${body.projectID},
+                ${token.user},
+                ${token.project},
                 "${body.content}",
                 ${body.public},
                 CURRENT_TIMESTAMP
@@ -73,7 +73,7 @@ exports.comment = (url, req, res, body) => {
 	});
 };
 
-exports.getComments = (url, req, res, body) => {
+exports.getComments = ({res, body, token}) => {
 	query(`
 
     SELECT
@@ -86,7 +86,7 @@ exports.getComments = (url, req, res, body) => {
         users
     WHERE
         users._id = comments.userID
-    AND comments.projectID = ${body.projectID}
+    AND comments.projectID = ${token.project}
     AND public = ${body.public ? 1 : 0}
 
     ORDER BY 
@@ -97,7 +97,7 @@ exports.getComments = (url, req, res, body) => {
 	});
 };
 
-exports.getComment = (url, req, res, body) => {
+exports.getComment = ({res, body}) => {
 	query(`
 
     SELECT
@@ -119,7 +119,7 @@ exports.getComment = (url, req, res, body) => {
 	});
 };
 
-exports.deleteComment = (url, req, res, body) => {
+exports.deleteComment = ({res, body}) => {
 	query(`
        
     DELETE FROM 

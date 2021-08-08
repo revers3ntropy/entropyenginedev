@@ -20,12 +20,6 @@
 <body>
 <div id="header"></div>
 
-<!-- not ready yet
-<a href="../../bug-tracker/submit">
-    Report Bug or Security risk
-</a>
--->
-
 <p style="font-size: 30px; margin: 10px" id="recent-projects-header">
     Your Recent Projects
 </p>
@@ -114,21 +108,22 @@
 </style>
 
 <script type="module">
-    import {mustBeSignedIn, unixTimeAgo} from '../../util.js';
-    import {request} from '../../request.js';
+    import {unixTimeAgo, validID} from '../../util.js';
+	import {APIToken, request} from '../../request.js';
 
     const toFill = $('#links');
+    const apiToken = new APIToken({});
 
-    mustBeSignedIn(() => {
-		toFill.html(`
-        <a href="../my-projects/" style="font-size: 30px">
-            All Projects
-        </a>
-        `);
-
-		recentProjects();
-    }, () => {
-		toFill.html(`
+	validID(localStorage.id).then(signedIn => {
+		if (signedIn) {
+			toFill.html(`
+            <a href="../my-projects/" style="font-size: 30px">
+                All Projects
+            </a>
+            `);
+			recentProjects();
+		} else {
+			toFill.html(`
         <a href="../sign-in" style="font-size: 25px; margin: 10px">
             Sign In
         </a>
@@ -137,25 +132,24 @@
         </a>
         `);
 
-		$('#recent-projects-header').html('');
-    });
+			$('#recent-projects-header').html('');
+		}
+	});
 
-    request('/top-projects-by-views')
+    request('/top-projects-by-views', apiToken)
         .then(async data => {
             for (const project of data) {
             	const projectID = project.id;
 
-                const name = (await request('/get-project-name', {
-                	projectID
-                })).name;
+            	const token = new APIToken({
+					project: projectID
+				})
 
-                const owner = await request('/project-owner', {
-					projectID
-				});
+                const name = (await request('/get-project-name', token)).name;
 
-                const views = await request('/project-views', {
-                	projectID
-                });
+                const owner = await request('/project-owner', token);
+
+                const views = await request('/project-views', token);
 
             	$('#top-projects').append(`
                     <div class="project" id="project-${projectID}">
@@ -201,15 +195,11 @@
 
 
     function recentProjects () {
-		request('/get-project-names', {
-			userID: localStorage.id
-		}).then(async projectNames => {
+		request('/get-project-names', apiToken).then(async projectNames => {
 
 			const projectsDiv = $('#recent-projects');
 
-			const myUsername = (await request('/get-username', {
-				userID: localStorage.id
-			})).username;
+			const myUsername = (await request('/get-username', apiToken)).username;
 
 			let i = 0;
 			for (let projectName of projectNames) {
@@ -249,9 +239,9 @@
 
                 `);
 
-				const editors = await request(`/get-project-editors`, {
-					projectID: projectName._id
-				});
+				const editors = await request(`/get-project-editors`, new APIToken({
+					project: projectName._id
+				}));
 
 				const editorsHTML = () => {
 					// these are just my projects, always have 'me' first

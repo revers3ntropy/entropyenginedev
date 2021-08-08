@@ -5,8 +5,7 @@ import {GUIElement} from "./gui.js";
 import {v2} from "../../maths/v2.js";
 
 export class GUIBox extends GUIElement {
-    Start(transform: Transform): void {
-    }
+    Start(transform: Transform): void {}
     // @ts-ignore
     height: number;
     // @ts-ignore
@@ -80,7 +79,7 @@ export class GUIBox extends GUIElement {
                 this.width * transform.scale.x,
                 this.height * transform.scale.y,
                 transform.position.v2,
-                this.outerColour,
+                this.outerColour.rgba,
                 this.radius
             );
 
@@ -90,7 +89,7 @@ export class GUIBox extends GUIElement {
             (this.width * transform.scale.x) - s*2,
             (this.height * transform.scale.y) - s*2,
             transform.position.v2.add(new v2(s, s)),
-            this.innerColour,
+            this.innerColour.rgba,
             this.radius - s
         );
     }

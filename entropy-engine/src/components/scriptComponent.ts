@@ -99,7 +99,7 @@ export class Script extends Component {
         return context;
     }
 
-    runMethod (functionName: string, args: Node[]) {
+    runMethod (functionName: string, args: Node[] = []) {
         for (let method of this?.script?.methods ?? []) {
             if (method.name !== functionName) continue;
 
@@ -107,7 +107,6 @@ export class Script extends Component {
             let context = this.genContext(method.startPos.file);
             if (context instanceof ESError)
                 return console.error(context.str);
-
 
             const res = caller.interpret(context);
             if (res.error) console.error(res.error.str);

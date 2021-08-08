@@ -15,6 +15,7 @@ import {System} from "./ECS/system.js";
 import './systems/physics/physics.js';
 import './systems/rendering/renderer.js';
 import './systems/entities/entityController.js';
+import {init} from "./scripting/EEScript/index.js";
 
 export {rgb} from './util/colour.js'
 export { Entity } from "./ECS/entity.js"
@@ -187,12 +188,14 @@ const scriptFetchInit = {
 
 export async function runFromJSON (path: string, config: any = {}) {
 
+    init();
+
     // get and init the
     const data_: any = await fetch(path, scriptFetchInit);
     const data = await data_.json();
 
     for (let key in data) {
-        if (['sprites', 'scenes'].includes(key))
+        if (['entities', 'scenes'].includes(key))
             continue;
 
         config[key] = data[key];
@@ -202,7 +205,7 @@ export async function runFromJSON (path: string, config: any = {}) {
 
     const returns = entropyEngine(config);
     
-    await entitiesFromJSON(data['sprites']);
+    await entitiesFromJSON(data['entities']);
 
     await returns.run();
 

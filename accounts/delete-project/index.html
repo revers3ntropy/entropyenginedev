@@ -60,15 +60,17 @@
 </style>
 
 <script type="module">
-    import {request} from '../../request.js';
+	import {APIToken, request} from '../../request.js';
     import {urlParam, sleep} from '../../util.js';
 
     const projectID = urlParam('p');
     const confirm = $('#confirm');
 
-    request('/get-project-name', {
-        projectID
-    }).then(async value => {
+    let apiToken = new APIToken({
+        project: projectID
+    });
+
+    request('/get-project-name', apiToken).then(async value => {
         confirm.html(`
             <p style="font-size: 30px">
                 Are you sure you want to delete the project
@@ -83,10 +85,7 @@
         await sleep(2000);
 
         window.delete = () => {
-            request('/delete-project', {
-                userID: localStorage.id,
-                projectID
-            });
+            request('/delete-project', apiToken);
             window.location.href = 'https://entropyengine.dev/accounts/my-projects';
         };
 

@@ -25,11 +25,9 @@ exports.query = (sql, then) => {
     if (!hasConnectedSQL) return false;
 
     con.query(sql, (err, result) => {
-        if (err)
-            console.error(err);
+        if (err) console.error(err);
 
-        if (then)
-            then(result);
+        if (then) then(result);
     });
 
     return true;
@@ -43,7 +41,7 @@ function handleDisconnect() {
     con.connect(err => {                     // The server is either down
         if (err) {                                     // or restarting (takes a while sometimes).
             console.log('error when connecting to db:', err);
-            setTimeout(handleDisconnect, 1000); // We introduce a delay before attempting to reconnect,
+            setTimeout(handleDisconnect, 500); // We introduce a delay before attempting to reconnect,
         }
 
         console.log("Connected to SQL server");
@@ -51,12 +49,10 @@ function handleDisconnect() {
     });                                     // process asynchronous requests in the meantime.
                                             // If you're also serving http, display a 503 error.
     con.on('error', err => {
-        console.log('db error', err);
-        if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
+        if (err.code === 'PROTOCOL_CONNECTION_LOST') // Connection to the MySQL server is usually
             handleDisconnect();                         // lost due to either server restart, or a
-        } else {                                      // connnection idle timeout (the wait_timeout
+        else                                         // connnection idle timeout (the wait_timeout
             throw err;                                  // server variable configures this)
-        }
     });
 }
 

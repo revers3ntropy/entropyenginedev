@@ -124,25 +124,29 @@
 </style>
 
 <script type="module">
-	import {request} from '../request.js';
+	import {request, APIToken} from '../request.js';
 	import {urlParam} from '../util.js';
 	import {comment as commentComponent} from '../globalComponents.js';
 
 	const projectID = urlParam('p');
+
+	let apiToken = new APIToken({
+        project: projectID
+    })
 	const cacheBust = Math.floor(Math.random() * 10**5);
 
 	function notAvailable (data) {
 		window.location.href = `https://entropyengine.dev/accounts/error?type=buildPlayFail&extra=${JSON.stringify(data)}`;
     }
 
-    request ('/has-build', {projectID})
+    request ('/has-build', apiToken)
     .then ( async beenBuilt => {
         if (!beenBuilt.built) {
             notAvailable(beenBuilt);
             return;
         }
 
-        const access = await request('/get-project-access', {projectID, userID: localStorage.id});
+        const access = await request('/get-project-access', apiToken);
         if (access.accessLevel < 1) {
 			notAvailable(access);
 			return;
@@ -150,25 +154,19 @@
 
         document.getElementById('contributors-link').href += projectID;
 
-        const ee = await import ('../entropy-engine/index.js');
+        const ee = await import ('../entropy-engine/1.0/index.js');
 
         // run the actual game - use cache-bust to get the most recent version
         ee.runFromJSON(`../projects/${projectID}/build/index.json?cache-bust=${cacheBust}`);
 
-        const owner = await request('/project-owner', {projectID})
+        const owner = await request('/project-owner', apiToken)
         $('#project-owner').html(`
             ${owner.owner} and ${owner.totalContributors-1} others
         `);
 
-        request('/viewed-project', {
-            projectID,
-            userID: localStorage.id
-        });
+        request('/viewed-project', apiToken);
 
-        const projectViewsData = await request('/project-views', {
-            projectID,
-            userID: localStorage.id
-        });
+        const projectViewsData = await request('/project-views', apiToken);
         $('#views').html(`
             <span style="margin-right: 10px">
                 ${projectViewsData.unique} viewers
@@ -180,9 +178,8 @@
         `);
 
         async function refreshComments (username) {
-            const comments = await request('/get-comments', {
-                public: true,
-                projectID
+            const comments = await request('/get-comments', apiToken, {
+                public: true
             });
             $('#num-comments').html(comments.length);
 
@@ -205,7 +202,7 @@
                     $(`#comment-${comment._id}-menu`).hide();
                     $(`#comment-${comment._id}`).hide();
 
-                    await request('/delete-comment', {
+                    await request('/delete-comment', apiToken, {
                         commentID: comment._id
                     });
                     refreshComments(username);
@@ -216,9 +213,7 @@
 
         const addMessage = $("#add-comment");
 
-        const username = await request('/get-username', {
-            userID: localStorage.id
-        })
+        const username = await request('/get-username', apiToken);
 
         addMessage.keyup(async event => {
             if (event.keyCode !== 13) return;
@@ -226,11 +221,9 @@
             const content = addMessage.val();
             addMessage.val('');
 
-            await request('/comment', {
+            await request('/comment', apiToken, {
                 content,
-                projectID,
-                public: true,
-                userID: localStorage.id
+                public: true
             });
             refreshComments(username.username);
         });

@@ -164,7 +164,7 @@ export class ImageRenderer2D extends Renderer2D {
             name: 'url',
             value: url,
             type: 'string',
-            description: 'The path to the image to be rendered - relative to /assets/ or /build/asssets/',
+            description: 'The path to the image to be rendered - always start with ../projects/{yourProjectID}/assets/',
         });
     }
 
@@ -180,8 +180,7 @@ export class ImageRenderer2D extends Renderer2D {
         image (
             arg.ctx,
             getZoomScaledPosition(renderPos, arg.zoom, arg.center),
-            new v2(width, height)
-                .scale(arg.zoom),
+            new v2(width, height),
             this.url
         );
     }

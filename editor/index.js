@@ -12,7 +12,7 @@ import "./builder.js";
 import './events.js';
 import {loadScripts, reloadScriptsOnEntities} from "./scripts.js";
 import './state.js';
-import {state, scripts, redirectedFrom, projectID, setSelected} from './state.js';
+import {state, scripts, redirectedFrom, projectID, setSelected, apiToken} from './state.js';
 
 // cache busting
 const scriptFetchHeaders = new Headers();
@@ -61,16 +61,13 @@ async function initFromFiles (id) {
 
 async function checkCredentials(callback) {
     mustBeSignedIn(async () => {
-        const accessLevel = (await request('/get-project-access', {
-            projectID,
-            userID: localStorage.id
-        })).accessLevel;
+        const accessLevel = (await request('/get-project-access', apiToken)).accessLevel;
 
         if (accessLevel < 1) {
             window.location.href = 'https://entropyengine.dev/accounts/error?type=projectAccessDenied';
             return;
         }
-        console.log(`ACCESS LVL: ${accessLevel}`);
+        console.log(`ACCESS LEVEL: ${accessLevel}`);
 
         if (!accessLevel) return;
         
@@ -98,9 +95,7 @@ checkCredentials(async accessLevel => {
             break;
     }
 
-    const data = await request('/get-project-name', {
-        projectID
-    });
+    const data = await request('/get-project-name', apiToken);
 
     const name = cullString(data.name, 16);
     $(`#project-name`).html(name);
@@ -111,7 +106,7 @@ checkCredentials(async accessLevel => {
 async function updatePing () {
     const startTime = performance.now();
 
-    let response = await request('/ping', {});
+    let response = await request('/ping');
 
     if (!response.ok) {
         console.error('Server ping failed');

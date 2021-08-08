@@ -31,11 +31,12 @@
 </html>
 
 <script type="module">
-    import {request} from '../../request.js';
+	import {APIToken, request} from '../../request.js';
     import {clean} from '../../util.js';
 
     const error = $('#error');
     const nameElement = $('#name');
+    const apiToken = new APIToken({});
 
     document.addEventListener('keypress', () => {
         nameElement.val(clean(nameElement.val(), ['/', ';', '?', '-', '#']));
@@ -49,10 +50,7 @@
             return;
         }
 
-        const id = await request('/new-project', {
-            name,
-            userID: localStorage.id
-        });
+        const id = await request('/new-project', apiToken, {name});
 
         window.location.href = 'https://entropyengine.dev/editor?p=' + id.projectID;
     });

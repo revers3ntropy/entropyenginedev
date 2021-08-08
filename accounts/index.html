@@ -33,27 +33,24 @@
 </html>
 
 <script type="module">
-    import {request} from '../request.js';
+	import {APIToken, request} from '../request.js';
     import {mustBeSignedIn, signOut} from '../util.js';
 
+    let apiToken = new APIToken({});
+
     mustBeSignedIn(async () => {
-        $(`#delete`).click(() => {
+        $(`#delete`).click(async () => {
         	signOut();
-            request(`/delete-account/`, {
-                userID: localStorage.id
-            }).then(() => {
-            	window.location.href = 'https://entropyengine.dev'
-            });
+            await request(`/delete-account/`, apiToken);
+            window.location.href = 'https://entropyengine.dev';
         });
 
         $(`#sign-out`).click(() => {
             signOut();
-            window.location.href = 'https://entropyengine.dev'
+            window.location.href = 'https://entropyengine.dev';
         });
 
-        const details = await request(`/get-details`, {
-            userID: localStorage.id
-        });
+        const details = await request(`/get-details`, apiToken);
 
         $(`#username`).html(details.username);
         $(`#email`).html(details.email);

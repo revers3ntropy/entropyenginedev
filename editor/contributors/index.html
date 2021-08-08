@@ -15,6 +15,8 @@
     </script>
 
     <link rel="stylesheet" href="../../libraries/chartist-js-develop/dist/chartist.min.css">
+    <script src="../../libraries/chartist-js-develop/dist/chartist.min.js"></script>
+
 
     <style>
 
@@ -230,12 +232,13 @@
 </html>
 
 <script type="module">
-    import {request} from '../../request.js';
+	import {APIToken, request} from '../../request.js';
 	import { urlParam, secondsToReadable, validID } from '../../util.js';
 
-    request('/contributor-info', {
-    	projectID: urlParam('p')
-    }).then(async info => {
+    request('/contributor-info', new APIToken({
+        project: urlParam('p')
+    })).then(async info => {
+
         $('#no-of-contributors').html(info.length);
 
         // update podium
@@ -306,7 +309,7 @@
         `);
 
         const myUsername = (await validID(localStorage.id))
-            ? (await request('/get-username', {userID: localStorage.id})).username
+            ? (await request('/get-username', new APIToken({}))).username
             : '';
 
         // update all contributors
@@ -347,9 +350,9 @@
 
     const currentTime = Math.round(new Date().getTime()/1000);
 
-	request('/latest-contributor', {
-		projectID: urlParam('p')
-	}).then(latest => {
+	request('/latest-contributor', new APIToken({
+		project: urlParam('p')
+	})).then(latest => {
 
 		const secondsSince = currentTime - parseInt(latest[0].date);
 

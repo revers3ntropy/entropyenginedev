@@ -952,6 +952,7 @@ export class Parser {
         const startPos = this.currentToken.startPos;
         const methods: N_function[] = [];
         const publicVariables: N_objectLiteral[] = [];
+        let entity: undefined | Node;
         let name: string | undefined;
 
         if (!this.currentToken.matches(tt.KEYWORD, 'script'))
@@ -965,6 +966,13 @@ export class Parser {
         if (this.currentToken.type === tt.IDENTIFIER) {
             name = this.currentToken.value;
             this.advance(res);
+        }
+
+        if (this.currentToken.type === tt.OPAREN) {
+            this.advance(res);
+            entity = res.register(this.expr());
+            if (res.error) return res;
+            this.consume(res, tt.CPAREN);
         }
 
         this.consume(res, tt.OBRACES);
@@ -1041,7 +1049,8 @@ export class Parser {
             methods,
             undefined,
             name,
-            publicVariables
+            publicVariables,
+            entity
         ));
     }
 

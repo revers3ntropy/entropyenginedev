@@ -60,7 +60,7 @@
 </html>
 
 <script type="module">
-    import {request} from '../../request.js';
+	import {APIToken, request} from '../../request.js';
     import {clean, urlParam} from '../../util.js';
 
     const error = $('#error');
@@ -84,11 +84,10 @@
 				return;
 			}
         }
-        request('/share-project', {
-            username,
-            accessLevel,
-            projectID,
-        });
+        await request('/share-project', new APIToken({ project: projectID }), {
+			username,
+			accessLevel
+		});
     });
 
 </script>

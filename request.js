@@ -1,16 +1,34 @@
-export async function request (url, body={}) {
+// make sure the connection is open and throw appropriate error if it not
+export function networkError () {
+    let location = window.location.href;
+    window.location.href = 'https://entropyengine.dev/accounts/error?type=serverPingFailed&cb=' + encodeURIComponent(location);
+}
+
+export class APIToken {
+    constructor ({
+        project = -1,
+        user = localStorage.id
+    }) {
+        this.project = project;
+        this.user = user;
+    }
+}
+
+export async function request (url, token = new APIToken({}), body={}) {
+    if (!(token instanceof APIToken)) {
+        console.error(`Backend API token must be of type 'APIToken': `, token);
+        return;
+    }
     let response = await fetch(`https://entropyengine.dev:50001${url}`, {
         method: 'POST',
-        body: JSON.stringify(body)
+        body: JSON.stringify({
+            ...body, token
+        })
     }).catch(networkError);
 
     return await response.json();
 }
 
-// make sure the connection is open and throw appropriate error if it not
-export function networkError () {
-    window.location.href = 'https://entropyengine.dev/accounts/error?type=serverPingFailed';
-}
 try {
     request('/ping')
         .then(ping => {

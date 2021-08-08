@@ -478,7 +478,7 @@ export class N_functionCall extends Node {
             try {
                 return new func.val(...args);
             } catch (e2) {
-                return new ESError(Position.unknown, Position.unknown, 'FunctionRunError', `Error running js function: '${e1}' and '${e2}'`)
+                return new ESError(this.startPos, this.endPos, 'FunctionRunError', `Error running js function: '${e1}' and '${e2}'`)
             }
         }
     }
@@ -586,7 +586,7 @@ export class N_builtInFunction extends Node {
             try {
                 return new this.func(...context.get('args'));
             } catch (e2) {
-                return new ESError(Position.unknown, Position.unknown, 'BuiltInFunctionError', `Error running built-in function: '${e1}' and '${e2}'`)
+                return new ESError(this.startPos, this.endPos, 'BuiltInFunctionError', `Error running built-in function: '${e1}' and '${e2}'`)
             }
         }
     }
@@ -818,6 +818,7 @@ export class N_ESBehaviour extends Node {
     transform: Transform | undefined;
     component: Script | undefined;
     started: boolean;
+    entityNode: undefined | Node;
 
     tempPublic: publicField<any>[];
 
@@ -827,7 +828,7 @@ export class N_ESBehaviour extends Node {
 
     publicVariables: N_objectLiteral[];
 
-    constructor (startPos: Position, endPos: Position, methods: N_function[], init?: N_function, name = '<anon ESBehaviour>', publicVariables: N_objectLiteral[] = []) {
+    constructor (startPos: Position, endPos: Position, methods: N_function[], init?: N_function, name = '<anon ESBehaviour>', publicVariables: N_objectLiteral[] = [], entityNode?: Node) {
         super(startPos, endPos);
         this.tempPublic = [];
         this.started = false;
@@ -835,9 +836,16 @@ export class N_ESBehaviour extends Node {
         this.methods = methods;
         this.name = name;
         this.publicVariables = publicVariables;
+        this.entityNode = entityNode;
     }
 
     interpret_ (context: Context) {
+        if (this.entityNode && !this.entity) {
+            let res = this.entityNode.interpret(context);
+            if (res.error) return res;
+            this.entity = res.val;
+        }
+
         for (let method of this.methods) {
             // @ts-ignore
             this[method.name] = new N_function(
@@ -875,7 +883,7 @@ export class N_ESBehaviour extends Node {
     }
 
     // these are not used internally, but by the user when creating scripts
-    public addPublic<T>(config: publicFieldConfig<T>) {
+    public addPublic = <T>(config: publicFieldConfig<T>) => {
         if (!config.name) {
             console.error(`Public fields must have 'name' property`);
             return;
@@ -922,7 +930,7 @@ export class N_ESBehaviour extends Node {
         return field;
     }
 
-    public getPublic (name: string) {
+    public getPublic = (name: string) => {
         if (this.started)
             return this.component?.getPublic(name);
 
@@ -933,7 +941,7 @@ export class N_ESBehaviour extends Node {
         }
     }
 
-    public setPublic (name: string, value: any) {
+    public setPublic = (name: string, value: any) => {
         if (this.started)
             return this.component?.setPublic(name, value);
 
@@ -944,7 +952,7 @@ export class N_ESBehaviour extends Node {
         }
     }
 
-    public hasPublic (name: string): boolean {
+    public hasPublic = (name: string): boolean => {
         if (this.started)
             return !!this.component?.hasPublic(name);
 

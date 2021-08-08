@@ -33,7 +33,6 @@ document.addEventListener('contextmenu', event => {
 window.onPropertyChange = (id, componentName, componentPropertyChain, parser) => {
     let value = $(`#${id}`).val();
 
-
     let component;
     if (componentName === 'nocomponent')
         component = state.selectedEntity;
@@ -49,10 +48,6 @@ window.onPropertyChange = (id, componentName, componentPropertyChain, parser) =>
 
     const lastPropertyName = componentPropertyChain [componentPropertyChain.length-1];
 
-    // its an asset
-    if (lastPropertyName === 'url')
-        value = `https://entropyengine.dev/projects/${projectID}/assets/${value}`;
-    
     toChange [lastPropertyName] = value;
 
     reRender();

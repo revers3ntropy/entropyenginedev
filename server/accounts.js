@@ -21,13 +21,13 @@ const genSalt = () => {
 };
 
 
-exports.username = (url, req, res, body) => {
-    query(`SELECT username FROM users WHERE _id=${body.userID} LIMIT 1`, value => {
+exports.username = ({res, token}) => {
+    query(`SELECT username FROM users WHERE _id=${token.user} LIMIT 1`, value => {
         res.end(JSON.stringify(value[0]));
     });
 };
 
-exports.userExists = (url, req, res, body) => {
+exports.userExists = ({res, token}) => {
     query(`
     
     SELECT
@@ -35,7 +35,7 @@ exports.userExists = (url, req, res, body) => {
     FROM 
          users
     WHERE 
-          _id = ${body.userID}
+          _id = ${token.user}
     
     `, data => {
         res.end(JSON.stringify({
@@ -45,7 +45,7 @@ exports.userExists = (url, req, res, body) => {
     });
 }
 
-exports.id = (url, req, res, body) => {
+exports.id = ({res, body}) => {
     query(`
 SELECT _id 
 from users 
@@ -66,7 +66,7 @@ WHERE
     });
 };
 
-exports.usernameExists = (url, req, res, body) => {
+exports.usernameExists = ({res, body}) => {
     query(`SELECT * from users WHERE username='${body.username}'`, value => {
         res.end(JSON.stringify({
             exists: value.length > 0 ? "1" : "0"
@@ -74,14 +74,14 @@ exports.usernameExists = (url, req, res, body) => {
     });
 };
 
-exports.details = (url, req, res, body) => {
-    query(`SELECT username, name, email FROM users WHERE _id=${body.userID}`, value => {
+exports.details = ({res, token}) => {
+    query(`SELECT username, name, email FROM users WHERE _id=${token.user}`, value => {
         res.end(JSON.stringify(value[0]));
     });
 };
 
 
-exports.newUser = (url, req, res, data) => {
+exports.newUser = ({res, body}) => {
 
     query(`SELECT FLOOR (1 + RAND() * ${idMax}) AS value FROM users HAVING value NOT IN (SELECT DISTINCT _id FROM users) LIMIT 1`, value => {
         const id = value[0]?.value || Math.ceil(Math.random() * idMax);
@@ -99,11 +99,11 @@ exports.newUser = (url, req, res, data) => {
                         INSERT INTO users
                         VALUES (
                             ${id},
-                            '${data.username}',
-                            '${data.name}',
-                            '${data.email}',
+                            '${body.username}',
+                            '${body.name}',
+                            '${body.email}',
                             0, 
-                            MD5('${salt}:${pepper}:${data.password}'), 
+                            MD5('${salt}:${pepper}:${body.password}'), 
                             '${salt}'
                         )`
                 );
@@ -115,13 +115,13 @@ exports.newUser = (url, req, res, data) => {
     });
 };
 
-exports.changeData = (url, req, res, data) => {
+exports.changeData = ({url, res, data}) => {
     query(`UPDATE users SET name='${data.name}', email='${data.email}' WHERE _id=${url[2]}`);
     res.end('{}');
 };
 
-exports.delete = (url, req, res, body) => {
-    query(`DELETE FROM users WHERE _id=${body.userID}`);
-    query(`DELETE FROM projectAccess WHERE userID=${body.userID}`);
+exports.delete = ({res, token}) => {
+    query(`DELETE FROM users WHERE _id=${token.user}`);
+    query(`DELETE FROM projectAccess WHERE userID=${token.user}`);
     res.end('{}');
 };

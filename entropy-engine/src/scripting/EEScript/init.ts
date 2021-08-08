@@ -28,11 +28,17 @@ export function initialise (globalContext: Context, printFunc: (...args: any[]) 
 
     builtInArgs['import'] = ['url'];
 
-    builtInFunctions['print'] = (context: Context) => {
-        printFunc('> ' + str(context.get('message')));
-    }
+    builtInFunctions['print'] = async (context: Context) => {
+        let output = '> ';
+        if (context instanceof Context) {
+            for (let arg of context.get('args'))
+                output += str(arg);
+        } else {
+            output += str(context);
+        }
 
-    builtInArgs['print'] = ['message'];
+        printFunc(output);
+    }
 
     for (let builtIn in builtInFunctions) {
         const node = new N_builtInFunction(builtInFunctions[builtIn], builtInArgs[builtIn] || []);

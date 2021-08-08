@@ -1,5 +1,5 @@
 import {Entity, Scene} from "../entropy-engine/1.0";
-import {scripts, projectID, scriptURLS} from "./state.js";
+import {scripts, projectID, scriptURLS, apiToken} from "./state.js";
 import {request} from '../request.js';
 import {sleep} from '../util.js';
 
@@ -25,10 +25,8 @@ function buildScripts () {
 
 window.backgroundSave = async () => {
     // raw save, no visible changes
-    await request('/save-project', {
-        projectID,
+    await request('/save-project', apiToken, {
         scripts: buildScripts(),
-        userID: localStorage.id,
         json: `
         {
             "canvasID": "myCanvas",

@@ -1,8 +1,9 @@
 import { urlParam } from '../../util.js';
-import { request } from '../../request.js';
+import {APIToken, request} from '../../request.js';
 import {download} from '../downloader.js';
 
 const projectID = urlParam('p');
+const apiToken = new APIToken({project: projectID});
 
 document.getElementById('back').href += projectID;
 
@@ -29,22 +30,23 @@ function copyToClipboard(text) {
 	clipboard.innerText = '';
 }
 
-request('/get-project-name', {projectID}).then(name => {
-	$('#project-name').append(name.name);
+request('/get-project-name', apiToken)
+	.then(name => {
+		$('#project-name').append(name.name);
 
-	window.downloadHTML = async () => {
-		const response = await fetch(`../../projects/${projectID}/build/index.html`);
-		const html = await response.text();
+		window.downloadHTML = async () => {
+			const response = await fetch(`../../projects/${projectID}/build/index.html`);
+			const html = await response.text();
 
-		download(name.name + '.html', html);
-	};
-});
+			download(name.name + '.html', html);
+		};
+	});
 
 window.build = () => {
 	document.write('Sorry, looks like theres been a problem.... try reloading the page');
 };
 
-request('/has-been-built', {projectID}).then(hasBeenBuilt => {
+request('/has-been-built', apiToken).then(hasBeenBuilt => {
 	const beenBuilt = hasBeenBuilt.built;
 
 	let building = false;
@@ -56,13 +58,12 @@ request('/has-been-built', {projectID}).then(hasBeenBuilt => {
 		const button = $('#build');
 		button.html('building...');
 
-		request('/build-project', {
-			projectID
-		}).then(() => {
-			button.css('display', 'none');
-			button.html('');
-			$('#has-built').css('display', 'inline');
-		});
+		request('/build-project', apiToken)
+			.then(() => {
+				button.css('display', 'none');
+				button.html('');
+				$('#has-built').css('display', 'inline');
+			});
 	};
 
 	if (!beenBuilt) return;

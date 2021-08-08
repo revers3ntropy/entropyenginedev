@@ -1,4 +1,4 @@
-const fastFolderSize = require('./node_modules/fast-folder-size')
+const fastFolderSize = require('./node_modules/fast-folder-size');
 
 exports.folderSize = (path, cb) => {
 	fastFolderSize(path, (err, bytes) => {
@@ -20,7 +20,7 @@ exports.folderSize = (path, cb) => {
 	})
 }
 
-exports.folderSizePublic = (url, req, res, body) => {
+exports.folderSizePublic = ({res, body}) => {
 	exports.folderSize(body.path, sizes => {
 		res.end(JSON.stringify(sizes));
 	});

@@ -69,7 +69,7 @@ export class GUIText extends GUIElement {
     }
 
     draw (ctx: CanvasRenderingContext2D, transform: Transform) {
-        text(ctx, this.text, this.fontSize * transform.scale.x, this.font, this.colour, transform.position.v2);
+        text(ctx, this.text, this.fontSize * transform.scale.x, this.font, this.colour.rgba, transform.position.v2);
     }
 
     touchingPoint (point: v2, ctx: CanvasRenderingContext2D, transform: Transform) {

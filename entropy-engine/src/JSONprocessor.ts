@@ -153,7 +153,7 @@ async function dealWithScriptComponent (componentJSON: any): Promise<Script | un
         if (Array.isArray(componentJSON['public'])) {
             for (let field of componentJSON['public']) {
                 if (!script.hasPublic(field['name'])) continue;
-                
+
                 let value = field['value'];
 
                 if (field['type'] === 'v2')
@@ -253,6 +253,10 @@ export function setParentFromInfo (parentInfo: {type: string, name: string}, chi
 export async function entitiesFromJSON (JSON: any) {
 
     let parentPairs: {[key: string]: {type: string, name: string}} = {};
+    if (!Array.isArray(JSON)) {
+        console.error('Cannot initialise entities from JSON ', JSON);
+        return;
+    }
 
     for (let entityJSON of JSON) {
         let entity = await getEntityFromJSON(entityJSON);

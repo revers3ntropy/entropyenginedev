@@ -1,6 +1,6 @@
 "use strict";
 
-import {globalEESContext, projectID, scripts, scriptURLS} from "./state.js";
+import {apiToken, globalEESContext, projectID, scripts, scriptURLS} from "./state.js";
 import {reRender} from "./render/renderer.js";
 import {genCacheBust} from "../util.js";
 import {request} from "../request.js";
@@ -8,7 +8,6 @@ import {nameFromScriptURL} from "../util.js";
 import {run} from "../entropy-engine/1.0/scripting/EEScript";
 import {N_ESBehaviour} from "../entropy-engine/1.0/scripting/EEScript/nodes.js";
 import {Entity} from "../entropy-engine/1.0";
-import {None} from "../entropy-engine/1.0/scripting/EEScript/constants.js";
 
 export const scriptTemplate = async scriptName => {
 	let template = await fetch('https://entropyengine.dev/templates/script.txt?c=' + genCacheBust());
@@ -43,7 +42,7 @@ export function mapScripts (handler) {
 }
 
 export async function loadScripts () {
-	const scriptPaths = await request('/find-scripts', {projectID});
+	const scriptPaths = await request('/find-scripts', apiToken);
 
 	for (let scriptPath of scriptPaths) {
 		let scriptRaw = await fetch(`${scriptPath}?${genCacheBust()}`);
@@ -56,7 +55,7 @@ export async function loadScripts () {
 }
 
 export async function reloadScriptsOnEntities () {
-	const scriptPaths = await request('/find-scripts', {projectID});
+	const scriptPaths = await request('/find-scripts', apiToken);
 
 	let scriptNodes = {};
 	for (let scriptPath of scriptPaths) {

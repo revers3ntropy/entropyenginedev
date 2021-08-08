@@ -4,14 +4,14 @@ const query = require('./sql').query;
 	
  */
 
-exports.reportBug = (url, req, res, body) => {
+exports.reportBug = ({res, body, token}) => {
 	query(`
 	
 	INSERT INTO
 	    bugs
 	VALUES (
 		null,
-		${body.userID},
+		${token.user},
 		'${body.title}',
         '${body.description}',
         '${body.reproduce}',
@@ -30,7 +30,7 @@ exports.reportBug = (url, req, res, body) => {
 	})
 };
 
-exports.getBug = (url, req, res, body) => {
+exports.getBug = ({res, body}) => {
 	query(`
 	
 	SELECT
@@ -60,7 +60,7 @@ exports.getBug = (url, req, res, body) => {
 	});
 };
 
-exports.getBugs = (url, req, res, body) => {
+exports.getBugs = ({res}) => {
 	query(`
 	
 	SELECT

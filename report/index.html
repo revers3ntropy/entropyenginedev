@@ -74,22 +74,23 @@
 </html>
 
 <script type="module">
-	import {request} from '../request.js';
+	import {APIToken, request} from '../request.js';
 	import { urlParam, isSignedIn } from '../util.js';
 	import {comment} from '../globalComponents.js';
 
 	const type = urlParam('type') || 'bug';
 	const issueID = urlParam('id') || 0;
+	let apiToken = new APIToken({});
+	apiToken.user ||= 0;
 
 	if (isSignedIn()) {
-		request('/get-username', {userID: localStorage.id}).then(data => {
+		request('/get-username', projectID).then(data => {
 			$('#username').html(', ' + data.username);
 		});
     }
 
 	$('#report').click(() => {
-		request('/report', {
-            userID: localStorage.id || 0,
+		request('/report', apiToken, {
             type,
             problem: $('#problem').val(),
             issueID,
@@ -98,7 +99,7 @@
 
 	// switch once there are more options
 	if (type === 'comment') {
-		request('/get-comment', {
+		request('/get-comment', apiToken, {
 			commentID: issueID
         }).then (data => {
 			$('#info').html(comment(data, false, false));

@@ -9,18 +9,27 @@ const query = require('./sql').query,
 
 const idMax = parseInt(process.env.SEC_IDMAX);
 
-const emptyScripts = ``;
-
-exports.shareProject = (url, req, res, body) => {
+exports.shareProject = ({token, body}) => {
     query(`
 
-    INSERT INTO projectAccess VALUES (${body.userID}, ${body.projectID}, ${body.level});
-    INSERT INTO projectSaves VALUES (${body.userID}, ${body.projectID}, CURRENT_TIMESTAMP);
+    INSERT INTO projectAccess VALUES (${token.user}, ${token.project}, ${body.level});
+    INSERT INTO projectSaves VALUES (${token.user}, ${token.project}, CURRENT_TIMESTAMP);
     
     `);
 };
 
-exports.createProject = (url, req, res, body) => {
+exports.authLevel = (userID, projectID, cb) => {
+    query(`SELECT globalAccess from projects WHERE _id=${projectID}`, globalAccess => {
+        query(`SELECT level FROM projectAccess WHERE projectID=${projectID} AND userID=${userID}`, personalAccess => {
+            const personal = personalAccess[0]?.level || 0;
+            const global = globalAccess[0]?.globalAccess || 0;
+
+            cb(Math.max(personal, global), (personal) >= global ? 'personal' : 'global');
+        });
+    });
+};
+
+exports.createProject = ({res, body, token}) => {
     query(`
 
         SELECT 
@@ -45,7 +54,7 @@ exports.createProject = (url, req, res, body) => {
         query(`
 
             INSERT INTO projects VALUES (${id}, '${body.name}', 0, 0);
-            INSERT INTO projectSaves VALUES (${body.userID}, ${id}, CURRENT_TIMESTAMP);
+            INSERT INTO projectSaves VALUES (${token.user}, ${id}, CURRENT_TIMESTAMP);
            
        `);
 
@@ -74,22 +83,26 @@ exports.createProject = (url, req, res, body) => {
             console.log('made  globalState.json file in ' + dir);
         });
 
-        exports.shareProject(url, req, res, {
-            userID: body.userID,
-            projectID: id,
-            level: 3
+        exports.shareProject({
+            token: {
+                project: id,
+                user: token.user
+            },
+            body: {
+                level: 3
+            }
         });
     });
 };
 
-exports.deleteProject = (url, req, res, body) => {
+exports.deleteProject = ({token, res}) => {
     /**
      * Checks if the user is allowed to perform that action,
      * and if they are then deletes all data associated with the project
      *
      * Requires the userAccess.level to be at 2 or more
      */
-    query(`SELECT level FROM projectAccess WHERE userID=${body.userID}`, value => {
+    query(`SELECT level FROM projectAccess WHERE userID=${token.user}`, value => {
         const userLevel = value[0].level;
         if (userLevel < 2) {
             res.end(JSON.stringify({
@@ -99,19 +112,19 @@ exports.deleteProject = (url, req, res, body) => {
         }
 
         // delete files
-        const dir = `../projects/${body.projectID}`;
+        const dir = `../projects/${token.project}`;
         fs.rmdirSync(dir, { recursive: true });
 
         //  actual deletion:
         // delete rows in SQL database
         query(`
 
-        DELETE FROM projects WHERE _id=${body.projectID};
-        DELETE FROM projectAccess WHERE projectID=${body.projectID};
-        DELETE FROM comments WHERE projectID=${body.projectID};
-        DELETE FROM projectSaves WHERE projectID=${body.projectID};
-        DELETE FROM projectViews WHERE projectID=${body.projectID};
-        DELETE FROM reports WHERE issueID=${body.projectID} AND type="project";
+        DELETE FROM projects WHERE _id=${token.project};
+        DELETE FROM projectAccess WHERE projectID=${token.project};
+        DELETE FROM comments WHERE projectID=${token.project};
+        DELETE FROM projectSaves WHERE projectID=${token.project};
+        DELETE FROM projectViews WHERE projectID=${token.project};
+        DELETE FROM reports WHERE issueID=${token.project} AND type="project";
 
         `, () => {
             res.end(JSON.stringify({
@@ -122,7 +135,7 @@ exports.deleteProject = (url, req, res, body) => {
 
 };
 
-exports.publicProjectsFromUser = (url, req, res, body) => {
+exports.publicProjectsFromUser = ({token, res, body}) => {
     query(`
         SELECT
             projects.name,
@@ -142,7 +155,7 @@ exports.publicProjectsFromUser = (url, req, res, body) => {
             AND
                 projectSaves.projectID = projectAccess.projectID
             AND
-                projectAccess.userID = ${body.userID}
+                projectAccess.userID = ${token.user}
             AND
                 (projectAccess.level > 0 OR projects.globalAccess > 0)
             AND 
@@ -161,7 +174,7 @@ exports.publicProjectsFromUser = (url, req, res, body) => {
     });
 };
 
-exports.getUserProjectNames = (url, req, res, body) => {
+exports.getUserProjectNames = ({token, res}) => {
     query(`
         SELECT
             projects.name,
@@ -181,7 +194,7 @@ exports.getUserProjectNames = (url, req, res, body) => {
           AND
             projectSaves.projectID = projectAccess.projectID
           AND
-            projectAccess.userID = ${body.userID}
+            projectAccess.userID = ${token.user}
           AND
             projectAccess.level > 0
               
@@ -199,20 +212,20 @@ exports.getUserProjectNames = (url, req, res, body) => {
     });
 };
 
-exports.getProjectEditors = (url, req, res, body) => {
+exports.getProjectEditors = ({token, res}) => {
     query(`
         SELECT users.username
         FROM projectAccess, users
         WHERE 
             projectAccess.userID=users._id AND
-            projectAccess.projectID=${body.projectID}
+            projectAccess.projectID=${token.project}
     `, values => {
         res.end(JSON.stringify(values));
     });
 };
 
-exports.save = (url, req, res, body) => {
-    const dir = `../projects/${body.projectID}`;
+exports.save = ({token, res, body}) => {
+    const dir = `../projects/${token.project}`;
 
     fs.writeFileSync(dir + '/index.json', body.json);
 
@@ -220,38 +233,32 @@ exports.save = (url, req, res, body) => {
         fs.writeFileSync(script.path, script.text);
     }
 
-    query(`INSERT INTO projectSaves VALUES(${body.userID}, ${body.projectID}, CURRENT_TIMESTAMP)`, () => {
+    query(`INSERT INTO projectSaves VALUES(${token.user}, ${token.project}, CURRENT_TIMESTAMP)`, () => {
         res.end(`{"result": "true"}`);
     });
 };
 
-exports.accessLevel = (url, req, res, body) => {
-    query(`SELECT globalAccess from projects WHERE _id=${body.projectID}`, globalAccess => {
-        query(`SELECT level FROM projectAccess WHERE projectID=${body.projectID} AND userID=${body.userID}`, personalAccess => {
-            const personal = personalAccess[0]?.level || 0;
-            const global = globalAccess[0]?.globalAccess || 0;
-
-            res.end(JSON.stringify({
-                type: (personal) >= global ? 'personal' : 'global',
-                accessLevel: Math.max(personal, global)
-            }));
-        });
-    });
+exports.accessLevel = ({token, res}) => {
+    exports.authLevel(token.user, token.project, (accessLevel, type) => {
+        res.end(JSON.stringify({
+            type, accessLevel
+        }));
+    })
 };
 
-exports.getName = (url, req, res, body) => {
-    query(`SELECT name FROM projects WHERE _id=${body.projectID}`, value => {
+exports.getName = ({res, token}) => {
+    query(`SELECT name FROM projects WHERE _id=${token.project}`, value => {
         res.end(JSON.stringify({
             name: value[0].name
         }));
     });
 };
 
-exports.share = (url, req, res, body) => {
+exports.share = ({token, res, body}) => {
 
     if (!body.username) {
         // share project globally
-        query(`UPDATE projects SET globalAccess=${body.accessLevel} WHERE _id=${body.projectID}`);
+        query(`UPDATE projects SET globalAccess=${body.accessLevel} WHERE _id=${token.project}`);
         res.end("{}");
         return;
     }
@@ -262,18 +269,18 @@ exports.share = (url, req, res, body) => {
                FROM projectAccess,users
                WHERE users._id = projectAccess.userID
                  AND projectAccess.userID = ${userID}
-                 AND projectAccess.projectID = ${body.projectID}`, values => {
+                 AND projectAccess.projectID = ${token.project}`, values => {
             if (values.length > 0) {
                 query(`
                     UPDATE projectAccess
                     SET projectAccess.level=${body.accessLevel}
-                    WHERE projectAccess.projectID = ${body.projectID}
+                    WHERE projectAccess.projectID = ${token.project}
                       AND projectAccess.userID = ${userID}
                 `);
             } else {
                 query(`
                     INSERT INTO projectAccess
-                    VALUES (${userID}, ${body.projectID}, ${body.accessLevel})
+                    VALUES (${userID}, ${token.project}, ${body.accessLevel})
                 `);
             }
         });
@@ -290,8 +297,8 @@ const buildHTML = (htmlTitle, projectID) => {
     return raw;
 };
 
-exports.build = (url, req, res, body) => {
-    const projectDir = `../projects/${body.projectID}`;
+exports.build = ({token, res}) => {
+    const projectDir = `../projects/${token.project}`;
     const buildDir = projectDir + '/build';
 
     if (!fs.existsSync(buildDir)) {
@@ -314,14 +321,14 @@ exports.build = (url, req, res, body) => {
 
     fs.writeFileSync(
         buildDir + '/index.html',
-        buildHTML('Entropy Engine', body.projectID)
+        buildHTML('Entropy Engine', token.project)
     );
 
     query(`
     
     UPDATE projects
     SET projects.hasBuild = 1
-    WHERE projects._id = ${body.projectID}
+    WHERE projects._id = ${token.project}
     
     `, () => {
         res.end("{}");
@@ -329,8 +336,8 @@ exports.build = (url, req, res, body) => {
 };
 
 
-exports.getAssets = (url, req, res, body) => {
-    const dir = `../projects/${body.projectID}/assets`;
+exports.getAssets = ({token, res}) => {
+    const dir = `../projects/${token.project}/assets`;
     const files = [];
 
     for (const fileName of fs.readdirSync(dir)) {
@@ -342,23 +349,23 @@ exports.getAssets = (url, req, res, body) => {
     res.end(JSON.stringify(files));
 };
 
-exports.deleteAsset = (url, req, res, body) => {
-    const path = `../projects/${body.projectID}/assets/${body.fileName}`;
+exports.deleteAsset = ({token, res, body}) => {
+    const path = `../projects/${token.project}/assets/${body.fileName}`;
     fs.unlinkSync(path);
     res.end("{}");
 };
 
-exports.beenBuilt = (url, req, res, body) => {
+exports.beenBuilt = ({token, res}) => {
     let built = false;
 
-    if (fs.existsSync(`../projects/${body.projectID}/build/assets`)) {
+    if (fs.existsSync(`../projects/${token.project}/build/assets`)) {
         built = true;
     }
 
     res.end(JSON.stringify({built}));
 };
 
-exports.contributorInfo = (url, req, res, body) => {
+exports.contributorInfo = ({token, res}) => {
     // get a table with columns:
     //  username - username
     //  count - number of saves
@@ -378,7 +385,7 @@ exports.contributorInfo = (url, req, res, body) => {
                   users 
              WHERE 
                    users._id = projectSaves.userID 
-               AND projectSaves.projectID = ${body.projectID}
+               AND projectSaves.projectID = ${token.project}
              group by 
                       projectSaves.userId,
                       users.username
@@ -396,7 +403,7 @@ exports.contributorInfo = (url, req, res, body) => {
     });
 };
 
-exports.latestContributor = (url, req, res, body) => {
+exports.latestContributor = ({token, res}) => {
     query(`
         SELECT 
             users.username,
@@ -406,7 +413,7 @@ exports.latestContributor = (url, req, res, body) => {
             projectSaves
         WHERE
               users._id = projectSaves.userID
-          AND projectSaves.projectID = ${body.projectID}
+          AND projectSaves.projectID = ${token.project}
         ORDER BY 
                  projectSaves.date 
                  DESC 
@@ -416,7 +423,7 @@ exports.latestContributor = (url, req, res, body) => {
     });
 };
 
-exports.allContributors = (url, req, res, body) => {
+exports.allContributors = ({url, res, body}) => {
     query(`
     
     SELECT
@@ -434,7 +441,7 @@ exports.allContributors = (url, req, res, body) => {
     });
 };
 
-exports.projectOwner = (url, req, res, body) => {
+exports.projectOwner = ({token, res}) => {
     query(`
     
     SELECT
@@ -444,7 +451,7 @@ exports.projectOwner = (url, req, res, body) => {
     WHERE 
           users._id=projectAccess.userID
         AND projectAccess.projectID=projects._id
-        AND projects._id=${body.projectID}
+        AND projects._id=${token.project}
         AND projectAccess.level>=3
     
     LIMIT 1
@@ -455,7 +462,7 @@ exports.projectOwner = (url, req, res, body) => {
         
         SELECT COUNT(distinct userID) as count
         FROM projectSaves
-        WHERE projectID=${body.projectID}
+        WHERE projectID=${token.project}
         
         `, total => {
 
@@ -467,26 +474,26 @@ exports.projectOwner = (url, req, res, body) => {
     });
 };
 
-exports.viewed = (url, req, res, body) => {
+exports.viewed = ({token, res}) => {
     query(`
     INSERT INTO projectViews
-    VALUES (${body.userID}, ${body.projectID}, CURRENT_TIMESTAMP)
+    VALUES (${token.user}, ${token.project}, CURRENT_TIMESTAMP)
     `, () => {
         res.end("{}");
     });
 };
 
-exports.projectViews = (url, req, res, body) => {
+exports.projectViews = ({token, res}) => {
     query(`
     SELECT COUNT(distinct userID) as count
     FROM projectViews
-    WHERE projectID=${body.projectID}
+    WHERE projectID=${token.project}
     `, unique => {
 
         query(`
         SELECT COUNT(*) as count
         FROM projectViews
-        WHERE projectID=${body.projectID}
+        WHERE projectID=${token.project}
         `, total => {
 
             res.end(JSON.stringify({
@@ -498,7 +505,7 @@ exports.projectViews = (url, req, res, body) => {
     });
 };
 
-exports.topProjectViews = (url, req, res, body) => {
+exports.topProjectViews = ({res}) => {
     query(`
 
     SELECT
@@ -522,7 +529,7 @@ exports.topProjectViews = (url, req, res, body) => {
 };
 
 
-exports.updateGlobalState = (url, req, res, body) => {
+exports.updateGlobalState = ({res, body}) => {
     let path;
 
     if (body.token.isBuild) {
@@ -541,7 +548,7 @@ exports.updateGlobalState = (url, req, res, body) => {
     res.end("{}");
 };
 
-exports.upload = async (url, req, res) => {
+exports.upload = async ({url, req, res}) => {
 
     url.shift();
 
@@ -581,15 +588,20 @@ exports.upload = async (url, req, res) => {
                 } else {
                     res.write('');
                     res.write(`
+                        <html lang="eng">
+                            <head>
+                                <title>uploading...</title>  
+                                <meta http-equiv="refresh" content="0;URL='https://entropyengine.dev/editor?p=${projectID}&from=${from}'"/>
+                            </head>
+                            <body>
+                                <div style="display: flex; align-items: center; justify-content: center; height: 100%">
+                                    <p style="text-align: center; font-size: xx-large">
+                                        File uploaded! Returning to project...
+                                    </p>
+                                </div>
+                            </body>
+                            </html>
 
-                    <p style="text-align: center; font-size: xx-large">
-                        File uploaded! Returning to project...
-                    </p>
-                    
-                    
-                    <script>
-                        window.location.href = 'https://entropyengine.dev/editor?p=${projectID}&from=${from}'
-                    </script>
                     `);
                 }
 
@@ -599,7 +611,7 @@ exports.upload = async (url, req, res) => {
     });
 };
 
-exports.findScript = (url, req, res, body) => {
+exports.findScript = ({token, res}) => {
     function fromDir(startPath, filter){
 
         let paths = [];
@@ -610,18 +622,29 @@ exports.findScript = (url, req, res, body) => {
         }
 
         let files = fs.readdirSync(startPath);
-        for (let i = 0; i<files.length; i++){
+        for (let i = 0; i < files.length; i++){
             let filename = path.join(startPath, files[i]);
             let stat = fs.lstatSync(filename);
             if (stat.isDirectory()) {
-                paths = [...paths, ...fromDir(filename, filter)]; //recurse
+                paths = [...paths, ...fromDir(filename, filter)]; // recurse
             }
-            else if (filename.indexOf(filter)>=0) {
+            else if (filename.indexOf(filter) >= 0) {
                 paths = [...paths, filename];
             }
         }
         return paths;
     }
-    let paths = fromDir(`../projects/${body.projectID}/assets`,'.es');
-    res.end(JSON.stringify(paths));
+    exports.accessLevel({token, res: {
+        end: (value) => {
+            value = JSON.parse(value);
+            if (value.accessLevel < 1) {
+                console.error(`Attempt to access files in project ${token.project} without authorisation. Token: ${token}`);
+                res.end(JSON.stringify([]));
+                return;
+            }
+
+            let paths = fromDir(`../projects/${token.project}/assets`,'.es');
+            res.end(JSON.stringify(paths));
+        }
+    }});
 };

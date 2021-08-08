@@ -7,26 +7,31 @@
     <meta name="viewport" content="width=device-width">
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
     <link rel='stylesheet' href="../../global.css">
-    <script>
-        $(() => {
-            $("#header").load("../header.html");
-        });
-    </script>
 </head>
 <body>
-<div id="header"></div>
-    <div id="error-message" style="text-align: center; font-size: 50px"></div>
-    <div id="options"></div>
+<div id="error-message" style="text-align: center; font-size: 50px"></div>
+<div id="options"></div>
 
 
 </body>
 </html>
 
-<script type="module">
-    import { urlParam } from '../../util.js';
+<script>
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString);
+	const cb = urlParams.get('cb');
+	window.goToCB = () => {
+		window.location.href = decodeURIComponent(cb);
+	}
+</script>
 
-    let message;
-    switch (urlParam('type')) {
+<script defer type="module">
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString);
+	const cb = urlParams.get('cb');
+
+	let message;
+    switch (urlParams.get('type')) {
         case 'notSignedIn':
             message = 'Looks like you need to sign in!';
             $('#options').html(`
@@ -45,6 +50,25 @@
 
         case 'serverPingFailed':
         	message = "Looks like we can't connect to the server right now... Try again in a few minutes";
+
+			if (!cb) break;
+
+            setInterval(async () => {
+                try {
+					let response = await fetch(`https://entropyengine.dev:50001/ping`, {
+						method: 'POST',
+                        body: '{}'
+					}).catch(() => {});
+
+					let ping = await response.json().catch(() => {});
+                    if (ping.ok)
+                    	window.goToCB();
+
+                } catch (E) {}
+
+            }, 1000);
+
+
         	break;
 
         case 'buildPlayFail':
@@ -56,7 +80,15 @@
             break
     }
 
-    $('#error-message').html(message);
+    if (cb) {
+    	message += `
+            <br><br>
+    	    <button onclick="window.goToCB()" style="font-size: xx-large">
+    	        Back
+    	    </button>
+    	`;
+    }
 
+    $('#error-message').html(message);
 
 </script>

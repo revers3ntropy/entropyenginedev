@@ -1,4 +1,4 @@
-import {request} from './request.js';
+import {APIToken, request} from './request.js';
 
 export function signOut () {
     localStorage.id = undefined;
@@ -23,7 +23,7 @@ export async function validID (userID) {
             'null',
             'none',
         ].includes(userID)
-    ) && (await request('/user-exists', {userID})).exists;
+    ) && (await request('/user-exists', new APIToken({user: userID}))).exists;
 }
 
 export function mustBeSignedIn (whenSignedIn, whenNotSignedIn) {

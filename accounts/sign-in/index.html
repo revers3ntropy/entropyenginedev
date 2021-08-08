@@ -61,7 +61,7 @@
 			const username = $('#username').val();
 			const password = $('#password').val();
 
-			localStorage.id = (await request('/get-id', {
+			localStorage.id = (await request('/get-id', undefined, {
 				username,
 				password
 			}))._id;

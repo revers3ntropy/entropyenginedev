@@ -7,7 +7,6 @@ Only use CSS inline and from global.css
 import {secondsToReadable} from './util.js';
 
 export const comment = (data, canDelete =false, options=true) => `
-
 	
 <div id="comment-${data._id}-menu" style="
 	width: 160px;
@@ -64,6 +63,7 @@ export const comment = (data, canDelete =false, options=true) => `
 
 ${!options ? '' : `
 <script>
+(function () {
 	const menu = $('#comment-${data._id}-menu');
 	const menuButton = $('#comment-${data._id}-menu-toggle');
 	const both = $('#comment-${data._id}-menu, #comment-${data._id}-menu-toggle');
@@ -87,8 +87,9 @@ ${!options ? '' : `
 			menu.show();
 		}
 	});
+
+})();
 </script>
-
-
 `}
+
 `;
