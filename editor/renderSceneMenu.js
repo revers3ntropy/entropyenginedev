@@ -1,4 +1,4 @@
-import {state} from '../state.js';
+import {state} from './state.js';
 
 export function renderSceneMenu (div) {
 	const cameraZoom = state.sceneCamera.getComponent('Camera').zoom.toFixed(2);

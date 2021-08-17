@@ -1,6 +1,6 @@
-import {request} from '../../../request.js';
-import {comment as commentComponent} from '../../../globalComponents.js';
-import {apiToken, projectID} from '../../state.js';
+import {request} from '../../request.js';
+import {comment as commentComponent} from '../../globalComponents.js';
+import {apiToken, projectID} from '../state.js';
 
 export function renderComments (div) {
 

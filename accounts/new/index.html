@@ -62,9 +62,10 @@
 
 <script type="module">
     import {request} from '../../request.js';
-    import {clean} from '../../util.js';
 
     const error = $('#error');
+
+    const illegalChars = '<>/-"\\`\'?&=';
 
     const usernameElement = $('#username');
     const passwordElement = $('#password');
@@ -72,15 +73,15 @@
     const emailElement = $('#email');
 
     usernameElement.change(() => {
-        usernameElement.val(clean(usernameElement.val(), [' ', '/', '|', ':', ';', '?']));
+        usernameElement.val(usernameElement.val());
     });
 
     passwordElement.change(() => {
-        passwordElement.val(clean(passwordElement.val(), ['/', '|', ':', ';', '?']));
+        passwordElement.val(passwordElement.val());
     });
 
     nameElement.change(() => {
-        nameElement.val(clean(nameElement.val(), [' ', '/', '|', ':', ';', '?']));
+        nameElement.val(nameElement.val());
     });
 
     $(`#submit`).click(async () => {
@@ -109,10 +110,32 @@
             error.html('Name must be longer than 1 character');
             return;
         }
+
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             error.html('Not a valid email');
             return;
         }
+
+        for (let char of illegalChars) {
+        	if (username.includes(char)) {
+				error.html('Sorry, your username is invalid. Try removing some special characters.');
+				return;
+            }
+		}
+
+		for (let char of illegalChars) {
+			if (password.includes(char)) {
+				error.html('Sorry, your password is invalid. Try removing some special characters.');
+				return;
+			}
+		}
+
+		for (let char of illegalChars) {
+			if (name.includes(char)) {
+				error.html('Sorry, your name is invalid. Try removing some special characters.');
+				return;
+			}
+		}
 
        await request('/new-user', undefined, {
             username,

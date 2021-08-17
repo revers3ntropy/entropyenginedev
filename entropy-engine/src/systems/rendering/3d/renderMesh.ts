@@ -30,7 +30,7 @@ export function drawMesh (mesh_: MeshV3, mode: renderMode, ctx: CanvasRenderingC
 
         switch (mode) {
             case renderMode.WIREFRAME:
-                draw.polygon(ctx, tri.triangleV2.points, 'rgb(0, 0, 0)', false);
+                draw.polygon(ctx, tri.triangleV2.points, 'rgb(0, 0, 0)', false, 0);
                 break;
             default:
                 console.error(`Unknown render mode: ${mode}`);

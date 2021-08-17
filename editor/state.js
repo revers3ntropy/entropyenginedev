@@ -3,12 +3,13 @@
 import {urlParam} from "../util.js";
 import entropyEngine from "../entropy-engine/1.0/index.js";
 import * as ee from "../entropy-engine/1.0/index.js";
-import {reRender} from "./render/renderer.js";
+import {reRender} from "./renderer.js";
 import {reloadScriptsOnEntities} from "./scripts.js";
 import {init as initEES} from "../entropy-engine/1.0/scripting/EEScript";
 import {global, globalConstants} from "../entropy-engine/1.0/scripting/EEScript/constants.js";
 import {APIToken} from "../request.js";
 
+// initialise Entropy Script with ee constants
 export let globalEESContext = global;
 
 globalConstants['CircleCollider'] = ee.CircleCollider;
@@ -35,6 +36,7 @@ globalConstants['Transform'] = ee.Transform;
 
 initEES();
 
+
 export let redirectedFrom = urlParam('from');
 export const projectID = urlParam('p');
 
@@ -48,7 +50,7 @@ export const canvasID = 'myCanvas';
 export const canvas = document.getElementById(canvasID);
 export const ctx = canvas.getContext('2d');
 
-export const { run, background } = entropyEngine({
+export const { run } = entropyEngine({
 	canvasID
 });
 
@@ -93,6 +95,7 @@ export const state = {
 	dragEnd: ee.v2.zero,
 	sceneCamera: null,
 	selectedEntity: null,
+	running: false
 };
 
 export const setSelected = sprite => state.selectedEntity = sprite;

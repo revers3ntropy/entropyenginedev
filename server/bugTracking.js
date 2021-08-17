@@ -1,8 +1,5 @@
+const {clean} = require("./util");
 const query = require('./sql').query;
-
-/*
-	
- */
 
 exports.reportBug = ({res, body, token}) => {
 	query(`
@@ -11,15 +8,15 @@ exports.reportBug = ({res, body, token}) => {
 	    bugs
 	VALUES (
 		null,
-		${token.user},
-		'${body.title}',
-        '${body.description}',
-        '${body.reproduce}',
-        '${body.expected}',
-        '${body.actual}',
-        ${body.severity},
-        '${body.type}',
-        '${body.extra}',
+		${clean(token.user)},
+		'${clean(body.title)}',
+        '${clean(body.description)}',
+        '${clean(body.reproduce)}',
+        '${clean(body.expected)}',
+        '${clean(body.actual)}',
+        ${clean(body.severity)},
+        '${clean(body.type)}',
+        '${clean(body.extra)}',
 		'reported',
 		null,
 		null
@@ -52,7 +49,7 @@ exports.getBug = ({res, body}) => {
 	     users
 	WHERE 
 	      bugs.userID=users._id AND
-	      bugs._id=${body.id}
+	      bugs._id=${clean(body.id)}
 	LIMIT 1
 	
 	`, data => {

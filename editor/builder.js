@@ -1,5 +1,5 @@
 import {Entity, Scene} from "../entropy-engine/1.0";
-import {scripts, projectID, scriptURLS, apiToken} from "./state.js";
+import {scripts, projectID, scriptURLS, apiToken, state} from "./state.js";
 import {request} from '../request.js';
 import {sleep} from '../util.js';
 
@@ -40,6 +40,10 @@ window.backgroundSave = async () => {
         `
     });
 };
+
+//setInterval(async () => {
+    //if (!state.running) await backgroundSave();
+//}, 1000);
 
 window.save = async () => {
     // save with the css changes for teh save button
@@ -83,9 +87,8 @@ const buildSpritesJSON = async projectID => {
 function buildScenesJSON () {
     const scenes = [];
     
-    for (let scene of Scene.scenes) {
+    for (let scene of Scene.scenes)
         scenes.push(JSON.stringify(scene.json()));
-    }
     
     return scenes.join(',\n');
 }

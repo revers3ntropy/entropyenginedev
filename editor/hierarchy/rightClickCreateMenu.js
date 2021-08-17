@@ -1,7 +1,7 @@
 import {reRender, rightClickOption, setRightClick} from "../renderer.js";
-import {setSelected, state} from "../../state.js";
-import {Entity, v3} from "../../../entropy-engine/1.0";
-import * as ee from "../../../entropy-engine/1.0";
+import {setSelected, state} from "../state.js";
+import {Entity, v3} from "../../entropy-engine/1.0";
+import * as ee from "../../entropy-engine/1.0";
 
 export function setRightClickAddEntityMenu(divID) {
 	setRightClick(divID, state.selectedEntity, `

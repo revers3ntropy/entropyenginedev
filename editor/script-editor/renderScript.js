@@ -1,5 +1,5 @@
-import {state, scripts} from '../../state.js';
-import {mapScripts} from "../../scripts.js";
+import {state, scripts} from '../state.js';
+import {mapScripts} from "../scripts.js";
 
 export const renderScripts = (divID) => {
     const s = $(`#${divID}`);

@@ -7,12 +7,14 @@ import {cullString} from '../entropy-engine/1.0/util/general.js';
 import {genCacheBust, mustBeSignedIn} from '../util.js';
 import {request} from '../request.js';
 
-import {reRender} from './render/renderer.js';
+import {reRender} from './renderer.js';
 import "./builder.js";
 import './events.js';
 import {loadScripts, reloadScriptsOnEntities} from "./scripts.js";
 import './state.js';
 import {state, scripts, redirectedFrom, projectID, setSelected, apiToken} from './state.js';
+
+import './updatePing.js';
 
 // cache busting
 const scriptFetchHeaders = new Headers();
@@ -102,21 +104,3 @@ checkCredentials(async accessLevel => {
     document.title = name;
 });
 
-// show ping
-async function updatePing () {
-    const startTime = performance.now();
-
-    let response = await request('/ping');
-
-    if (!response.ok) {
-        console.error('Server ping failed');
-        return;
-    }
-
-    const time = performance.now() - startTime;
-
-    $('#ping').html(Math.floor(time));
-}
-
-setInterval(updatePing, 2000);
-updatePing();

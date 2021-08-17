@@ -1,7 +1,6 @@
 import {v3} from "../maths/maths.js";
 import {Component} from "../ECS/component.js";
 import {JSONifyComponent} from "../util/general.js";
-import {Transform} from "./transform";
 
 export class Body extends Component {
 

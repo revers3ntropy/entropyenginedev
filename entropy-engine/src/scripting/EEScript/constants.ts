@@ -42,7 +42,10 @@ export const globalConstants: {[name: string]: any} = {
     'true': true,
     'null': 0,
     'undefined': None,
-    'maths': Math,
+    'maths': {
+        ...Math,
+        mod: (x: number, y: number) => x % y
+    },
     'input': input,
     'keyCode': input,
     'timer': {

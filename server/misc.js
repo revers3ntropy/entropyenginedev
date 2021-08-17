@@ -1,4 +1,5 @@
-const query = require('./sql').query;
+const {clean} = require("./util");
+const {query} = require('./sql');
 
 const idMax = parseInt(process.env.SEC_IDMAX);
 
@@ -9,13 +10,12 @@ exports.report = ({body, token}) => {
 	    reports 
 	VALUES (
 	        null,
-	        ${token.user},
-	        "${body.type}", 
-	        "${body.issueID}", 
-	        "${body.problem}", 
+	        ${clean(token.user)},
+	        "${clean(body.type)}", 
+	        "${clean(body.issueID)}", 
+	        "${clean(body.problem)}", 
 	        CURRENT_TIMESTAMP
 		);
-	
 	`);
 };
 
@@ -25,7 +25,7 @@ exports.getReport = ({res, body}) => {
 			users.username,
 			reports.type,
 			reports.problem,
-            UNIX_TIMESTAMP(reports.date) as date,
+            UNIX_TIMESTAMP(reports.date) as date
 		
 		FROM 
 		     users,
@@ -59,11 +59,11 @@ exports.comment = ({res, body, token}) => {
             INSERT INTO
                 comments
             VALUES(
-                ${id},
-                ${token.user},
-                ${token.project},
-                "${body.content}",
-                ${body.public},
+                ${clean(id)},
+                ${clean(token.user)},
+                ${clean(token.project)},
+                "${clean(body.content)}",
+                ${clean(body.public)},
                 CURRENT_TIMESTAMP
             )
             
@@ -86,7 +86,7 @@ exports.getComments = ({res, body, token}) => {
         users
     WHERE
         users._id = comments.userID
-    AND comments.projectID = ${token.project}
+    AND comments.projectID = ${clean(token.project)}
     AND public = ${body.public ? 1 : 0}
 
     ORDER BY 
@@ -110,7 +110,7 @@ exports.getComment = ({res, body}) => {
         users
     WHERE
         users._id = comments.userID
-    AND comments._id=${body.commentID}
+    AND comments._id=${clean(body.commentID)}
 
     LIMIT 1
 
@@ -119,15 +119,25 @@ exports.getComment = ({res, body}) => {
 	});
 };
 
-exports.deleteComment = ({res, body}) => {
+exports.deleteComment = ({res, body, token}) => {
 	query(`
-       
-    DELETE FROM 
-        comments
-    WHERE
-        _id = ${body.commentID}
-    
-    `, () => {
-		res.end("{}");
+		SELECT level from users WHERE _id = ${clean(token.user)}
+	`, ({level}) => {
+		query(`
+			SELECT userID from comments WHERE _id = ${clean(body.commentID)}
+		`, ({userID}) => {
+			// check to see if the user did not write the comment they have to have a high
+			// level to be able to delete it.
+			if (level < 2 && userID !== token.user) return;
+			query(`
+
+                DELETE
+                FROM comments
+                WHERE _id = ${clean(body.commentID)}
+
+			`, () => {
+				res.end("{}");
+			});
+		});
 	});
 };

@@ -1,9 +1,8 @@
 import {Transform} from "./transform.js";
-import {Renderer} from "./renderComponents.js";
+import {Renderer} from "./renderer.js";
 import {MeshV3} from '../maths/maths.js';
 import {Entity} from "../ECS/entity.js";
 import {drawMesh, renderMode} from "../systems/rendering/3d/renderMesh.js";
-import {Mat4} from "../maths/matrix.js";
 import {MeshArr} from "../maths/maths.js";
 
 export abstract class Renderer3D extends Renderer {

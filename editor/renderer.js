@@ -1,12 +1,12 @@
-import { Scene, v2, Camera, System } from "../../entropy-engine/1.0";
-import {rect} from "../../entropy-engine/1.0/systems/rendering/basicShapes.js";
-import {renderDebug, renderSelectedOutline, drawCameraViewArea} from '../../entropy-engine/1.0/systems/rendering/debugRenderer.js';
+import { Scene, v2, Camera, System } from "../entropy-engine/1.0";
+import {rect} from "../entropy-engine/1.0/systems/rendering/basicShapes.js";
+import {renderDebug, renderSelectedOutline, drawCameraViewArea} from '../entropy-engine/1.0/systems/rendering/debugRenderer.js';
 
 import {
     ctx, canvas,
     setSelected,
     state, scriptEditor, sceneView, gameView, setState, assets, comments,
-} from "../state.js";
+} from "./state.js";
 
 import {reRenderHierarchy} from "./hierarchy/renderHierarchy.js";
 import {reRenderInspector} from "./inspector/renderInspector.js";

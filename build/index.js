@@ -1,6 +1,6 @@
-import { urlParam } from '../../util.js';
-import {APIToken, request} from '../../request.js';
-import {download} from '../downloader.js';
+import { urlParam } from '../util.js';
+import {APIToken, request} from '../request.js';
+import {download} from '../editor/downloader.js';
 
 const projectID = urlParam('p');
 const apiToken = new APIToken({project: projectID});

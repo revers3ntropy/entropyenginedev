@@ -1,5 +1,5 @@
 import {reRender, rightClickOption, setRightClick} from "../renderer.js";
-import {state} from "../../state.js";
+import {state} from "../state.js";
 import {_componentProperty_} from "./property.js";
 
 export const _component_ = (component, i) => {

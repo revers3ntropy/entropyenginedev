@@ -8,7 +8,7 @@ import {
     setSelected
 } from "./state.js";
 
-import {reRender, reRenderCanvas, reRenderCanvasDebug, reRenderSceneToolbar} from "./render/renderer.js";
+import {reRender, reRenderCanvas, reRenderCanvasDebug, reRenderSceneToolbar} from "./renderer.js";
 import {rect} from "../entropy-engine/1.0/systems/rendering/basicShapes.js";
 import {v2, Entity, Scene, Camera} from '../entropy-engine/1.0';
 import {getMousePos} from "../entropy-engine/1.0/input.js";
@@ -61,17 +61,17 @@ window.setParent = id => {
 }
 
 $(document).keydown(event => {
-        // If Control or Command key is pressed and the S key is pressed
-        // run save function. 83 is the key code for S.
-        if((event.ctrlKey || event.metaKey) && event.which === 83) {
-            window.save();
-            event.preventDefault();
-            return false;
-        }
+    // If Control or Command key is pressed and the S key is pressed
+    // run save function. 83 is the key code for S.
+    if((event.ctrlKey || event.metaKey) && event.which === 83) {
+        window.save();
+        event.preventDefault();
+        return false;
     }
-);
+});
 
 window.run = async () => {
+    state.running = true;
     await window.backgroundSave();
     await reloadScriptsOnEntities();
 
@@ -141,7 +141,7 @@ export function setSelectedSpriteFromClick (pos) {
 
 window.goToBuildMenu = async () => {
     await window.backgroundSave();
-    window.location.href = `https://entropyengine.dev/editor/build/?p=${projectID}`;
+    window.location.href = `../build/?p=${projectID}`;
 };
 
 // sets the scene from the

@@ -96,7 +96,7 @@ function circleCircleCollision (sprite1: Entity, sprite2: Entity, onCollision: (
     // finish the collision
     onCollision();
 }
-
+/*
 function circleRectCollision (circle: Entity, rect: Entity, onCollision: () => void) {
     const transformRect = rect.transform;
     const transformCircle = circle.transform;
@@ -198,7 +198,7 @@ function circleRectCollision (circle: Entity, rect: Entity, onCollision: () => v
         );
 
     // resolve dynamic collision
-    /*
+    / *
 
     const body1 = sprite1.getComponent<Body>('Body');
     const body2 = sprite2.getComponent<Body>('Body');
@@ -222,10 +222,11 @@ function circleRectCollision (circle: Entity, rect: Entity, onCollision: () => v
     );
 
     [circleBody.velocity, rectBody.velocity] = newVs;
-     */
+     * /
 
     onCollision();
 }
+*/
 
 function rectRectCollision (sprite1: Entity, sprite2: Entity, onCollision: () => void) {
     const transform1 = sprite1.transform;
@@ -277,11 +278,12 @@ function rectRectCollision (sprite1: Entity, sprite2: Entity, onCollision: () =>
         overlap.x = 0;
 
     // resolve collision
-    if (!sprite1.Static || !collider1.solid)
+    if (!sprite1.Static && collider1.solid)
         transform1.position.add(
             overlap.v3.scale(-1 / (sprite2.Static ? 1 : 2))
         );
-    if (!sprite2.Static || !collider2.solid)
+
+    if (!sprite2.Static && collider2.solid)
         transform2.position.add(
             overlap.v3.scale(1 / (sprite1.Static ? 1 : 2))
         );
@@ -311,16 +313,6 @@ function rectRectCollision (sprite1: Entity, sprite2: Entity, onCollision: () =>
     onCollision();
 }
 
-const collisionTypes: {[name: string]: any} = {
-    'CircleCollider CircleCollider': circleCircleCollision,
-    // have to have two different functions for the case of one of each, as one needs to be swapped around
-    'RectCollider CircleCollider': (rect: Entity, circle: Entity, onCollision: () => void) => {
-        circleRectCollision(circle, rect, onCollision);
-    },
-    'CircleCollider RectCollider': circleRectCollision,
-    'RectCollider RectCollider': rectRectCollision
-}
-
 export function collide (sprite1: Entity, sprite2: Entity, scriptCollide: (sprite1: Entity, sprite2: Entity) => void): void {
     if (!sprite1.hasComponent("Collider") || !sprite2.hasComponent("Collider"))
         return;
@@ -328,23 +320,13 @@ export function collide (sprite1: Entity, sprite2: Entity, scriptCollide: (sprit
     const collider1 = sprite1.getComponent<Collider>("Collider");
     const collider2 = sprite2.getComponent<Collider>("Collider");
 
-    let type1 = collider1.subtype;
-    let type2 = collider2.subtype;
-
-    try {
-        collisionTypes[`${type1} ${type2}`](sprite1, sprite2, () => {
-            // it has collided
-
-            // apply friction
-            /* this slows down stuff even if both are floating...
-            body1.velocity.scaleBy(1 - body1.material.friction);
-            body2.velocity.scaleBy(1 - body2.material.friction);
-             */
-
-            // run onCollision functions in scripts
-            scriptCollide(sprite1, sprite2);
-        });
-    } catch (e) {
-        console.log(`Cannot collide '${type1} ${type2}': \n${e}`);
+    const onCollision = () => {
+        scriptCollide(sprite1, sprite2);
     }
+
+    if (collider1.subtype === 'RectCollider' && collider2.subtype === 'RectCollider')
+        rectRectCollision(sprite1, sprite2, onCollision);
+    else if (collider1.subtype === 'CircleCollider' && collider2.subtype === 'CircleCollider')
+        circleCircleCollision(sprite1, sprite2, onCollision);
+
 }

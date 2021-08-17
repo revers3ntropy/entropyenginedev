@@ -1,7 +1,7 @@
-import {apiToken, projectID, state} from '../../state.js';
-import {request} from '../../../request.js';
+import {apiToken, projectID, state} from '../state.js';
+import {request} from '../../request.js';
 import {reRender, rightClickOption, setRightClick} from "../renderer.js";
-import {cullString} from '../../../entropy-engine/1.0/util/general.js';
+import {cullString} from '../../entropy-engine/1.0/util/general.js';
 
 const _asset_ = (fileName) => `
 

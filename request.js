@@ -17,7 +17,7 @@ export class APIToken {
 export async function request (url, token = new APIToken({}), body={}) {
     if (!(token instanceof APIToken)) {
         console.error(`Backend API token must be of type 'APIToken': `, token);
-        return;
+        return {};
     }
     let response = await fetch(`https://entropyengine.dev:50001${url}`, {
         method: 'POST',

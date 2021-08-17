@@ -45,20 +45,6 @@ export function urlParam (name) {
     return urlParams.get(name);
 }
 
-export function clean (string, filterOut) {
-    if (!string || !filterOut) return string;
-
-    let newString = '';
-
-    for (let char of string) {
-        if (!filterOut.includes(char)) {
-            newString += char;
-        }
-    }
-
-    return newString
-}
-
 export function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }

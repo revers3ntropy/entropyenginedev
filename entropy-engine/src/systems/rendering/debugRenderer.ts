@@ -1,7 +1,7 @@
 import {Camera} from '../../components/camera.js';
 import {Entity} from '../../ECS/entity.js';
 import {getCanvasSize} from '../../util/general.js';
-import {circle, rect, image} from './basicShapes.js';
+import {circle, rect, image, rotateAroundPointWrapper} from './basicShapes.js';
 import {v2} from '../../maths/maths.js';
 import {CircleCollider, RectCollider, Collider } from '../../components/colliders.js';
 
@@ -45,14 +45,14 @@ function renderGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
     for (let y = min.y; y < max.y; y += step) {
         const pos = cameraC.worldSpaceToScreenSpace(new v2(0, y), canvas, camera.transform.position);
         pos.x = -1;
-        rect(ctx, pos, canvasSize.x+2, 1, colour);
+        rect(ctx, pos, canvasSize.x+2, 1, colour, 0);
     }
 
     // vertical
     for (let x = min.x; x < max.x; x += step) {
         const pos = cameraC.worldSpaceToScreenSpace(new v2(x, 0), canvas, camera.transform.position);
         pos.y = -1;
-        rect(ctx, pos, 1, canvasSize.y+2, colour);
+        rect(ctx, pos, 1, canvasSize.y+2, colour, 0);
     }
 }
 
@@ -88,14 +88,17 @@ function renderCollider (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElemen
     );
 
     if (collider instanceof RectCollider) {
-        const dimensions = transform.scale.v2.mul(new v2(collider.width, collider.height));
+        const size = new v2(collider.width, collider.height);
+        const dimensions = transform.scale.v2.mul(size);
         dimensions.scale(zoom);
-        ctx.rect(pos.x, pos.y, dimensions.x, dimensions.y);
-
+        rotateAroundPointWrapper(ctx, pos.clone.add(dimensions.clone.scale(0.5)), transform.rotation.z, () => {
+            ctx.rect(pos.x, pos.y, dimensions.x, dimensions.y);
+            ctx.stroke();
+        });
     } else if (collider instanceof CircleCollider) {
-        ctx.arc(pos.x, pos.y, collider.radius * transform.scale.x * zoom, 0,2*Math.PI);
+        ctx.arc(pos.x, pos.y, collider.radius * transform.scale.x * zoom, 0,2 * Math.PI);
+        ctx.stroke();
     }
-    ctx.stroke();
 }
 
 function renderColliders (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, camera: Entity, colour: string, sprites: Entity[]) {
@@ -111,7 +114,7 @@ export function drawCameras (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEl
     for (const sprite of sprites) {
         if (!sprite.hasComponent('Camera')) continue;
         let pos = cameraC.worldSpaceToScreenSpace(sprite.transform.position.v2, canvas, camera.transform.position);
-        image(ctx, pos, new v2(80, 40), 'https://entropyengine.dev/svg/camera.png');
+        image(ctx, pos, new v2(80, 40), 'https://entropyengine.dev/svg/camera.png', 0);
     }
 }
 
@@ -130,12 +133,12 @@ export function drawCameraViewArea (ctx: CanvasRenderingContext2D, canvas: HTMLC
     const xSize = Math.abs(minScreenSpace.x - maxScreenSpace.x);
 
     // left and right
-    rect(ctx, minScreenSpace, 1, ySize, colour);
-    rect(ctx, new v2(maxScreenSpace.x, minScreenSpace.y), 1, ySize, colour);
+    rect(ctx, minScreenSpace, 1, ySize, colour, 0);
+    rect(ctx, new v2(maxScreenSpace.x, minScreenSpace.y), 1, ySize, colour, 0);
 
     // top and bottom
-    rect(ctx, minScreenSpace, xSize, 1, colour);
-    rect(ctx, new v2(minScreenSpace.x, maxScreenSpace.y), xSize, 1, colour);
+    rect(ctx, minScreenSpace, xSize, 1, colour, 0);
+    rect(ctx, new v2(minScreenSpace.x, maxScreenSpace.y), xSize, 1, colour, 0);
 }
 
 export function renderDebug (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, camera: Entity, entities: Entity[]) {

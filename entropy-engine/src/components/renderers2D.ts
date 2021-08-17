@@ -128,7 +128,7 @@ export class RectRenderer extends Renderer2D {
             .add(arg.position);
 
 
-        rect (arg.ctx, getZoomScaledPosition(renderPos, arg.zoom, arg.center), width, height, this.colour.rgb);
+        rect (arg.ctx, getZoomScaledPosition(renderPos, arg.zoom, arg.center), width, height, this.colour.rgb, arg.transform.rotation.z);
     }
 }
 
@@ -181,7 +181,8 @@ export class ImageRenderer2D extends Renderer2D {
             arg.ctx,
             getZoomScaledPosition(renderPos, arg.zoom, arg.center),
             new v2(width, height),
-            this.url
+            this.url,
+            arg.transform.rotation.z
         );
     }
 }

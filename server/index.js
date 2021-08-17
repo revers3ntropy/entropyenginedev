@@ -97,7 +97,9 @@ const rawPaths = [
 ];
 
 async function serverResponse (req, res) {
+
     res.setHeader("Access-Control-Allow-Origin", "https://entropyengine.dev");
+
     try {
         const url = req.url.split('/');
         // expecting url of something like /api/987678,

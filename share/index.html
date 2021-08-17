@@ -7,7 +7,7 @@
     </title>
 
     <meta name="viewport" content="width=device-width">
-    <link rel='stylesheet' href="../../global.css">
+    <link rel='stylesheet' href="../global.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script>
         $(() => {
@@ -60,10 +60,10 @@
 </html>
 
 <script type="module">
-	import {APIToken, request} from '../../request.js';
-    import {clean, urlParam} from '../../util.js';
+	import {APIToken, request} from '../request.js';
+    import {clean, urlParam} from '../util.js';
 
-    const error = $('#error');
+    const errorDIV = $('#error');
     const projectID = urlParam('p');
     document.getElementById('back').href += projectID;
 	document.getElementById('see-contributors').href += projectID;
@@ -75,19 +75,25 @@
         const username = usernameElement.val();
         const accessLevel = accessElement.val();
 
+        let apiToken = new APIToken({project: projectID});
+
         if (username) {
-			const usernameExists = await request('/username-exists', {
+			const usernameExists = await request('/username-exists', apiToken, {
 				username: clean(username)
 			});
 			if (usernameExists.exists !== '1') {
-				error.html('That username doesn\'t seem to exist exists');
+				errorDIV.html('That username doesn\'t seem to exist exists');
 				return;
 			}
         }
-        await request('/share-project', new APIToken({ project: projectID }), {
+        let {error} = await request('/share-project', apiToken, {
 			username,
 			accessLevel
 		});
+        if (!error)
+        	window.location.href = `../editor`;
+        else
+        	window.location.href = `../accounts/error`;
     });
 
 </script>

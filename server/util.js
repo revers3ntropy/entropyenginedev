@@ -25,3 +25,16 @@ exports.folderSizePublic = ({res, body}) => {
 		res.end(JSON.stringify(sizes));
 	});
 }
+
+exports.clean = (string, filterOut='<>/-"\\`\'?&=') => {
+	let newString = '';
+
+	if (typeof string === 'number')
+		return String(string);
+
+	for (let char of string)
+		if (!filterOut.includes(char))
+			newString += char;
+
+	return newString
+}

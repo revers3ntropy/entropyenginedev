@@ -1,6 +1,6 @@
-import {Scene, v2, v3} from "../../../entropy-engine/1.0";
+import {Scene, v2, v3} from "../../entropy-engine/1.0";
 import {reRender} from "../renderer.js";
-import {state} from '../../state.js';
+import {state} from '../state.js';
 
 function _colour_ (id, value, componentName) {
 	return `

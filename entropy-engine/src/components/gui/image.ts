@@ -43,7 +43,7 @@ export class GUIImage extends GUIElement {
 
         if (height <= 0 || width <= 0) return;
 
-        image(ctx, transform.position.v2, new v2(width, height), this.url);
+        image(ctx, transform.position.v2, new v2(width, height), this.url, transform.rotation.z);
     }
 
     Update(): void {}

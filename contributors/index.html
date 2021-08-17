@@ -7,15 +7,15 @@
     <meta name="viewport" content="width=device-width">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 
-    <link rel='stylesheet' href="../../global.css">
+    <link rel='stylesheet' href="../global.css">
     <script>
 		$(() => {
 			$("#header").load("../../accounts/header.html");
 		});
     </script>
 
-    <link rel="stylesheet" href="../../libraries/chartist-js-develop/dist/chartist.min.css">
-    <script src="../../libraries/chartist-js-develop/dist/chartist.min.js"></script>
+    <link rel="stylesheet" href="../libraries/chartist-js-develop/dist/chartist.min.css">
+    <script src="../libraries/chartist-js-develop/dist/chartist.min.js"></script>
 
 
     <style>
@@ -226,14 +226,14 @@
 
 <div id="all-contributors"></div>
 
-<script src="../../libraries/chartist-js-develop/dist/chartist.min.js"></script>
+<script src="../libraries/chartist-js-develop/dist/chartist.min.js"></script>
 
 </body>
 </html>
 
 <script type="module">
-	import {APIToken, request} from '../../request.js';
-	import { urlParam, secondsToReadable, validID } from '../../util.js';
+	import {APIToken, request} from '../request.js';
+	import { urlParam, secondsToReadable, validID } from '../util.js';
 
     request('/contributor-info', new APIToken({
         project: urlParam('p')

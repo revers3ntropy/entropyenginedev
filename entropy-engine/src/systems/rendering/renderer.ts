@@ -7,7 +7,7 @@ import {v2} from "../../maths/v2.js";
 import {colour, rgb} from "../../util/colour.js";
 import {getCanvasSize} from "../../util/general.js";
 import {GUIElement} from "../../components/gui/guiElement.js";
-import {Renderer} from "../../components/renderer.js";
+import {Renderer} from "../../components/renderComponents.js";
 
 function orderSpritesForRender (sprites: Entity[]): Entity[] {
     // sort the entities by their z position
@@ -52,7 +52,7 @@ export function renderBackground (ctx: CanvasRenderingContext2D, canvasSize: v2,
     }
     // if it can't use the image as a background, then just use the colour
     try {
-        image(ctx, v2.zero, canvasSize, backgroundImage);
+        image(ctx, v2.zero, canvasSize, backgroundImage, 0);
     } catch {
         fillBackground(0.1);
     }

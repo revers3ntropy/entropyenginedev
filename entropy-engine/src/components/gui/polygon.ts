@@ -34,7 +34,7 @@ export class GUIPolygon extends GUIElement {
     draw (ctx: CanvasRenderingContext2D, transform: Transform): void {
         if (this.points.length <= 1) return;
 
-        polygon(ctx, scaleMeshV2(this.points, transform.scale.v2), this.colour.hex);
+        polygon(ctx, scaleMeshV2(this.points, transform.scale.v2), this.colour.hex, true, transform.rotation.z);
     }
 
     touchingPoint (point: v2, ctx: CanvasRenderingContext2D, transform: Transform): boolean {

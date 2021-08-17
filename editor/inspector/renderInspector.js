@@ -1,6 +1,6 @@
-import {scripts, state} from "../../state.js";
+import {scripts, state} from "../state.js";
 import {reRender} from "../renderer.js";
-import {reloadScriptsOnEntities} from "../../scripts.js";
+import {reloadScriptsOnEntities} from "../scripts.js";
 
 import {_componentProperty_} from "./property.js";
 import {_component_} from "./component.js";
@@ -13,7 +13,7 @@ import {
     CircleRenderer, ImageRenderer2D, RectRenderer,
     GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox,
     Camera
-} from '../../../entropy-engine/1.0';
+} from '../../entropy-engine/1.0';
 
 Script;
 

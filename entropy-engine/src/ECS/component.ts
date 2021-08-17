@@ -1,6 +1,5 @@
 import {rgb} from "../util/colour.js";
 import {v2, v3} from "../maths/maths.js";
-import {Transform} from "../components/transform.js";
 import {publicField, publicFieldConfig} from "../publicField.js";
 
 

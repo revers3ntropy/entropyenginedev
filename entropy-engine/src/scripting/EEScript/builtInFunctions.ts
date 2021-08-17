@@ -158,6 +158,10 @@ export const builtInFunctions: {[name: string]: ((context: Context) => any) | an
         }
 
         return total;
+    },
+
+    'now': (context: Context) => {
+        return performance.now();
     }
 }
 

@@ -9,11 +9,11 @@ export async function startAnimation(canvasID: string) {
 
     const canvasSize = getCanvasSize(canvas);
 
-    rect(ctx, v2.zero, canvasSize.x, canvasSize.y, '#EEEEEE');
+    rect(ctx, v2.zero, canvasSize.x, canvasSize.y, '#EEEEEE', 0);
 
     function draw() {
         // clear the screen
-        rect(ctx, v2.zero, canvasSize.x, canvasSize.y, '#EEEEEE');
+        rect(ctx, v2.zero, canvasSize.x, canvasSize.y, '#EEEEEE', 0);
         text(ctx, 'made with', fontSize / 2.5, `Nunito`, `rgb(60, 60, 60)`, new v2(canvas.width / 2 - fontSize / 1.6, canvas.height / 2 + fontSize / 1.5));
         text(ctx, 'Entropy Engine', fontSize, `Nunito`, `rgb(0, 0, 0)`, new v2(canvas.width / 2, canvas.height / 2 - fontSize / 2.5));
     }
