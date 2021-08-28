@@ -92,6 +92,13 @@ html {
     border: 1px solid #c6c6c6;
 }
 
+canvas {
+    -ms-interpolation-mode: nearest-neighbor;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+}
+
 #assets {
     border: 1px solid black;
     grid-column: 2/4;

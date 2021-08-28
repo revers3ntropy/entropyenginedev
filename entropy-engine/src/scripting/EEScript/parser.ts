@@ -7,7 +7,6 @@ import {
     N_class,
     N_continue,
     N_emptyObject,
-    N_ESBehaviour,
     N_for,
     N_function,
     N_functionCall,
@@ -27,7 +26,8 @@ import {
     Node
 } from './nodes.js';
 import {ESError, InvalidSyntaxError} from "./errors.js";
-import {Position} from "./position";
+import type {Position} from "./position.js";
+import {N_ESBehaviour} from "./ESBehaviour.js";
 
 export class ParseResults {
     node: Node | undefined;

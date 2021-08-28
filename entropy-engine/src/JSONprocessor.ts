@@ -13,7 +13,7 @@ import {defaultSceneSettings, Scene, sceneSettings} from './ECS/scene.js';
 import {rgba} from "./util/colour.js";
 import {nameFromScriptURL} from './util/general.js';
 import {run} from "./scripting/EEScript/index.js";
-import {N_ESBehaviour} from "./scripting/EEScript/nodes.js";
+import {ESBehaviourInstance} from "./scripting/EEScript/ESBehaviour.js";
 
 // reference everything so the ts compiler will think that it is being used and wont delete the import
 CircleCollider; RectCollider;
@@ -104,7 +104,7 @@ async function dealWithScriptComponent (componentJSON: any): Promise<Script | un
     const className = componentJSON['name'] || componentJSON['className']
     // gets name of file
 
-    let scriptNode: undefined | N_ESBehaviour;
+    let scriptNode: undefined | ESBehaviourInstance;
 
     try {
         let scriptData = await fetch(`${path}?${cacheBust}`);
@@ -120,13 +120,13 @@ async function dealWithScriptComponent (componentJSON: any): Promise<Script | un
         let node;
 
         for (let line of res.val) {
-            if (!(line instanceof N_ESBehaviour)) continue;
+            if (!(line instanceof ESBehaviourInstance)) continue;
             if (line.name !== name) continue;
             node = line;
             break;
         }
 
-        if (!(node instanceof N_ESBehaviour)) {
+        if (!(node instanceof ESBehaviourInstance)) {
             console.error('Node not instance of N_ESBehaviour: ', node)
             return;
         }

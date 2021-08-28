@@ -3,7 +3,7 @@ import { Body} from "../components/body.js"
 import {Script} from "../components/scriptComponent.js"
 import {getEntityFromJSON, setParentFromInfo} from "../JSONprocessor.js";
 import { Transform } from '../components/transform.js';
-import {N_ESBehaviour} from "../scripting/EEScript/nodes.js";
+import {ESBehaviourInstance} from "../scripting/EEScript/ESBehaviour.js";
 
 export type entityConfig = {
     name: string
@@ -65,7 +65,7 @@ export class Entity {
         return entity;
     };
 
-    addComponent = (toAdd: Component | N_ESBehaviour) => {
+    addComponent = (toAdd: Component | ESBehaviourInstance) => {
         /*
             Checks if the component is viable on the entity, and if it is not,
             then refuses to add it or overrides the problematic component.
@@ -73,7 +73,7 @@ export class Entity {
             the CircleRenderer will be deleted and then the RectRenderer will be added
          */
         if (!(toAdd instanceof Component)) {
-            if (toAdd instanceof N_ESBehaviour) {
+            if (toAdd instanceof ESBehaviourInstance) {
                 for (let component of this.components)
                     if (Object.is(component, toAdd))
                         return false;

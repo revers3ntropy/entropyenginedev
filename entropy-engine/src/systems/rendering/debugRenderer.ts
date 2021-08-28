@@ -24,9 +24,7 @@ function getGlobalGrid (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement
     if ((max.x - min.x) / step < 5)
         step /= 2;
 
-    const roundTo = (x: number) => {
-        return Math.ceil(x/step)*step;
-    };
+    const roundTo = (x: number) => Math.ceil(x / step) * step;
 
     min.apply(roundTo);
     max.apply(roundTo);

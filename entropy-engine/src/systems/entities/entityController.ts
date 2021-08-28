@@ -17,7 +17,7 @@ System.systems.push(new System ({
 
             let thisComponent: any = null;
 
-            Scene.loopThroughAllScripts((script_, sprite) => {
+            Scene.loopThroughAllScripts(script_ => {
                 if (Object.is(script.script, script_.script))
                     thisComponent = script_;
             });
@@ -27,7 +27,6 @@ System.systems.push(new System ({
 
             script.script.component = thisComponent;
 
-            script.script.started = true;
             script.runMethod('Start', []);
         });
     },

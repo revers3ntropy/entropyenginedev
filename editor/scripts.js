@@ -6,7 +6,7 @@ import {genCacheBust} from "../util.js";
 import {request} from "../request.js";
 import {nameFromScriptURL} from "../util.js";
 import {run} from "../entropy-engine/1.0/scripting/EEScript";
-import {N_ESBehaviour} from "../entropy-engine/1.0/scripting/EEScript/nodes.js";
+import {ESBehaviourInstance} from "../entropy-engine/1.0/scripting/EEScript/ESBehaviour.js";
 import {Entity} from "../entropy-engine/1.0";
 import {ESError} from "../entropy-engine/1.0/scripting/EEScript/errors.js";
 
@@ -92,7 +92,7 @@ export async function reloadScriptsOnEntities () {
 			continue;
 
 		for (let line of res) {
-			if (!(line instanceof N_ESBehaviour)) continue;
+			if (!(line instanceof ESBehaviourInstance)) continue;
 			if (line.name !== name){
 				foundESBehaviour = true;
 				continue;
@@ -101,7 +101,7 @@ export async function reloadScriptsOnEntities () {
 			break;
 		}
 
-		if (!(node instanceof N_ESBehaviour)) {
+		if (!(node instanceof ESBehaviourInstance)) {
 			if (foundESBehaviour)
 				console.warn('Make sure that your script has the same name as the file for file "' + name + '"');
 			console.error('Node not instance of N_ESBehaviour: ', node);
