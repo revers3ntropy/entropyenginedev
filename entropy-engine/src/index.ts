@@ -38,19 +38,24 @@ export {System} from './ECS/system.js';
  * Example: limit the output of this computation to between 0 and 255
  * (x * 255).clamp(0, 255)
  *
+ * keep as function over arrow function due to use of 'this'
+ *
  * @param {Number} min The lower boundary of the output range
  * @param {Number} max The upper boundary of the output range
  * @returns A number in the range [min, max]
  * @type Number
- */
-// keep as function(){} due to use of 'this'
-// @ts-ignore
-Number.prototype.clamp = function(min: number, max: number) {
+ */ // @ts-ignore
+Number.prototype.clamp = function (min: number, max: number) {
     return Math.min(Math.max(this as number, min), max);
 };
 
+/**
+ * Initialises Entropy Engine
+ * @param {string} canvasID - id of the canvas HTML element being drawn to
+ * @param {number} performanceDebug - level of timings logged to JS console
+ * @returns {object} - contains run function which starts the game loop
+ */
 export default function entropyEngine ({
-    licenseKey = '',
     canvasID= "canvas",
     performanceDebug = 0,
 }) {
@@ -58,7 +63,7 @@ export default function entropyEngine ({
     // for the event listeners
     let isInitialised = false;
 
-    const licenseLevel = license(licenseKey);
+    const licenseLevel = license('');
     const { canvas, ctx } = getCanvasStuff(canvasID);
     
     setCanvasSize(canvas);
@@ -186,6 +191,11 @@ const scriptFetchInit = {
     headers: scriptFetchHeaders,
 };
 
+/**
+ * Initialise and run Entropy Engine from the URL of a JSON file
+ * @param {string} path - path to JSON file
+ * @param {object} config - passed to entropyEngine function
+ */
 export async function runFromJSON (path: string, config: any = {}) {
 
     init();

@@ -1,5 +1,10 @@
 const fastFolderSize = require('./node_modules/fast-folder-size');
 
+/**
+ * Gets the total recursive size of a folder from this location
+ * @param {string} path
+ * @param {Function} cb
+ */
 exports.folderSize = (path, cb) => {
 	fastFolderSize(path, (err, bytes) => {
 		if (err) {
@@ -17,7 +22,7 @@ exports.folderSize = (path, cb) => {
 			gb: mb / 1_000,
 			tb: mb / 1_000_000,
 		});
-	})
+	});
 }
 
 exports.folderSizePublic = ({res, body}) => {
@@ -26,6 +31,12 @@ exports.folderSizePublic = ({res, body}) => {
 	});
 }
 
+/**
+ * Cleans user input
+ * @param {string} string - dirty user input
+ * @param {string} [filterOut='<>/-"\\`\'?&='] - all characters that should be removed from the string
+ * @return {string} - clean user input
+ */
 exports.clean = (string, filterOut='<>/-"\\`\'?&=') => {
 	let newString = '';
 

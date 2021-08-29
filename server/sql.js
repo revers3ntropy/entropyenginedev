@@ -14,14 +14,14 @@ let con;
 
 let hasConnectedSQL = false;
 
+/**
+ *   Queries the mySQL database 'entropye_ngine_users'
+ *
+ *   @param {string} sql The SQL query
+ *   @param {function} then Called when the query has been completed, passes the result of the query
+ *   @returns {boolean} Has connected yet
+ */
 exports.query = (sql, then) => {
-    /**
-     *   Queries the mySQL database 'entropye_ngine_users'
-     *
-     *   @param {string} sql The SQL query
-     *   @param {function} then Called when the query has been completed, passes the result of the query
-     *   @returns {boolean} Has connected yet
-     */
     if (!hasConnectedSQL) return false;
 
     con.query(sql, (err, result) => {
@@ -33,7 +33,10 @@ exports.query = (sql, then) => {
     return true;
 };
 
-// brings the SQL connection back online when it periodically disconnections
+/**
+ * brings the SQL connection back online when it periodically disconnections.
+ * Note: recursively called on error
+ */
 function handleDisconnect() {
     con = mysql.createConnection(dbConfig); // Recreate the connection, since
                                             // the old one cannot be reused.

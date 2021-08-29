@@ -6,6 +6,12 @@ Only use CSS inline and from global.css
  */
 import {secondsToReadable} from './util.js';
 
+/**
+ * @param {object} data - data from the backend as a json
+ * @param {Boolean} canDelete - does this user have the required access to delete this comment
+ * @param {Boolean} options - should the little dots at the end of the comment show
+ * @return {string} - the HTML
+ */
 export const comment = (data, canDelete =false, options=true) => `
 	
 <div id="comment-${data._id}-menu" style="

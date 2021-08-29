@@ -1,3 +1,6 @@
+/**
+ * @module entropy-engine/maths
+ */
 import {v2} from "./v2";
 
 export * from './matrix.js';
@@ -11,7 +14,11 @@ export * from './meshV3.js';
 export * from './triangleV2.js';
 export * from './triangleV3.js';
 
-
+/**
+ * Calculates if the point is in a polygon described by moving through each point in the array passed in
+ * @param {v2[]} polygonPoints
+ * @param {v2} point
+ */
 export function polygonCollidingWithPoint (polygonPoints: v2[], point: v2): boolean {
 
     if (polygonPoints.length <= 1) return false;

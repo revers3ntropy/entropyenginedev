@@ -3,6 +3,12 @@ import {Node} from "./nodes.js";
 
 export type enumDict<T extends number, U> = { [K in T]: U };
 
+/**
+ * @desc opens a modal window to display a message
+ * @return bool - success or failure
+ * @param obj
+ * @param hash
+ */
 export function deepClone(obj: any, hash = new WeakMap()): any {
     // Do not try to clone primitives or functions
     if (Object(obj) !== obj || obj instanceof Function)

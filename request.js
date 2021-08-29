@@ -1,10 +1,17 @@
-// make sure the connection is open and throw appropriate error if it not
+/**
+ * Make sure the connection is open and throw appropriate error if it not
+ */
 export function networkError () {
     let location = window.location.href;
     window.location.href = 'https://entropyengine.dev/accounts/error?type=serverPingFailed&cb=' + encodeURIComponent(location);
 }
 
 export class APIToken {
+    /**
+     * Returns a json that canbe used to talk to the Node server
+     * @param {number} project - project ID
+     * @param {number} user - user ID
+     */
     constructor ({
         project = -1,
         user = localStorage.id
@@ -14,6 +21,13 @@ export class APIToken {
     }
 }
 
+/**
+ *
+ * @param {string} url - must start with a '/'
+ * @param {APIToken} token
+ * @param {object} body
+ * @return {Promise<object>}
+ */
 export async function request (url, token = new APIToken({}), body={}) {
     if (!(token instanceof APIToken)) {
         console.error(`Backend API token must be of type 'APIToken': `, token);

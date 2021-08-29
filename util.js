@@ -1,16 +1,27 @@
 import {APIToken, request} from './request.js';
 
+/**
+ * Removes the user ID from localStorage
+ */
 export function signOut () {
     localStorage.id = undefined;
 }
 
+/**
+ * @param {string} error - error type: see accounts/error/index.html for the different types
+ */
 export function forceSignOut (error) {
     signOut();
     window.location.href = 'https://entropyengine.dev/accounts/error?type=' + error;
 }
 
+/**
+ * Checks if the user is signed in and the account exists
+ * @param userID
+ * @return {Promise<boolean>}
+ */
 export async function validID (userID) {
-    return (
+    return !!(
         ![
             undefined,
             0,
@@ -23,9 +34,17 @@ export async function validID (userID) {
             'null',
             'none',
         ].includes(userID)
-    ) && (await request('/user-exists', new APIToken({user: userID}))).exists;
+    ) && !!(await request(
+        '/user-exists',
+        new APIToken({user: userID})
+    )).exists;
 }
 
+/**
+ *
+ * @param {Function} whenSignedIn
+ * @param {Function} whenNotSignedIn
+ */
 export function mustBeSignedIn (whenSignedIn, whenNotSignedIn) {
     validID(localStorage.id).then(signedIn => {
         if (!signedIn) {
@@ -41,18 +60,37 @@ export function mustBeSignedIn (whenSignedIn, whenNotSignedIn) {
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 
+/**
+ * Gets the URL param of the name passed in
+ * @param name
+ * @return {string}
+ */
 export function urlParam (name) {
     return urlParams.get(name);
 }
 
+/**
+ * await sleep(n) to halt the code for n ms
+ * @param {Number} ms
+ * @return {Promise<unknown>}
+ */
 export function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Generates a random number. Add ?p= genCacheBust() to always get the latest version of the file from the server
+ * @return {number}
+ */
 export function genCacheBust () {
     return Math.ceil(Math.random() * 10000);
 }
 
+/**
+ * Returns the time in seconds as a nice human-readable string
+ * @param {Number} seconds
+ * @return {string}
+ */
 export function secondsToReadable (seconds) {
     const rawSeconds = seconds;
     let mins = seconds/60;
@@ -87,6 +125,10 @@ export function secondsToReadable (seconds) {
     return str;
 }
 
+/**
+ * @param {Number} time
+ * @return {string} - for example, '3 weeks'
+ */
 export function unixTimeAgo (time) {
     return secondsToReadable(
         Math.round(
@@ -95,8 +137,12 @@ export function unixTimeAgo (time) {
     );
 }
 
+/**
+ * Strips a URL down to the file name. Only works on files with a 2-char extension like es, ts or js
+ * @param {string} path - eg 'path/script.es'
+ * @return {string} -  'script'
+ */
 export function nameFromScriptURL (path) {
-    // ../projects/12345/assets/folder/script.es for example
     let file = path.substring(path.lastIndexOf('/')+1);
     return file.substring(0, file.length-3);
 }
