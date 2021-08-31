@@ -3,10 +3,11 @@ const query = require('./sql').query,
     fs = require('fs'),
     path = require('path'),
     fse = require('./node_modules/fs-extra'),
-    dotenv = require('./node_modules/dotenv').config(),
     mv = require('./node_modules/mv'),
     util = require('./util.js'),
     formidable = require('./node_modules/formidable');
+
+require('./node_modules/dotenv').config();
 
 const idMax = parseInt(process.env.SEC_IDMAX);
 
@@ -114,19 +115,13 @@ exports.createProject = ({res, body, token}) => {
         fs.mkdirSync(dir + '/assets');
 
         fs.copyFile('../templates/project.txt', dir + '/index.json', err => {
-            if (err) {
+            if (err)
                 console.error(`Creating JSON file in ${dir} failed: ${err}`);
-                return;
-            }
-            console.log('made JSON file in ' + dir);
         });
 
         fs.copyFile('../templates/globalState.txt', dir + '/globalState.json', err => {
-            if (err) {
+            if (err)
                 console.error(`Creating globalState.json file in ${dir} failed: ${err}`);
-                return;
-            }
-            console.log('made  globalState.json file in ' + dir);
         });
 
         query(`
@@ -145,7 +140,7 @@ exports.deleteProject = ({token, res}) => {
      * Requires the userAccess.level to be at 2 or more
      */
     query(`SELECT level FROM projectAccess WHERE userID=${clean(token.user)}`, value => {
-        const userLevel = value[0].level;
+        const userLevel = value[0]?.level || 0;
         if (userLevel < 2) {
             res.end(JSON.stringify({
                 ok: false
@@ -177,7 +172,7 @@ exports.deleteProject = ({token, res}) => {
 
 };
 
-exports.publicProjectsFromUser = ({token, res, body}) => {
+exports.publicProjectsFromUser = ({res, body}) => {
     query(`
         SELECT
             projects.name,
@@ -283,13 +278,13 @@ exports.accessLevel = ({token, res}) => {
         res.end(JSON.stringify({
             type, accessLevel
         }));
-    })
+    });
 };
 
 exports.getName = ({res, token}) => {
     query(`SELECT name FROM projects WHERE _id=${clean(token.project)}`, value => {
         res.end(JSON.stringify({
-            name: value[0].name
+            name: value[0]?.name || 'unknown'
         }));
     });
 };
@@ -570,7 +565,6 @@ exports.upload = async ({url, req, res}) => {
     const from = url.shift();
     const path = url.join('/') || '';
 
-
     const assetsPath = `../projects/${clean(projectID)}/assets`;
     util.folderSize(assetsPath, ({gb, mb}) => {
         if (gb > 1) {
@@ -625,14 +619,12 @@ exports.upload = async ({url, req, res}) => {
 };
 
 exports.findScript = ({token, res}) => {
-    function fromDir(startPath, filter){
+
+    function fromDir (startPath, filter) {
 
         let paths = [];
 
-        if (!fs.existsSync(startPath)){
-            console.log("no dir ", startPath);
-            return;
-        }
+        if (!fs.existsSync(startPath)) return;
 
         let files = fs.readdirSync(startPath);
         for (let i = 0; i < files.length; i++){
@@ -647,6 +639,7 @@ exports.findScript = ({token, res}) => {
         }
         return paths;
     }
+
     exports.accessLevel({token, res: {
         end: (value) => {
             value = JSON.parse(value);

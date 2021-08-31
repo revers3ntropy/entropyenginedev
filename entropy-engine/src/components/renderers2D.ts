@@ -72,7 +72,7 @@ export class CircleRenderer extends Renderer2D {
 }
 
 export class RectRenderer extends Renderer2D {
-    Start(transform: Transform): void {}
+    Start(): void {}
 
     // @ts-ignore
     height: number;
@@ -127,13 +127,16 @@ export class RectRenderer extends Renderer2D {
         let renderPos = this.offset.clone
             .add(arg.position);
 
-
-        rect (arg.ctx, getZoomScaledPosition(renderPos, arg.zoom, arg.center), width, height, this.colour.rgb, arg.transform.rotation.z);
+        rect (arg.ctx,
+            getZoomScaledPosition(renderPos, arg.zoom, arg.center),
+            width, height, this.colour.rgb,
+            arg.transform.rotation.z
+        );
     }
 }
 
 export class ImageRenderer2D extends Renderer2D {
-    Start(transform: Transform): void {}
+    Start(): void {}
 
     // @ts-ignore
     height: number;

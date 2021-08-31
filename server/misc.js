@@ -1,5 +1,7 @@
 const {clean} = require("./util");
 const {query} = require('./sql');
+const fs = require('fs');
+const {authLevel} = require("./projects");
 
 const idMax = parseInt(process.env.SEC_IDMAX);
 
@@ -140,4 +142,20 @@ exports.deleteComment = ({res, body, token}) => {
 			});
 		});
 	});
+};
+
+exports.receiveEEClientScripts = ({res, body, token}) => {
+	authLevel(token.user, token.project, (accessLevel) => {
+		if (accessLevel < 1) {
+			res.end("{}");
+			return;
+		}
+
+		for (const path in body.files) {
+			fs.writeFileSync(`../projects/${token.project}/assets/${path}`, body.files[path]);
+		}
+
+		res.end('{}');
+	});
+
 };

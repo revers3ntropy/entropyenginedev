@@ -172,7 +172,7 @@ export class N_varAssign extends Node {
             const setRes = context.set(this.varNameTok.value, res.val, {
                 global: this.isGlobal,
                 isConstant: this.isConstant
-            });
+            }, this.value.startPos);
             if (setRes instanceof ESError) return setRes;
         }
         else {

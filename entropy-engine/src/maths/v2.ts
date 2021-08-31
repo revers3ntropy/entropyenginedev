@@ -255,6 +255,24 @@ export class v2 {
     }
 
     /**
+     * Gets a vector from the angle and magnitude.
+     * @param {number} theta Angle of the vector in radians. Gets clamped to between 0 and 360.
+     * @param {number} m The length of the vector
+     * @returns {v2}
+     */
+    static fromAngleMagnitude (theta: number, m: number): v2 {
+        while (theta < 0) theta += 360;
+        theta %= 360;
+
+        return new v2 (
+            Math.sin(theta),
+            Math.cos(theta)
+        )
+            .normalise()
+            .scale(m);
+    }
+
+    /**
      * Converts an array into a vector
      * @static
      * @param {number[]} arr

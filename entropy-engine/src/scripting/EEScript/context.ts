@@ -72,7 +72,7 @@ export class Context {
         return symbol;
     }
 
-    set (identifier: string, value: any, options: symbolOptions = {}) {
+    set (identifier: string, value: any, options: symbolOptions = {}, position = Position.unknown) {
         let context: Context = this;
 
         if (options.global) {
@@ -85,18 +85,18 @@ export class Context {
             if (!context.hasOwn(identifier))
                 context = this;
         }
-        return context.setOwn(value, identifier, options);
+        return context.setOwn(value, identifier, options, position);
     }
 
-    setOwn (value: any, identifier: string, options: symbolOptions = {}) {
+    setOwn (value: any, identifier: string, options: symbolOptions = {}, position = Position.unknown) {
         // is not global
         if (options.global && !this.initialisedAsGlobal) options.global = false;
         let symbol = this.getSymbol(identifier);
         if (symbol instanceof ESError) return symbol;
         if (symbol?.isConstant) {
             return new TypeError(
-                Position.unknown,
-                Position.unknown,
+                position,
+                position,
                 'dynamic',
                 'constant',
                 identifier

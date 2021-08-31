@@ -94,8 +94,7 @@ export function reRenderSceneToolbar () {
 }
 
 export function reRender () {
-    console.log('..........');
-
+    //console.log('..........');
     function setTabNotActive (tab, div) {
         tab.hover(() => {
             tab.css('background-color', 'var(--input-hover-bg)');

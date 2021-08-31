@@ -84,6 +84,7 @@ const handlers = {
     'public-projects': projects.publicProjectsFromUser,
     'has-build': projects.beenBuilt,
     'find-scripts': projects.findScript,
+    'eeclient-upload': misc.receiveEEClientScripts,
 };
 
 // goes strait to these function without any data handling

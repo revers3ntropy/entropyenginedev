@@ -8,7 +8,7 @@ export function networkError () {
 
 export class APIToken {
     /**
-     * Returns a json that canbe used to talk to the Node server
+     * Returns a json that can be used to talk to the Node server
      * @param {number} project - project ID
      * @param {number} user - user ID
      */
@@ -49,7 +49,7 @@ try {
             if (!ping.ok)
                 networkError();
         })
-        .catch((error) => {
+        .catch(() => {
             networkError();
         });
 } catch (E) {

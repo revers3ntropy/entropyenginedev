@@ -32,14 +32,13 @@
 
 <script type="module">
 	import {APIToken, request} from '../../request.js';
-    import {clean} from '../../util.js';
 
     const error = $('#error');
     const nameElement = $('#name');
     const apiToken = new APIToken({});
 
     document.addEventListener('keypress', () => {
-        nameElement.val(clean(nameElement.val(), ['/', ';', '?', '-', '#']));
+        nameElement.val(nameElement.val());
     });
 
     $(`#submit`).click(async () => {
