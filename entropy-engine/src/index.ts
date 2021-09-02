@@ -1,3 +1,5 @@
+import 'https://entropyengine.dev/libraries/matter.js';
+
 import { Entity } from "./ECS/entity.js"
 import { startAnimation } from "./systems/rendering/startAnimation.js"
 import { Script } from './components/scriptComponent.js'
@@ -10,12 +12,20 @@ import {Camera} from "./components/camera.js"
 import {getCanvasStuff, setCanvasSize} from "./util/general.js"
 import {rgb} from './util/colour.js'
 import {Scene} from './ECS/scene.js'
-import {System} from "./ECS/system.js";
+import {Systems} from "./ECS/system.js";
+import {Transform} from "./components/transform.js";
+import {RectCollider, CircleCollider} from "./components/colliders.js";
+import { v2, TriangleV2, MeshV2, v3, TriangleV3, MeshV3 } from './maths/maths.js'
+import { Body } from "./components/body.js"
+import { CircleRenderer, RectRenderer, ImageRenderer2D, MeshRenderer } from './components/renderComponents.js'
+import { GUIBox, GUIText, GUIRect, GUICircle, GUIPolygon, GUIImage } from './components/gui/gui.js'
+
+import {init as initEES} from "./scripting/EEScript/index.js";
+import {globalConstants} from "./scripting/EEScript/constants.js";
 
 import './systems/physics/physics.js';
 import './systems/rendering/renderer.js';
 import './systems/entities/entityController.js';
-import {init} from "./scripting/EEScript/index.js";
 
 export {rgb} from './util/colour.js'
 export { Entity } from "./ECS/entity.js"
@@ -30,34 +40,46 @@ export { Camera } from './components/camera.js'
 export { entitiesFromJSON } from './JSONprocessor.js'
 export {Transform} from './components/transform.js'
 export {Scene} from './ECS/scene.js'
-export {System} from './ECS/system.js';
+export {Systems} from './ECS/system.js';
 
-/**
- * Returns a number whose value is limited to the given range.
- *
- * Example: limit the output of this computation to between 0 and 255
- * (x * 255).clamp(0, 255)
- *
- * keep as function over arrow function due to use of 'this'
- *
- * @param {Number} min The lower boundary of the output range
- * @param {Number} max The upper boundary of the output range
- * @returns A number in the range [min, max]
- * @type Number
- */ // @ts-ignore
+// setup the global constants for entropy script
+globalConstants['CircleCollider'] = CircleCollider;
+globalConstants['RectCollider'] = RectCollider;
+globalConstants['Script'] = Script;
+globalConstants['TriangleV2'] = TriangleV2;
+globalConstants['TriangleV3'] = TriangleV3;
+globalConstants['MeshV2'] = MeshV2;
+globalConstants['MeshV3'] = MeshV3;
+globalConstants['Body'] = Body;
+globalConstants['CircleRenderer'] = CircleRenderer;
+globalConstants['RectRenderer'] = RectRenderer;
+globalConstants['ImageRenderer2D'] = ImageRenderer2D;
+globalConstants['MeshRenderer'] = MeshRenderer;
+globalConstants['GUIBox'] = GUIBox;
+globalConstants['GUIText'] = GUIText;
+globalConstants['GUITextBox'] = GUITextBox;
+globalConstants['GUIRect'] = GUIRect;
+globalConstants['GUICircle'] = GUICircle;
+globalConstants['GUIPolygon'] = GUIPolygon;
+globalConstants['GUIImage'] = GUIImage;
+globalConstants['Camera'] = Camera;
+globalConstants['Transform'] = Transform;
+
 Number.prototype.clamp = function (min: number, max: number) {
     return Math.min(Math.max(this as number, min), max);
 };
 
 /**
  * Initialises Entropy Engine
- * @param {string} canvasID - id of the canvas HTML element being drawn to
- * @param {number} performanceDebug - level of timings logged to JS console
- * @returns {object} - contains run function which starts the game loop
+ * @param {string} [canvasID="canvas"] ID of the canvas HTML element being drawn to
+ * @param {number} [performanceDebug=0] Level of timings logged to JS console
+ * @param {boolean} [shouldInitEES=true] Only set to false if Entropy Engine Script has already been initialised
+ * @returns {object} Contains run function which starts the game loop
  */
 export default function entropyEngine ({
     canvasID= "canvas",
     performanceDebug = 0,
+    shouldInitEES = true
 }) {
 
     // for the event listeners
@@ -160,16 +182,19 @@ export default function entropyEngine ({
         if (licenseLevel < 2)
             await startAnimation(canvasID);
 
+        if (shouldInitEES)
+            initEES();
+
         Scene.activeScene.findMainCamera();
 
-        System.Start(Scene.activeScene);
+        Systems.Start(Scene.activeScene);
 
         // for event listeners
         isInitialised = true;
     }
 
     async function tick () {
-        System.Update(Scene.activeScene);
+        Systems.Update(Scene.activeScene);
         window.requestAnimationFrame(tick);
     }
 
@@ -198,7 +223,7 @@ const scriptFetchInit = {
  */
 export async function runFromJSON (path: string, config: any = {}) {
 
-    init();
+    initEES();
 
     // get and init the
     const data_: any = await fetch(path, scriptFetchInit);
@@ -210,6 +235,8 @@ export async function runFromJSON (path: string, config: any = {}) {
 
         config[key] = data[key];
     }
+
+    config.shouldInitEES = false;
 
     initialiseScenes(data['scenes']);
 

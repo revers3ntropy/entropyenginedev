@@ -1,9 +1,9 @@
-import {System} from "../../ECS/system.js";
+import {Systems} from "../../ECS/system.js";
 import {Scene} from "../../ECS/scene.js";
 import {Script} from "../../components/scriptComponent.js";
 import {Entity} from "../../ECS/entity.js";
 
-System.systems.push(new System ({
+Systems.systems.push({
     name: 'Scripts',
     Start: (scene: Scene) => {
         Script.runStartMethodOnInit = true;
@@ -34,4 +34,4 @@ System.systems.push(new System ({
     Update: (scene: Scene) => {
         scene.broadcast('Update', []);
     }
-}));
+});

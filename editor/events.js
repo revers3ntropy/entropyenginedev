@@ -93,6 +93,7 @@ window.run = async () => {
     // if you add another listener then it will run this function before reloading,
     // which saves the project - not good
     document.getElementById('run').onclick = () => {
+        localStorage.statewindow = sceneView;
         window.location.reload();
     };
 

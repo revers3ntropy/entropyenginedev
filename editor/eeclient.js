@@ -1,3 +1,4 @@
+import {state} from "./state.js";
 
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
@@ -18,6 +19,7 @@ function localhost (path, body, success, error) {
 
 async function check () {
 	localhost('ping', {}, async response => {
+		if (state.running) return;
 		response = await response.text();
 		if (response !== '1') {
 			setTimeout(check, 1000);
@@ -49,12 +51,12 @@ function authenticateServer () {
 
 function waitForChanges () {
 	localhost('changed', {}, async response => {
+		if (state.running) return;
 		response = await response.text();
 		if (response !== '1') {
 			setTimeout(waitForChanges, 500);
 			return;
 		}
-
 		window.location.reload();
 
 	}, () => setTimeout(check, 500));

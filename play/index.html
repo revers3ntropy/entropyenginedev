@@ -139,6 +139,10 @@
 		window.location.href = `https://entropyengine.dev/accounts/error?type=buildPlayFail&extra=${JSON.stringify(data)}`;
     }
 
+	document.addEventListener('keypress', evt => evt.preventDefault());
+	document.addEventListener('keydown', evt => evt.preventDefault());
+	document.addEventListener('keyup', evt => evt.preventDefault());
+
     request ('/has-build', apiToken)
     .then ( async beenBuilt => {
         if (!beenBuilt.built) {
@@ -160,9 +164,12 @@
         ee.runFromJSON(`../projects/${projectID}/build/index.json?cache-bust=${cacheBust}`);
 
         const owner = await request('/project-owner', apiToken)
-        $('#project-owner').html(`
-            ${owner.owner} and ${owner.totalContributors-1} others
-        `);
+        if (owner.totalContributors-1 < 1)
+			$('#project-owner').html(owner.owner);
+		else
+            $('#project-owner').html(`
+                ${owner.owner} and ${owner.totalContributors-1} others
+            `);
 
         request('/viewed-project', apiToken);
 

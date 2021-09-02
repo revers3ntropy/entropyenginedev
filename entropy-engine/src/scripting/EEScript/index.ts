@@ -1,6 +1,6 @@
 import {Lexer} from "./lexer.js";
 import {Parser} from "./parser.js";
-import {global, globalConstants, now} from "./constants.js";
+import {global, globalConstants} from "./constants.js";
 import {initialise} from "./init.js";
 import {ESError} from "./errors.js";
 import {Position} from "./position.js";
@@ -33,7 +33,7 @@ export function run (msg: string, {
         interprets: 0,
     }
 
-    const start = now();
+    const start = performance.now();
     globalConstants.timer.start();
 
     if (!env.root.initialisedAsGlobal){
@@ -75,7 +75,7 @@ export function run (msg: string, {
     }
     const finalRes = res.node.interpret(env);
     timeData.interpretTotal = globalConstants.timer.get();
-    timeData.total = now() - start;
+    timeData.total = performance.now() - start;
 
     timeData.nodeMax = Node.maxTime;
     timeData.nodeTotal = Node.totalTime;

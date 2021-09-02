@@ -1,4 +1,4 @@
-import {System} from "../../ECS/system.js";
+import {Systems} from "../../ECS/system.js";
 import {Scene} from "../../ECS/scene.js";
 import {image} from "./basicShapes.js";
 import {Camera} from "../../components/camera.js";
@@ -119,17 +119,13 @@ export function renderAll (entities: Entity[], canvas: HTMLCanvasElement, ctx: C
     }
 }
 
-
-// canvas util
-
-
-System.systems.push(new System ({
+Systems.systems.push({
     name: 'Renderer',
-    Start: (scene: Scene) => {},
+    Start: () => {},
 
     Update: (scene: Scene) => {
         const ctx = scene.settings.ctx;
         if (!ctx) return;
         renderAll(scene.entities, ctx.canvas, ctx, scene.settings.backgroundTint, scene.settings.backgroundImage);
     }
-}));
+});

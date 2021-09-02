@@ -3,18 +3,19 @@ import entropyEngine, * as ee from "../entropy-engine/1.0";
 import {Entity, entitiesFromJSON} from "../entropy-engine/1.0";
 import {initialiseScenes} from '../entropy-engine/1.0/JSONprocessor.js';
 import {cullString} from '../entropy-engine/1.0/util/general.js';
+import {init} from "../entropy-engine/1.0/scripting/EEScript";
 
 import {genCacheBust, mustBeSignedIn} from '../util.js';
 import {request} from '../request.js';
 
-import {reRender} from './renderer.js';
 import "./builder.js";
 import './events.js';
 import {loadScripts, reloadScriptsOnEntities} from "./scripts.js";
 import './state.js';
-import {state, scripts, redirectedFrom, projectID, setSelected, apiToken} from './state.js';
+import {state, scripts, projectID, setSelected, apiToken} from './state.js';
 
 import './updatePing.js';
+import './eeclient.js';
 
 // cache busting
 const scriptFetchHeaders = new Headers();
@@ -27,6 +28,7 @@ const scriptFetchInit = {
 };
 
 async function initFromFiles (id) {
+    init();
     const path = `../projects/${id}`;
     const config = {};
 
@@ -81,21 +83,9 @@ checkCredentials(async accessLevel => {
     // it is safe now
 
     await loadScripts();
-    state.currentScript = Object.keys(scripts)[0];
+    state.currentScript ??= Object.keys(scripts)[0];
 
     await initFromFiles(projectID)
-
-    switch (redirectedFrom) {
-        case 'import':
-        case 'assets':
-            state.window = assets;
-            reRender();
-            break;
-
-        default:
-            reRender();
-            break;
-    }
 
     const data = await request('/get-project-name', apiToken);
 

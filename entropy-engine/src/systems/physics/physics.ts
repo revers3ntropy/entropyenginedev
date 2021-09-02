@@ -1,13 +1,12 @@
-import {System} from "../../ECS/system.js";
+import {Systems} from "../../ECS/system.js";
 import {Scene} from "../../ECS/scene.js";
-import {collide} from "./collisions.js";
-import {Script} from "../../components/scriptComponent.js";
+import type {Body} from "../../components/body.js";
+import {Collider} from "../../components/colliders.js";
 import {Entity} from "../../ECS/entity.js";
 import {v3} from "../../maths/v3.js";
-import {Body} from "../../components/body.js";
-import {N_any} from "../../scripting/EEScript/nodes.js";
 
 // function called when two sprites collide to trigger the onCollision event in all scripts
+/*
 function collideSprites (sprite1: Entity, sprite2: Entity) {
     for (let component of sprite1.components)
         if (component.type === 'Script')
@@ -18,44 +17,80 @@ function collideSprites (sprite1: Entity, sprite2: Entity) {
         if (component.type === 'Script')
             (component as Script).runMethod('onCollision', [new N_any(sprite1)]);
 }
+ */
 
-System.systems.push(new System ({
+Systems.systems.push({
     name: 'Physics',
-    Start: (scene: Scene) => {},
+    order: 0,
+    time: performance.now(),
+    engine: Matter.Engine.create(),
 
-    Update: (scene: Scene) => {
-        const entities = scene.entities;
-        const settings = scene.settings;
+    Start: function (scene: Scene) {
+        this.time = performance.now();
 
-        // update bodies
-        for (let i = 0; i < entities.length; i++) {
-            const entity = entities[i];
-
+        for (let entity of scene.entities) {
             if (!entity.hasComponent('Body')) continue;
+            if (!entity.hasComponent('Collider')) continue;
 
-            const body = entity.getComponent<Body>('Body');
+            let collider = entity.getComponent<Collider>('Collider');
+            let body = entity.getComponent<Body>('Body');
 
-            // update gravity
-            body.velocity.add(settings.globalGravity);
+            this.updateMBodyOptions(collider, entity, body);
 
-            // update the position for new velocity
-            entity.transform.position.add(body.velocity.clone.scale(settings.timeScale));
+            Matter.World.addBody(this.engine.world, collider.MatterBody);
+        }
+    },
 
-            // apply air resistance
-            body.velocity.scale(1 - body.airResistance);
+    updateMBodyOptions: (collider: Collider, entity: Entity, body: Body): void => {
+        const mBody = collider.MatterBody;
+        mBody.position = Matter.Vector.create(entity.transform.position.x, entity.transform.position.y);
+        mBody.angle = entity.transform.rotation.z;
+        mBody.friction = body.friction;
+        mBody.velocity = Matter.Vector.create(body.velocity.x, body.velocity.y);
+        mBody.frictionAir = body.airResistance;
+        mBody.isStatic = entity.Static;
+        mBody.mass = body.mass;
+        mBody.restitution = body.bounciness.clamp(0, 1);
+        mBody.collisionFilter.group = collider.solid ? 1 : -1;
+        console.log(mBody);
+    },
 
-            // set default values if error
-            if (body.velocity == undefined || body.velocity.x == undefined || body.velocity.y == undefined) {
-                console.error(`Velocity Error: velocity is ${body.velocity}`);
-                body.velocity = v3.zero;
-            }
+    Update: function (scene: Scene) {
+        // UPDATE
+        for (let entity of scene.entities) {
+            if (!entity.hasComponent('Body')) continue;
+            if (!entity.hasComponent('Collider')) continue;
+
+            let collider = entity.getComponent<Collider>('Collider');
+            let body = entity.getComponent<Body>('Body');
+
+            this.updateMBodyOptions(collider, entity, body);
         }
 
-        // update collisions
-        for (let n = 0; n < settings.collisionIterations; n++)
-            for (let i = 0; i < entities.length; i++)
-                for (let j = i+1; j < entities.length; j++)
-                    collide(entities[i], entities[j], collideSprites);
-    }
+        // TICK
+        const delta = this.time - performance.now();
 
-}));
+        Matter.Engine.update(this.engine, delta);
+
+        this.time = performance.now();
+
+        // UNBUILD
+        for (let entity of scene.entities) {
+            if (!entity.hasComponent('Body')) continue;
+            if (!entity.hasComponent('Collider')) continue;
+
+            let collider = entity.getComponent<Collider>('Collider');
+            let mBody = collider.MatterBody;
+            let body = entity.getComponent<Body>('Body');
+
+            if (!entity) {
+                console.error('EEInstance not attached to Matter.Body instance');
+                continue;
+            }
+
+            entity.transform.rotation.z = mBody.angle;
+            entity.transform.position.set(new v3(mBody.position.x, mBody.position.y, 0));
+            body.velocity.set(new v3(mBody.velocity.x, mBody.velocity.y, 0));
+        }
+    },
+});

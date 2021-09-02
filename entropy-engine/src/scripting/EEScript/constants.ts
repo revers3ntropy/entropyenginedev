@@ -52,10 +52,10 @@ export const globalConstants: {[name: string]: any} = {
         __startTime__: 0,
 
         start: () => {
-            globalConstants.timer.__startTime__ = now();
+            globalConstants.timer.__startTime__ = performance.now();
         },
         reset: () => {
-            globalConstants.timer.__startTime__ = now();
+            globalConstants.timer.__startTime__ = performance.now();
         },
         log: () => {
             console.log(`${globalConstants.timer.get()}ms`);
@@ -64,19 +64,9 @@ export const globalConstants: {[name: string]: any} = {
             globalConstants.timer.__startTime__ = 0;
         },
         get: () => {
-            let ms = now() - globalConstants.timer.__startTime__;
+            let ms = performance.now() - globalConstants.timer.__startTime__;
             // @ts-ignore - ms of time number not string
             return Number(ms.toPrecision(2));
         }
     }
 }
-
-export let now: (() => number) = () => 0;
-async function setNow () {
-    now = (typeof window === 'undefined') ? () => 0 : () => performance.now();
-    if (typeof window === 'undefined') {
-        const performance: any = await import('perf_hooks');
-        now = (() => performance?.performance?.now()) ?? (() => 0);
-    }
-}
-setNow();

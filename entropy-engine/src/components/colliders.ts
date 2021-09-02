@@ -1,15 +1,16 @@
 import { Component } from "../ECS/component.js"
 import {v2} from "../maths/maths.js"
-import {JSONifyComponent} from "../util/general.js";
-import { Transform } from "../index.js";
+import {Transform} from "../index.js";
 
 export abstract class Collider extends Component {
     // @ts-ignore
     offset: v2;
     // @ts-ignore
     solid: boolean;
+    // @ts-ignore
+    MatterBody: Matter.Body
 
-    protected constructor (subtype: string, solid: boolean, offset: v2) {
+    protected constructor (subtype: string, solid: boolean, offset: v2, matterBody: Matter.Body) {
         super("Collider", subtype);
 
         this.addPublic({
@@ -27,13 +28,11 @@ export abstract class Collider extends Component {
             description: 'Offsets the renderer from the transform of the entity',
             default: v2.zero
         });
+
+        this.MatterBody = matterBody;
     }
 
     abstract overlapsPoint(transform: Transform, point: v2): boolean;
-
-    json () {
-        return JSONifyComponent(this);
-    }
 }
 
 export class CircleCollider extends Collider {
@@ -45,7 +44,9 @@ export class CircleCollider extends Collider {
          solid = true,
          offset = new v2(0, 0),
      }) {
-        super("CircleCollider", solid, offset);
+        super("CircleCollider", solid, offset,
+            Matter.Bodies.circle(0, 0, radius, {})
+        );
 
         this.addPublic({
             name: 'radius',
@@ -60,6 +61,15 @@ export class CircleCollider extends Collider {
                 .add(this.offset)
         ) <= this.radius * transform.scale.x;
     }
+
+    json () {
+        return {
+            type: 'CircleCollider',
+            radius: this.radius,
+            solid: this.solid,
+            offset: this.offset.array
+        }
+    }
 }
 
 export class RectCollider extends Collider {
@@ -69,7 +79,10 @@ export class RectCollider extends Collider {
     height: number;
 
     constructor ({ width = 1, height = 1, solid = true, offset = new v2(0, 0) }) {
-        super("RectCollider", solid, offset);
+        super("RectCollider", solid, offset,
+            Matter.Bodies.rectangle(0, 0, width, height, {})
+        );
+
         this.addPublic({
             name: 'height',
             value: height
@@ -87,5 +100,15 @@ export class RectCollider extends Collider {
                 .add(this.offset),
             new v2(this.width * transform.scale.x, this.height * transform.scale.y)
         );
+    }
+
+    json () {
+        return {
+            type: 'RectCollider',
+            height: this.height,
+            width: this.width,
+            solid: this.solid,
+            offset: this.offset.array
+        }
     }
 }

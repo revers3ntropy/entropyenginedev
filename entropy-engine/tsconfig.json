@@ -5,6 +5,9 @@
     "outDir": "./1.0",
     "lib": [ "es2016", "dom" ],
     "strict": true,
+    "typeRoots": [
+      "src/types"
+    ]
   },
   "include": ["./src/**/*"]
 }

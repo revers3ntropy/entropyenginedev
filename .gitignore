@@ -6,6 +6,10 @@
 !**/tsconfig.json
 
 **/node_modules/
+/node_modules/
+/server/node_modules/
+/npx-init-eeclient/node_modules/**/*
+/EEClient/node_modules/
 /libraries/
 
 /projects/
@@ -16,3 +20,4 @@
 /entropy-engine/*.js
 /entropy-engine/**/*.js
 /out/
+/npx-init-eeclient/node_modules/

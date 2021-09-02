@@ -1,52 +1,45 @@
 import {Scene} from "./scene.js";
 
-export class System {
+export interface System {
     Start: (scene: Scene) => void;
     Update: (scene: Scene) => void;
-
     name: string;
-
     order: number;
+}
 
-    constructor ({Start, Update, order, name}: {
-        Start: (scene: Scene) => void,
-        Update: (scene: Scene) => void,
-        name: string,
-        order?: number | undefined
-    }) {
-        this.Start = Start;
-        this.Update = Update;
 
-        this.name = name;
+export const Systems: {
+    systems: (any & System)[],
+    sortByOrder: () => void,
+    getByName:  (name: string) => System | void,
+    Start: (scene: Scene) => void,
+    Update: (scene: Scene) => void
 
-        // higher numbers get executed first
-        this.order = order || 0;
-    }
+} = {
+    systems: [],
 
-    static systems: System[] = [];
+    sortByOrder () {
+        Systems.systems = Systems.systems.sort((a: System, b: System) => a.order - b.order);
+    },
 
-    static sortByOrder () {
-        System.systems = System.systems.sort((a: System, b: System) => a.order - b.order);
-    }
-
-    static getByName (name: string): System | void {
-        for (let system of System.systems) {
+    getByName (name: string): System | void {
+        for (let system of Systems.systems) {
             if (system.name === name) {
                 return system;
             }
         }
-    }
+    },
 
-    static Start (scene: Scene) {
-        System.sortByOrder();
+    Start (scene: Scene) {
+        Systems.sortByOrder();
 
-        for (let system of System.systems) {
+        for (let system of Systems.systems) {
             system.Start(scene);
         }
-    }
+    },
 
-    static Update (scene: Scene) {
-        for (let system of System.systems) {
+    Update (scene: Scene) {
+        for (let system of Systems.systems) {
             system.Update(scene);
         }
     }

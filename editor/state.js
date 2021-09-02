@@ -2,42 +2,14 @@
 
 import {urlParam} from "../util.js";
 import entropyEngine from "../entropy-engine/1.0/index.js";
-import * as ee from "../entropy-engine/1.0/index.js";
 import {reRender} from "./renderer.js";
 import {reloadScriptsOnEntities} from "./scripts.js";
-import {init as initEES} from "../entropy-engine/1.0/scripting/EEScript";
-import {global, globalConstants} from "../entropy-engine/1.0/scripting/EEScript/constants.js";
+import {global} from "../entropy-engine/1.0/scripting/EEScript/constants.js";
 import {APIToken} from "../request.js";
+import {v2} from "../entropy-engine";
 
-// initialise Entropy Script with ee constants
 export let globalEESContext = global;
 
-globalConstants['CircleCollider'] = ee.CircleCollider;
-globalConstants['RectCollider'] = ee.RectCollider;
-globalConstants['Script'] = ee.Script;
-globalConstants['TriangleV2'] = ee.TriangleV2;
-globalConstants['TriangleV3'] = ee.TriangleV3;
-globalConstants['MeshV2'] = ee.MeshV2;
-globalConstants['MeshV3'] = ee.MeshV3;
-globalConstants['Body'] = ee.Body;
-globalConstants['CircleRenderer'] = ee.CircleRenderer;
-globalConstants['RectRenderer'] = ee.RectRenderer;
-globalConstants['ImageRenderer2D'] = ee.ImageRenderer2D;
-globalConstants['MeshRenderer'] = ee.MeshRenderer;
-globalConstants['GUIBox'] = ee.GUIBox;
-globalConstants['GUIText'] = ee.GUIText;
-globalConstants['GUITextBox'] = ee.GUITextBox;
-globalConstants['GUIRect'] = ee.GUIRect;
-globalConstants['GUICircle'] = ee.GUICircle;
-globalConstants['GUIPolygon'] = ee.GUIPolygon;
-globalConstants['GUIImage'] = ee.GUIImage;
-globalConstants['Camera'] = ee.Camera;
-globalConstants['Transform'] = ee.Transform;
-
-initEES();
-
-
-export let redirectedFrom = urlParam('from');
 export const projectID = urlParam('p');
 
 export const apiToken = new APIToken({
@@ -60,6 +32,7 @@ export const scriptURLS = {};
 
 window.switchScripts = script => {
 	state.currentScript = script;
+	localStorage.currentScript = script;
 	reRender();
 };
 
@@ -87,12 +60,12 @@ window.comments = 5;
 export const comments = window.comments;
 
 export const state = {
-	window: sceneView,
+	window: parseInt(localStorage.statewindow) ?? sceneView,
 	eeReturns: {},
-	currentScript: '',
+	currentScript: localStorage.currentScript ?? '',
 	dragging: false,
-	dragStart: ee.v2.zero,
-	dragEnd: ee.v2.zero,
+	dragStart: v2.zero,
+	dragEnd: v2.zero,
 	sceneCamera: null,
 	selectedEntity: null,
 	running: false
@@ -101,9 +74,10 @@ export const state = {
 export const setSelected = sprite => state.selectedEntity = sprite;
 
 export const setState = newState => {
-	if (state === newState) return;
+	if (state.window === newState) return;
 
 	reloadScriptsOnEntities();
+	localStorage.statewindow = newState;
 
 	state.window = newState;
 	reRender();
@@ -111,14 +85,5 @@ export const setState = newState => {
 window.setState = setState;
 
 // effects
-
-if (!redirectedFrom) {
-	redirectedFrom = sessionStorage.from;
-	sessionStorage.from = '';
-} else {
-	sessionStorage.from = redirectedFrom;
-	window.location.href = `https://entropyengine.dev/editor/?p=${projectID}`;
-}
-
 document.getElementById('share').href += projectID;
 document.getElementById('build-button').href += projectID;

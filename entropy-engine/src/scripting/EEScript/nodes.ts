@@ -3,7 +3,7 @@ import {Token} from "./tokens.js";
 import {ESError, InvalidSyntaxError, ReferenceError, TypeError} from "./errors.js";
 import {Context} from "./context.js";
 import {Position} from "./position.js";
-import {None, now, Undefined} from "./constants.js";
+import {None, Undefined} from "./constants.js";
 
 export class interpretResult {
     val: any | undefined;
@@ -31,7 +31,7 @@ export abstract class Node {
     abstract interpret_ (context: Context): any;
 
     interpret (context: Context): interpretResult {
-        const start = now();
+        const start = performance.now();
         const res = new interpretResult();
         const val = this.interpret_(context);
 
@@ -48,7 +48,7 @@ export abstract class Node {
         } else
             res.val = val;
 
-        let time = now() - start;
+        let time = performance.now() - start;
         Node.interprets++;
         Node.totalTime += time;
         if (time > Node.maxTime) Node.maxTime = time;

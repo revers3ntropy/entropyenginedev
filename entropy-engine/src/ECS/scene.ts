@@ -223,6 +223,7 @@ export class Scene {
     }
 
     static next (persists: Entity[]) {
+        // @ts-ignore
         Scene.active++;
         
         if (Scene.active > Scene.scenes.length-1) {
@@ -240,6 +241,7 @@ export class Scene {
     }
 
     static previous (persists: Entity[]) {
+        // @ts-ignore
         Scene.active--;
 
         if (Scene.active < 0) {

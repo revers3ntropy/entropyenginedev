@@ -1,7 +1,7 @@
 import {ESError, TestFailed} from "./errors.js";
 import {run} from "./index.js";
 import {Context} from "./context.js";
-import {global, now} from "./constants.js";
+import {global} from "./constants.js";
 import {str} from "./util.js";
 
 export class TestResult {
@@ -75,7 +75,7 @@ export class Test {
     static testAll (): TestResult {
         const res = new TestResult();
 
-        let time = now();
+        let time = performance.now();
 
         for (let test of Test.tests) {
             global.resetAsGlobal();
@@ -84,7 +84,7 @@ export class Test {
             res.register(test.run(testEnv));
         }
 
-        res.time = Math.round( now() - time);
+        res.time = Math.round( performance.now() - time);
 
         return res;
     }

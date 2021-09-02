@@ -1,8 +1,4 @@
-import {Entity} from "../../ECS/entity.js"
-import {v2} from "../../maths/maths.js"
-import {Body} from "../../components/body.js";
-import {Collider, RectCollider, CircleCollider} from '../../components/colliders.js';
-
+/*
 function getNewVelocityFromCollision (V1: v2, V2: v2, m1: number, m2: number, p1: v2, p2: v2, contactAngle: number) {
 
     let theta1 = Math.atan2 (V1.y, V1.x);
@@ -227,7 +223,7 @@ function circleRectCollision (circle: Entity, rect: Entity, onCollision: () => v
     onCollision();
 }
 */
-
+/*
 function rectRectCollision (sprite1: Entity, sprite2: Entity, onCollision: () => void) {
     const transform1 = sprite1.transform;
     const transform2 = sprite2.transform;
@@ -330,3 +326,4 @@ export function collide (sprite1: Entity, sprite2: Entity, scriptCollide: (sprit
         circleCircleCollision(sprite1, sprite2, onCollision);
 
 }
+ */

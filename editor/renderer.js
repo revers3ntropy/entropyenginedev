@@ -1,4 +1,4 @@
-import { Scene, v2, Camera, System } from "../entropy-engine/1.0";
+import { Scene, v2, Camera, Systems } from "../entropy-engine/1.0";
 import {rect} from "../entropy-engine/1.0/systems/rendering/basicShapes.js";
 import {renderDebug, renderSelectedOutline, drawCameraViewArea} from '../entropy-engine/1.0/systems/rendering/debugRenderer.js';
 
@@ -61,7 +61,7 @@ export function rightClickOption (name, onclick, show=name) {
 }
 
 export function reRenderCanvas () {
-    System.getByName('Renderer').Update(Scene.activeScene);
+    Systems.getByName('Renderer').Update(Scene.activeScene);
 }
 
 export function reRenderCanvasDebug () {
@@ -204,6 +204,7 @@ export function reRender () {
             break;
 
         default:
+            console.error('Current window not recognised: ', state.window);
             setState(sceneView);
             reRender();
             break;
