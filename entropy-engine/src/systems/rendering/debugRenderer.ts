@@ -79,20 +79,27 @@ function renderCollider (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElemen
     ctx.beginPath();
     ctx.strokeStyle = colour;
     
-    const pos = cameraC.worldSpaceToScreenSpace(
+    let pos = cameraC.worldSpaceToScreenSpace(
         transform.position.clone.v2
             .add(collider.offset),
         canvas, camera.transform.position
     );
 
     if (collider instanceof RectCollider) {
+
         const size = new v2(collider.width, collider.height);
         const dimensions = transform.scale.v2.mul(size);
         dimensions.scale(zoom);
-        rotateAroundPointWrapper(ctx, pos.clone.add(dimensions.clone.scale(0.5)), transform.rotation.z, () => {
+        const center = pos.clone;
+        pos = pos.clone.sub(dimensions.clone.scale(1/2));
+
+        rotateAroundPointWrapper(ctx,
+            center,
+            transform.rotation.z, () => {
             ctx.rect(pos.x, pos.y, dimensions.x, dimensions.y);
             ctx.stroke();
         });
+
     } else if (collider instanceof CircleCollider) {
         ctx.arc(pos.x, pos.y, collider.radius * transform.scale.x * zoom, 0,2 * Math.PI);
         ctx.stroke();
@@ -112,6 +119,7 @@ export function drawCameras (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEl
     for (const sprite of sprites) {
         if (!sprite.hasComponent('Camera')) continue;
         let pos = cameraC.worldSpaceToScreenSpace(sprite.transform.position.v2, canvas, camera.transform.position);
+        pos.sub(new v2(2));
         image(ctx, pos, new v2(80, 40), 'https://entropyengine.dev/svg/camera.png', 0);
     }
 }
@@ -141,7 +149,7 @@ export function drawCameraViewArea (ctx: CanvasRenderingContext2D, canvas: HTMLC
 
 export function renderDebug (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, camera: Entity, entities: Entity[]) {
     renderGlobalGrid(ctx, canvas, camera,  `rgba(150, 150, 150, 0.3)`);
-    renderGridDots(ctx, canvas, camera,  `rgba(150, 150, 150, 0.4)`, 1);
+    //renderGridDots(ctx, canvas, camera,  `rgba(150, 150, 150, 0.4)`, 1);
     renderCenterDot(ctx, canvas, camera,  `rgba(150, 150, 150, 0.6)`, 2);
     renderColliders(ctx, canvas, camera, `rgba(255, 230, 0, 0.6)`, entities);
     drawCameras(ctx, canvas, camera, entities);

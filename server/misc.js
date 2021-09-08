@@ -147,15 +147,25 @@ exports.deleteComment = ({res, body, token}) => {
 exports.receiveEEClientScripts = ({res, body, token}) => {
 	authLevel(token.user, token.project, (accessLevel) => {
 		if (accessLevel < 1) {
-			res.end("{}");
+			res.end(JSON.stringify({done: false}));
 			return;
 		}
 
 		for (const path in body.files) {
-			fs.writeFileSync(`../projects/${token.project}/assets/${path}`, body.files[path]);
+			let fullPath = `../projects/${token.project}/assets/${path}`
+			if (!fs.existsSync(fullPath)) {
+				try {
+					fs.appendFileSync(fullPath, '');
+				} catch (e) {
+					console.error(`Error receiving files: ${e}`);
+					res.end(JSON.stringify({done: false}));
+					return;
+				}
+			}
+			fs.writeFileSync(fullPath, body.files[path]);
 		}
 
-		res.end('{}');
+		res.end(JSON.stringify({done: true}));
 	});
 
 };

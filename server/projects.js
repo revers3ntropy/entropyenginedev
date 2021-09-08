@@ -96,6 +96,7 @@ exports.createProject = ({res, body, token}) => {
         const id = value[0]?.value ||
             // defaults to random number which is most likely not going to be used yet
             Math.ceil(Math.random() * idMax);
+        token.project = id;
 
         // got the id, now do the same thing for the salt
         query(`

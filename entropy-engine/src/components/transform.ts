@@ -37,6 +37,7 @@ export class Transform extends Component {
                 const p = v || v3.zero;
                 p.x ??= 0;
                 p.y ??= 0;
+
                 this.setPublic('position', p);
             }
         });

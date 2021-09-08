@@ -1,6 +1,7 @@
 import { Component } from "../ECS/component.js"
 import {v2} from "../maths/maths.js"
 import {Transform} from "../index.js";
+import {rect} from "../systems/rendering/basicShapes";
 
 export abstract class Collider extends Component {
     // @ts-ignore
@@ -56,10 +57,20 @@ export class CircleCollider extends Collider {
     }
 
     overlapsPoint(transform: Transform, point: v2): boolean {
-        return point.distTo(
-            transform.position.clone.v2
-                .add(this.offset)
-        ) <= this.radius * transform.scale.x;
+        const testMBody = Matter.Bodies.circle(
+            transform.position.x, transform.position.y,
+            this.radius * transform.scale.x,
+            {
+                angle: transform.rotation.z
+            }
+        );
+
+        const collisionRes = Matter.Query.point(
+            [testMBody],
+            Matter.Vector.create(point.x, point.y),
+        );
+
+        return collisionRes.length > 0;
     }
 
     json () {
@@ -95,11 +106,22 @@ export class RectCollider extends Collider {
     }
 
     overlapsPoint(transform: Transform, point: v2): boolean {
-        return point.isInRect(
-            transform.position.clone.v2
-                .add(this.offset),
-            new v2(this.width * transform.scale.x, this.height * transform.scale.y)
+
+        const testMBody = Matter.Bodies.rectangle(
+            transform.position.x, transform.position.y,
+            this.width * transform.scale.x,
+            this.height * transform.scale.y,
+            {
+                angle: transform.rotation.z
+            }
         );
+
+        const collisionRes = Matter.Query.point(
+            [testMBody],
+            Matter.Vector.create(point.x, point.y),
+        );
+
+        return collisionRes.length > 0;
     }
 
     json () {

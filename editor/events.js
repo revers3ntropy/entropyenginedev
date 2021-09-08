@@ -132,9 +132,10 @@ export function setSelectedSpriteFromClick (pos) {
         }
     }
 
-    if (touching.length === 0) {
+    if (touching.length === 0)
         setSelected(null);
-    } else {
+    else {
+        // TODO: sort by z position here
         setSelected(touching[0]);
     }
     reRender();

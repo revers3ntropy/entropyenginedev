@@ -127,6 +127,11 @@ export class RectRenderer extends Renderer2D {
         let renderPos = this.offset.clone
             .add(arg.position);
 
+        renderPos.sub(new v2(
+            width / (arg.zoom * 2),
+            height / (arg.zoom * 2)
+        ));
+
         rect (arg.ctx,
             getZoomScaledPosition(renderPos, arg.zoom, arg.center),
             width, height, this.colour.rgb,
@@ -179,6 +184,11 @@ export class ImageRenderer2D extends Renderer2D {
 
         let renderPos = this.offset.clone
             .add(arg.position);
+
+        renderPos.sub(new v2(
+            width / (arg.zoom * 2),
+            height / (arg.zoom * 2)
+        ));
 
         image (
             arg.ctx,

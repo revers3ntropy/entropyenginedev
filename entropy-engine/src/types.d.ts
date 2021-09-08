@@ -587,7 +587,7 @@ declare namespace Matter {
     * @class Body
     */
     export class Body {
-        EEInstance: any;
+        positionPrev: Vector;
         /**
          * Applies a force to a body from a given world-space position, including resulting torque.
          * @method applyForce
@@ -2090,7 +2090,7 @@ declare namespace Matter {
          * @method run
          * @param {engine} engine
          */
-        static run(enige: Engine): void;
+        static run(engine: Engine): void;
 
         /**
          * Replaced by and now alias for `engine.grid`.
@@ -2874,6 +2874,7 @@ declare namespace Matter {
 
         x: number;
         y: number;
+        body: Body;
 
         /**
          * Creates a new vector.
@@ -4048,8 +4049,8 @@ declare namespace Matter {
          * @method collides
          * @param {Body} bodyA
          * @param {Body} bodyB
-         * @param {Collision} previousCollision
-         * @return {Collision} collision
+         * @param {ICollision} previousCollision
+         * @return {ICollision} collision
          */
         static collides(bodyA: Body, bodyB: Body, previousCollision?: ICollision): ICollision;
     }

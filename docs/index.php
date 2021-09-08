@@ -1,4 +1,7 @@
 <?php
+echo <<<END
+    <meta http-equiv="Refresh" content="0; url='https://entropyengine.dev/docs/getting-started.html'" />
+END;
 
 $section = $_GET['s'];
 $page = $_GET['p'];

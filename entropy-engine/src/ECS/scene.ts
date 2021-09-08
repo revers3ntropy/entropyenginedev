@@ -38,7 +38,7 @@ export const defaultSceneSettings = (): sceneSettings => ({
 
     backgroundTint: rgb.parse('white'),
 
-    globalGravity: new v3(0, -9.8, 0),
+    globalGravity: new v3(0, 0, 0),
     collisionIterations: 5,
 
     globalVolume: 1
