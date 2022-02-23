@@ -1,0 +1,26 @@
+{
+    "name": "entropyenginedev",
+    "version": "0.0.0",
+    "description": "entropyengine.dev site",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/revers3ntropy/entropyenginedev.git"
+    },
+    "author": "revers3ntropy",
+    "bugs": {
+        "url": "https://github.com/revers3ntropy/entropyenginedev/issues"
+    },
+    "homepage": "https://entropyengine.dev",
+    "devDependencies": {
+        "@types/jquery": "^3.5.13",
+        "chalk": "^5.0.0",
+        "entropy-engine": "^0.0.1",
+        "performance-now": "^2.1.0",
+        "prompt-confirm": "^2.0.4"
+    },
+    "dependencies": {
+        "html-minifier": "^4.0.0",
+        "mini-css-extract-plugin": "^2.5.3",
+        "uglify-js": "^3.15.1"
+    }
+}

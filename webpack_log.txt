@@ -1,0 +1,32 @@
+asset webpack_out.js 264 KiB [emitted] [minimized] [big] (name: main)
+runtime modules 1.23 KiB 6 modules
+orphan modules 110 KiB [orphan] 5 modules
+cacheable modules 567 KiB
+  modules by path ./node_modules/ 433 KiB
+    modules by path ./node_modules/style-loader/dist/runtime/*.js 5.75 KiB 6 modules
+    modules by path ./node_modules/cal-heatmap/ 95.1 KiB 2 modules
+    modules by path ./node_modules/css-loader/dist/runtime/*.js 2.33 KiB
+      ./node_modules/css-loader/dist/runtime/noSourceMaps.js 64 bytes [built] [code generated]
+      ./node_modules/css-loader/dist/runtime/api.js 2.26 KiB [built] [code generated]
+    ./node_modules/d3/d3.js 330 KiB [built] [code generated]
+  modules by path ./styles/*.less 14.1 KiB
+    ./node_modules/css-loader/dist/cjs.js!./node_modules/less-loader/dist/cjs.js!./styles/main.less 3.13 KiB [built] [code generated]
+    ./node_modules/css-loader/dist/cjs.js!./node_modules/less-loader/dist/cjs.js!./styles/fonts.less 10.6 KiB [built] [code generated]
+    ./node_modules/css-loader/dist/cjs.js!./node_modules/less-loader/dist/cjs.js!./styles/animation.less 426 bytes [built] [code generated]
+  ./app.ts + 5 modules 119 KiB [built] [code generated]
+
+WARNING in asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets: 
+  webpack_out.js (264 KiB)
+
+WARNING in entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  main (264 KiB)
+      webpack_out.js
+
+WARNING in webpack performance recommendations: 
+You can limit the size of your bundles by using import() or require.ensure to lazy load some parts of your application.
+For more info visit https://webpack.js.org/guides/code-splitting/
+
+webpack 5.65.0 compiled with 3 warnings in 4606 ms

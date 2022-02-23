@@ -1,23 +1,22 @@
+**/*.env
+**/*.pem
 *.env
 *.pem
-.idea
+/.idea/
 *.htaccess
-*.json
-!**/tsconfig.json
+**/*.htaccess
 
 **/node_modules/
 /node_modules/
-/server/node_modules/
-/npx-init-eeclient/node_modules/**/*
-/EEClient/node_modules/
-/libraries/
 
-/projects/
-/svg/
+src/projects/
+src/svg/
 /server/*.js
 /server/**/*.js
 
-/entropy-engine/*.js
-/entropy-engine/**/*.js
-/out/
-/npx-init-eeclient/node_modules/
+/build/sshPass.txt
+/build/github_token.txt
+/package-lock.json
+
+/webpack_log.txt
+/ts_less_log.txt

@@ -1,0 +1,62 @@
+#top-projects-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 270px;
+}
+
+#top-projects {
+    width: 90%;
+    border-radius: 10px;
+    border: 1px solid vaR(--input-opposite-bg);
+    display: flex;
+    flex-direction: column;
+    overflow-x: scroll;
+    height: 100%;
+}
+
+.project {
+    border-radius: 8px;
+    border: 1px solid vaR(--input-opposite-bg);
+    width: 150px;
+    height: 100%;
+    background-color: vaR(--input-bg);
+    cursor: pointer;
+}
+
+.project:hover {
+    background-color: vaR(--input-hover-bg);
+}
+
+#recent-projects {
+    margin-top: 10px;
+}
+
+.project-button {
+    text-decoration: none;
+    background-color: vaR(--input-bg);
+    margin: 4px;
+    padding: 8px;
+    text-align: center;
+    height: 30px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.project-button:hover {
+    background-color: vaR(--input-hover-bg);
+}
+
+.projectName {
+    float: left;
+    background: none;
+    max-width: 33%;
+    overflow: hidden;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+}

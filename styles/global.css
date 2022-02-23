@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css?family=Nunito');
+
+:root {
+    --input-bg: rgb(73, 73, 73);
+    --input-hover-bg: rgb(82, 82, 82);
+    --input-opposite-bg: rgb(90, 90, 90);
+
+    --transparent: rgba(0, 0, 0, 0);
+
+    --bg: rgb(54, 54, 54);
+
+    --bg-dark: rgb(30, 30, 30);
+
+    --text-colour: rgb(250, 250, 250);
+    --text-hover-colour: rgb(203, 203, 203);
+
+    --warning: #ff6f6f;
+}
+
+body {
+    color: vaR(--text-colour);
+    background-color: vaR(--bg);
+}
+
+/* width */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+    border-radius: 2px;
+}
+
+html, body {
+    font-family: 'Nunito', serif;
+    font-size: 13px;
+    height: 100%;
+    margin: 0;
+    border: none;
+    padding: 0;
+}
+
+.empty-button {
+    border: none;
+    border-radius: 0;
+    padding: 5px;
+    margin: 0;
+    width: 100%;
+    text-align: left;
+    outline: none;
+}
+
+.short-button {
+    border: none;
+    border-radius: 2px;
+    padding: 5px;
+    margin: 2px;
+    width: 50px;
+    text-align: center;
+    background-color: vaR(--input-bg);
+    outline: none;
+    color: vaR(--text-colour);
+}
+
+.empty-button:hover {
+    background-color: #d4d4d4;
+}
+
+.button {
+    border: none;
+    border-radius: 2px;
+    padding: 5px;
+    margin: 2px;
+    width: 80%;
+    text-align: center;
+    background-color: vaR(--input-bg);
+    outline: none;
+    color: vaR(--text-colour);
+    text-decoration: none;
+}
+
+.button:hover:enabled {
+    background-color: vaR(--input-hover-bg);
+}
+.short-button:hover:enabled {
+    background-color: vaR(--input-hover-bg);
+}
+
+input, a, button {
+    color: vaR(--text-colour);
+    background-color: vaR(--input-bg);
+    border: none;
+    outline: none;
+    padding: 4px;
+    text-decoration: none;
+}
+
+input:hover, a:hover, button:hover {
+    background-color: vaR(--input-hover-bg);
+}
+
+.blur {
+    background-color: rgba(255, 255, 255, .1);
+    backdrop-filter: blur(10px);
+}
+
+svg {
+    fill: vaR(--text-colour);
+}
+
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+#top-bar {
+    height: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px 0;
+    border-bottom: 1px solid vaR(--input-bg);
+}
+
+.item {
+    margin: 10px;
+    text-decoration: none;
+    background: none;
+    font-size: 15px;
+}
+
+.item:hover {
+    background: none;
+    color: vaR(--text-hover-colour);
+}
