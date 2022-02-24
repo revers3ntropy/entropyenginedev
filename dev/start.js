@@ -43,18 +43,12 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 
 let MAIN = '';
-const WEBPACK_PATHS = ['./footer.html', 'nav.html', 'types', 'app.ts', 'styles'];
+const WEBPACK_PATHS = ['./footer.html', 'nav.html', 'types', 'main.ts', 'styles'];
 
 
 async function startServer () {
 	await (new Promise(async resolve => {
-		await run ('sudo pkill gunicorn > server/log.txt');
-
-		run(`
-			. ./server/venv/bin/activate;
-			cd server;
-			gunicorn --reload -b localhost:${API_PORT} app:app --log-level debug --error-logfile log.txt --capture-output;
-		`);
+		run(`node ./server/index.js`);
 
 		// keep on checking until the server is ready
 		while (true) {
@@ -76,8 +70,8 @@ async function startFileServer () {
 		res.statusCode = 200;
 		res.setHeader('Content-Type', 'text/html');
 		const paths = [
-			path.join(__dirname, '../dist/public_html/staging/', req.url, 'index.html'),
-			path.join(__dirname, '../dist/public_html/staging/', req.url)
+			path.join(__dirname, '../dist/public_html/', req.url, 'index.html'),
+			path.join(__dirname, '../dist/public_html/', req.url)
 		];
 		for (let possiblePath of paths) {
 			if (!fs.existsSync(possiblePath)) {
@@ -85,13 +79,6 @@ async function startFileServer () {
 			}
 			console.log('serving ' + possiblePath);
 			const content = fs.readFileSync(possiblePath).toString();
-			content.replace('const WEB_ROOT = `https://${STAGING ? \'staging.\' : \'\'}lucidcrowd.uk`;\n' +
-				'const API_PORT = STAGING ? 56787 : 56786;\n' +
-				'const SERVER_URL = `https://lucidcrowd.uk:${API_PORT}`;',
-				'const WEB_ROOT = `http://localhost`;\n' +
-				'const API_PORT = 56787;\n' +
-				'const SERVER_URL = `http://localhost:${API_PORT}`;'
-			);
 			res.end(content);
 			return;
 		}

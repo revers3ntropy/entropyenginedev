@@ -20,3 +20,4 @@ src/svg/
 
 /webpack_log.txt
 /ts_less_log.txt
+/server/log.txt

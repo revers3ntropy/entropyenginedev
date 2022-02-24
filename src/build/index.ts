@@ -1,3 +1,7 @@
+import {} from '../../types/types';
+
+const projectID = urlParam('p');
+
 const backButton = <null|HTMLLinkElement>document.getElementById('back');
 if (backButton) {
 	backButton.href += projectID;
@@ -20,7 +24,7 @@ $('#copy-url-to-clipboard').click(() => {
 	copyToClipboard(buildURL);
 });
 
-request('/get-project-name', apiToken)
+request('get-project-name', apiToken)
 	.then(name => {
 		$('#project-name').append(name.name);
 
@@ -36,7 +40,7 @@ window.build = () => {
 	document.write('Sorry, looks like theres been a problem.... try reloading the page');
 };
 
-request('/has-been-built', apiToken).then(hasBeenBuilt => {
+request('has-been-built', apiToken).then(hasBeenBuilt => {
 	const beenBuilt = hasBeenBuilt.built;
 
 	let building = false;
@@ -48,12 +52,11 @@ request('/has-been-built', apiToken).then(hasBeenBuilt => {
 		const button = $('#build');
 		button.html('building...');
 
-		request('/build-project', apiToken)
-			.then(() => {
-				button.css('display', 'none');
-				button.html('');
-				$('#has-built').css('display', 'inline');
-			});
+		await request('build-project', apiToken);
+
+		button.css('display', 'none');
+		button.html('');
+		$('#has-built').css('display', 'inline');
 	};
 
 	if (!beenBuilt) {

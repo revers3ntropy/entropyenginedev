@@ -1,3 +1,5 @@
+import {} from '../../types/types';
+
 mustBeSignedIn(async () => {
     $(`#delete`).click(async () => {
         signOut();

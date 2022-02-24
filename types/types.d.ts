@@ -17,8 +17,6 @@ declare global {
 
     let apiToken: apiTok;
 
-    const $: any;
-
     interface apiTok {
         user?: number,
         project?: number

@@ -1,3 +1,5 @@
+import {} from '../../../types/types';
+
 const projectID = urlParam('p') || '0';
 let confirmButton = $('#confirm');
 

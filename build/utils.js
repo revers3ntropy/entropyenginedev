@@ -4,13 +4,17 @@ const { exec } = require("child_process");
  * @returns {Promise<void>}
  */
 exports.run = async (cmd) => {
-	return new Promise((e) => {
-		exec(cmd, (error, stdout, stderr) => {
-			if (error) console.log(error);
-			if (stdout) console.error(stdout);
-			if (stderr) console.error(stderr);
-			e();
-		});
+	return new Promise((e, fail) => {
+		try {
+			exec(cmd, (error, stdout, stderr) => {
+				if (error) fail(error);
+				if (stdout) console.error(stdout);
+				if (stderr) fail(stderr);
+				e();
+			});
+		} catch (e) {
+			fail(e);
+		}
 	});
 }
 

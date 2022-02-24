@@ -15,6 +15,8 @@ const {run, sortObjectEntries} = require('./utils');
 const performanceNow = require("performance-now");
 const now = () => Math.round(performanceNow());
 
+const p = require('path');
+
 // beatify
 const chalk = require('chalk');
 
@@ -39,17 +41,18 @@ let MAIN = '';
 async function cpServer () {
 	const start = now();
 
-	const paths = fs.readdirSync('./server/');
-	const distPath = `./dist/server/`;
+	const paths = fs.readdirSync(p.resolve('./server/'));
+	const distPath = p.resolve(`./dist/server/`);
 
 	for (const path of paths) {
+		const absPath = p.join(p.resolve('./server/'), path);
 		if (
-			fs.statSync('./server/' + path).isDirectory() ||
+			fs.statSync(absPath).isDirectory() ||
 			path.split('.').pop() !== 'py'
 		) {
 			continue;
 		}
-		await run(`cp ./server/${path} ${distPath}`);
+		await run(`cp ${absPath} ${distPath}`);
 	}
 
 	timings[`Build Node Server`] = now() - start;
@@ -58,17 +61,15 @@ async function cpServer () {
 async function upload () {
 	const start = now();
 
-	const paths = fs.readdirSync('./dist/');
+	const paths = fs.readdirSync(p.resolve('./dist/'));
 
 	for (const path of paths) {
 		console.log('Uploading path ' + path);
-		if (fs.statSync('./dist/' + path).isDirectory()) {
-			await run(
-				`sshpass -f './build/sshPass.txt' scp -r ./dist/${path} entropyengine@entropyengine.dev:~/`);
+		if (fs.statSync(p.join(p.resolve('./dist/'), path)).isDirectory()) {
+			await run(`sshpass -f './build/sshPass.txt' scp -r ./dist/${path} entropyengine@entropyengine.dev:~/`);
 			continue;
 		}
-		await run(
-			`sshpass -f './build/sshPass.txt' scp ./dist/${path} entropyengine@entropyengine.dev:~/`);
+		await run(`sshpass -f './build/sshPass.txt' scp ./dist/${path} entropyengine@entropyengine.dev:~/`);
 	}
 
 	console.log(chalk.green('Finished Uploading'));
@@ -113,10 +114,13 @@ function logTimings () {
 async function buildWebpack () {
 	const start = now();
 
-	await run('webpack --config webpack.config.js > webpack_log.txt');
+	await run('webpack --config webpack.config.js > webpack_log.txt')
+		.catch(e => {
+			console.log(chalk.red`Failed to run webpack:`,
+				String(fs.readFileSync('webpack_log.txt')));
+		});
 	if (!fs.existsSync('./webpack_out.js')) {
-		console.error(chalk.red`NO WEBPACK OUTPUT!`);
-		return;
+		throw chalk.red`NO WEBPACK OUTPUT!`;
 	}
 	MAIN = fs.readFileSync('./webpack_out.js');
 	fs.unlinkSync('./webpack_out.js');

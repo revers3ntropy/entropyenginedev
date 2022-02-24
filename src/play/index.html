@@ -1,241 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>
-        My Projects
-    </title>
+<main>
 
-    <meta name="viewport" content="width=device-width">
-    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
-    <link rel='stylesheet' href="../../global.css">
-    <script>
-		$(() => {
-			$("#header").load("../accounts/header.html");
-		});
-    </script>
-</head>
-<body>
-<div id="header"></div>
-
-<section id="game-container">
-    <div id="game">
-        <canvas id="myCanvas"></canvas>
-    </div>
-</section>
-
-<section id="info-container">
-        <div id="info">
-            <div>
-                By <span id="project-owner" style="margin-right: 10px"></span>
-                <a href="../contributors/?p=" id="contributors-link">
-                    See all contributors
-                </a>
-
-            </div>
-
-            <div id="views"></div>
+    <section id="game-container">
+        <div id="game">
+            <canvas id="myCanvas"></canvas>
         </div>
-</section>
+    </section>
 
-<section id="comments-container">
-    <div style="margin: 10px 0 50px 100px; font-size: 20px">
-        <span id="num-comments"></span> Comments
-    </div>
-    <div id="add-comment-container">
-        <label>
-            <input
-                type="text"
-                id="add-comment"
-                placeholder="Add a public comment..."
-                maxlength = "500"
-            />
-        </label>
-    </div>
-    <div id="comments"></div>
-    <footer style="height: 100px"></footer>
-</section>
+    <section id="info-container">
+            <div id="info">
+                <div>
+                    By <span id="project-owner" style="margin-right: 10px"></span>
+                    <a href="../contributors/?p=" id="contributors-link">
+                        See all contributors
+                    </a>
 
+                </div>
 
-</body>
-</html>
+                <div id="views"></div>
+            </div>
+    </section>
 
-<style>
-
-    html {
-        height: calc(100% - 31px);
-    }
-
-    body {
-        height: 100%;
-    }
-
-    #game-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 80%;
-        margin-top: 25px;
-    }
-
-    #game {
-        width: 80%;
-        height: 100%;
-        border: 1px solid vaR(--text-colour);
-    }
-
-    #info-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 0;
-        height: 30px;
-    }
-
-    #info {
-        border-radius: 1px 1px 10px 10px;
-        height: 100%;
-        display: flex;
-        justify-content: space-evenly;
-        align-items: center;
-        padding: 0 4px;
-        width: 80%;
-    }
-
-    #contributors-link {
-        margin-left: 10px;
-    }
-
-    #comments-container {
-        margin: 100px 20px 50px 20px;
-    }
-
-    #add-comment-container {
-        text-align: center;
-        margin: 0 0 20px 0;
-    }
-
-    #add-comment {
-        border-bottom: 1px solid grey;
-        margin: 20px;
-        background-color: rgba(0,0,0,0);
-        width: 75%;
-    }
-</style>
-
-<script type="module">
-	import {request, APIToken} from '../request.js';
-	import {urlParam} from '../util.js';
-	import {comment as commentComponent} from '../globalComponents.js';
-
-	const projectID = urlParam('p');
-
-	let apiToken = new APIToken({
-        project: projectID
-    })
-	const cacheBust = Math.floor(Math.random() * 10**5);
-
-	function notAvailable (data) {
-		window.location.href = `https://entropyengine.dev/accounts/error?type=buildPlayFail&extra=${JSON.stringify(data)}`;
-    }
-
-	document.addEventListener('keypress', evt => evt.preventDefault());
-	document.addEventListener('keydown', evt => evt.preventDefault());
-	document.addEventListener('keyup', evt => evt.preventDefault());
-
-    request ('/has-build', apiToken)
-    .then ( async beenBuilt => {
-        if (!beenBuilt.built) {
-            notAvailable(beenBuilt);
-            return;
-        }
-
-        const access = await request('/get-project-access', apiToken);
-        if (access.accessLevel < 1) {
-			notAvailable(access);
-			return;
-        }
-
-        document.getElementById('contributors-link').href += projectID;
-
-        const ee = await import ('../entropy-engine/1.0/index.js');
-
-        // run the actual game - use cache-bust to get the most recent version
-        ee.runFromJSON(`../projects/${projectID}/build/index.json?cache-bust=${cacheBust}`);
-
-        const owner = await request('/project-owner', apiToken)
-        if (owner.totalContributors-1 < 1)
-			$('#project-owner').html(owner.owner);
-		else
-            $('#project-owner').html(`
-                ${owner.owner} and ${owner.totalContributors-1} others
-            `);
-
-        request('/viewed-project', apiToken);
-
-        const projectViewsData = await request('/project-views', apiToken);
-        $('#views').html(`
-            <span style="margin-right: 10px">
-                ${projectViewsData.unique} viewers
-            </span>
-
-            <span>
-                ${projectViewsData.total} views
-            </span>
-        `);
-
-        async function refreshComments (username) {
-            const comments = await request('/get-comments', apiToken, {
-                public: true
-            });
-            $('#num-comments').html(comments.length);
-
-            if (!comments) return;
-
-            const commentsDIV = $('#comments');
-
-            commentsDIV.html('');
-
-            for (let comment of comments) {
-                commentsDIV.append(
-                    commentComponent(comment, comment.username === username)
-                );
-
-                // have to do this here
-                if (comment.username !== username) continue;
-
-                $(`#delete-comment-${comment._id}`).click(async () => {
-
-                    $(`#comment-${comment._id}-menu`).hide();
-                    $(`#comment-${comment._id}`).hide();
-
-                    await request('/delete-comment', apiToken, {
-                        commentID: comment._id
-                    });
-                    refreshComments(username);
-                });
-            }
-        }
-
-
-        const addMessage = $("#add-comment");
-
-        const username = await request('/get-username', apiToken);
-
-        addMessage.keyup(async event => {
-            if (event.keyCode !== 13) return;
-
-            const content = addMessage.val();
-            addMessage.val('');
-
-            await request('/comment', apiToken, {
-                content,
-                public: true
-            });
-            refreshComments(username.username);
-        });
-
-        refreshComments(username.username);
-    });
-
-</script>
+    <section id="comments-container">
+        <div style="margin: 10px 0 50px 100px; font-size: 20px">
+            <span id="num-comments"></span> Comments
+        </div>
+        <div id="add-comment-container">
+            <label>
+                <input
+                    type="text"
+                    id="add-comment"
+                    placeholder="Add a public comment..."
+                    maxlength = "500"
+                />
+            </label>
+        </div>
+        <div id="comments"></div>
+        <footer style="height: 100px"></footer>
+    </section>
+</main>

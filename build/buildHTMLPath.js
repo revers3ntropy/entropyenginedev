@@ -21,6 +21,7 @@ const
  */
 exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 	if (!QUIET) console.log(`Building HTML at '${dir}'`);
+
 	const start = now();
 
 	const paths = fs.readdirSync(p.join('./src/', dir));
@@ -52,45 +53,90 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 				${HEAD}
 				${fs.readFileSync(fullPath)}
 			`;
-		}
 
-		else if (path === 'index.less') {
+		} else if (path === 'index.less') {
 			const start = now();
 			await run (`lessc ${fullPath} ${distPath}/index.css > ts_less_log.txt`);
 			if (!fs.existsSync(`${distPath}/index.css`)) {
-				console.log(chalk.red`FILE '${distPath}/index.css' REQUIRED!`)
-				continue;
+				console.log(chalk.red`FILE '${distPath}/index.css' REQUIRED!`);
+				throw new Error();
 			}
 			const fileContent = fs.readFileSync(`${distPath}/index.css`);
 			fs.unlinkSync(`${distPath}/index.css`);
 
 			css = '<style>' + fileContent + '</style>';
 			timings['Compile LESS'] += now() - start;
-		}
 
-		else if (path === 'index.ts') {
+
+		} else if (path === 'index.ts') {
 			const start = now();
 
-			await run (`tsc --esModuleInterop --outDir ${distPath} --moduleResolution node --typeRoots "./types,./node_modules/@types" --module ES6 --lib "ES2018,DOM" ${fullPath} > ts_less_log.txt`);
-			if (!fs.existsSync(`${distPath}/index.js`)) {
-				console.log(chalk.red`FILE '${distPath}/index.js' REQUIRED!`);
-				continue;
+			const webpackConfigPath = p.join(p.basename(fullPath), 'webpack.config.js');
+			const logPath = p.join(p.basename(fullPath), 'log.txt');
+
+			fs.writeFileSync(logPath, '');
+
+			fs.writeFileSync(webpackConfigPath, `
+				const path = require('path');
+				const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+				
+				module.exports = {
+					entry: './index.ts',
+					output: {
+						filename: 'bundle.js',
+						path: path.resolve(__dirname, ''),
+					},
+					mode: 'production',
+					resolve: {
+						extensions: ['.ts', '.js'],
+					},
+					module: {
+						rules: [
+							{
+								test: /\\.less$/,
+								use: [
+									'style-loader',
+									'css-loader',
+									'less-loader'
+								],
+								exclude: /node_modules|src/,
+							},
+							{
+								test: /\\.ts$/,
+								loader: 'ts-loader',
+								options: {
+									configFile: "${p.resolve('./tsconfig.json')}"
+								},
+								exclude: /node_modules|src/,
+							},
+						]
+					},
+					plugins: [
+						new MiniCssExtractPlugin()
+					]
+				};
+			`);
+
+			await run (`--config ${webpackConfigPath} > ${logPath}`)
+				.catch(e => {
+					console.log(chalk.red`Failed to compile & bundle @ ${distPath}: \n`,
+						fs.readFileSync('log.txt').toString());
+					throw new Error();
+				});
+
+			const bundlePath = p.join(p.basename(fullPath), 'bundle.js');
+			if (!fs.existsSync(bundlePath)) {
+				console.log(chalk.red`FILE '${bundlePath}' REQUIRED!`);
+				throw new Error();
 			}
 
-			const fileContent = String(fs.readFileSync(`${distPath}/index.js`));
-			fs.unlinkSync(`${distPath}/index.js`);
+			const fileContent = String(fs.readFileSync(bundlePath));
 
-			const minified = uglifyJS(fileContent, {});
+			fs.unlinkSync(bundlePath);
+			fs.unlinkSync(webpackConfigPath);
+			fs.unlinkSync(logPath);
 
-			if (minified.error) {
-				console.error(`UglifyJS error: ${minified.error}`);
-				return now() - start - subDirTime;
-			}
-			if (minified.warnings) {
-				console.log(minified.warnings);
-			}
-
-			js = '<script defer>' + minified.code + '</script>';
+			js = '<script defer>' + fileContent + '</script>';
 			timings['Compile TS'] += now() - start;
 		}
 	}
@@ -105,9 +151,8 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 	const final = minifyHTML(html + css + js + FOOT, {
 		removeAttributeQuotes: false,
 		removeComments: true,
-		removeRedundantAttributes: false,
+		removeRedundantAttributes: true,
 		removeScriptTypeAttributes: false,
-		removeStyleLinkTypeAttributes: false,
 		sortClassName: true,
 		useShortDoctype: true,
 		collapseWhitespace: true

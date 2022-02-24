@@ -1,3 +1,6 @@
+import {} from '../../../types/types';
+import {} from '../../../node_modules/@types/jquery';
+
 let username = urlParam('u') || '';
 
 document.title = username;

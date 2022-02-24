@@ -1,5 +1,6 @@
-const cb = urlParams.get('cb');
+import {} from '../../../types/types';
 
+const cb = urlParam('cb');
 
 window.goToCB = () => {
     if (cb) {
@@ -9,7 +10,7 @@ window.goToCB = () => {
 
 
 let message;
-switch (urlParams.get('type')) {
+switch (urlParam('type')) {
     case 'notSignedIn':
         message = 'Looks like you need to sign in!';
         $('#options').html(`

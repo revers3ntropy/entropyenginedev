@@ -1,3 +1,5 @@
+import {} from '../../../types/types';
+
 validID(localStorage.id).then(valid => {
     if (valid) {
         window.location.href = 'https://entropyengine.dev/accounts';
@@ -13,15 +15,16 @@ validID(localStorage.id).then(valid => {
             password
         }))._id;
 
-        validID(localStorage.id).then(valid => {
-            if (valid) {
-                window.location.href = 'https://entropyengine.dev/accounts';
-                return;
-            }
+        validID(localStorage.id)
+            .then(valid => {
+                if (valid) {
+                    window.location.href = 'https://entropyengine.dev/accounts';
+                    return;
+                }
 
-            $('#warning').html(`
-                    Sorry, that account doesn't exist
-                `);
-        });
+                $('#warning').html(`
+                        Sorry, that account doesn't exist
+                    `);
+            });
     });
 });

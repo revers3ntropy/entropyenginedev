@@ -20,7 +20,6 @@ module.exports = {
 					'css-loader',
 					'less-loader'
 				],
-				exclude: /node_modules|src/,
 			},
 			{
 				test: /\.ts$/,
@@ -28,14 +27,12 @@ module.exports = {
 				options: {
 					configFile: "tsconfig.json"
 				},
-				exclude: /node_modules|src/,
 			},
 		]
 	},
 	plugins: [
 		new MiniCssExtractPlugin()
 	],
-	/*
 	devServer: {
 		static: {
 		  directory: path.join(__dirname, 'dist/public_html'),
@@ -43,5 +40,4 @@ module.exports = {
 		compress: true,
 		port: 9000,
 	},
-	 */
 };

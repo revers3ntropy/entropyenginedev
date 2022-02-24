@@ -1,3 +1,5 @@
+import {} from '../../../types/types';
+
 let error = $('#error');
 
 const illegalChars = '<>/-"\\`\'?&=';
@@ -8,22 +10,22 @@ let nameElement = $('#name');
 const emailElement = $('#email');
 
 usernameElement.change(() => {
-    usernameElement.val(usernameElement.val());
+    usernameElement.val(usernameElement.val() || '');
 });
 
 passwordElement.change(() => {
-    passwordElement.val(passwordElement.val());
+    passwordElement.val(passwordElement.val() || '');
 });
 
 nameElement.change(() => {
-    nameElement.val(nameElement.val());
+    nameElement.val(nameElement.val() || '');
 });
 
 $(`#submit`).click(async () => {
-    const username = usernameElement.val();
-    const password = passwordElement.val();
-    const name = nameElement.val();
-    const email = emailElement.val();
+    const username = (usernameElement.val() || '').toString();
+    const password = (passwordElement.val() || '').toString();
+    const name = (nameElement.val() || '').toString();
+    const email = (emailElement.val() || '').toString();
 
     if (username.length < 3) {
         error.html('Username too short - must be longer than 2 characters');

@@ -1,3 +1,4 @@
+import {} from '../../../types/types';
 
 mustBeSignedIn(() => {
     let myProjects = $('#my-projects');

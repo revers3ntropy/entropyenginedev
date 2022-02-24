@@ -4,7 +4,7 @@ import './scripts/util';
 import './scripts/request';
 import './scripts/globalComponents';
 
-var apiToken: apiTok = {
+apiToken = {
     user: localStorage.id
 };
 
@@ -25,7 +25,7 @@ const updatePing = async () => {
 
     const time = performance.now() - startTime;
 
-    $('#ping').html(Math.floor(time));
+    $('#ping').html(Math.floor(time).toFixed(3));
 }
 
 setInterval(updatePing, 5000);
