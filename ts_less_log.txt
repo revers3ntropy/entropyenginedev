@@ -1,0 +1,21 @@
+src/build/index.ts(3,21): error TS2304: Cannot find name 'projectID'.
+src/build/index.ts(6,55): error TS2304: Cannot find name 'projectID'.
+src/build/index.ts(13,1): error TS2581: Cannot find name '$'. Do you need to install type definitions for jQuery? Try `npm i --save-dev @types/jquery`.
+src/build/index.ts(14,1): error TS2581: Cannot find name '$'. Do you need to install type definitions for jQuery? Try `npm i --save-dev @types/jquery`.
+src/build/index.ts(19,1): error TS2581: Cannot find name '$'. Do you need to install type definitions for jQuery? Try `npm i --save-dev @types/jquery`.
+src/build/index.ts(20,2): error TS2304: Cannot find name 'copyToClipboard'.
+src/build/index.ts(23,1): error TS2552: Cannot find name 'request'. Did you mean 'Request'?
+src/build/index.ts(23,30): error TS2304: Cannot find name 'apiToken'.
+src/build/index.ts(25,3): error TS2581: Cannot find name '$'. Do you need to install type definitions for jQuery? Try `npm i --save-dev @types/jquery`.
+src/build/index.ts(27,10): error TS2339: Property 'downloadHTML' does not exist on type 'Window & typeof globalThis'.
+src/build/index.ts(28,51): error TS2304: Cannot find name 'projectID'.
+src/build/index.ts(31,11): error TS2551: Property 'download' does not exist on type 'Window & typeof globalThis'. Did you mean 'onload'?
+src/build/index.ts(35,8): error TS2339: Property 'build' does not exist on type 'Window & typeof globalThis'.
+src/build/index.ts(39,1): error TS2552: Cannot find name 'request'. Did you mean 'Request'?
+src/build/index.ts(39,28): error TS2304: Cannot find name 'apiToken'.
+src/build/index.ts(44,9): error TS2339: Property 'build' does not exist on type 'Window & typeof globalThis'.
+src/build/index.ts(48,18): error TS2581: Cannot find name '$'. Do you need to install type definitions for jQuery? Try `npm i --save-dev @types/jquery`.
+src/build/index.ts(51,3): error TS2304: Cannot find name 'request'.
+src/build/index.ts(51,29): error TS2304: Cannot find name 'apiToken'.
+src/build/index.ts(55,5): error TS2581: Cannot find name '$'. Do you need to install type definitions for jQuery? Try `npm i --save-dev @types/jquery`.
+src/build/index.ts(63,2): error TS2581: Cannot find name '$'. Do you need to install type definitions for jQuery? Try `npm i --save-dev @types/jquery`.

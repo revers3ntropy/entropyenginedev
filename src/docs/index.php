@@ -36,7 +36,7 @@ echo <<<END
 function EntropyEngine ($page) { switch ($page) {
     case'home':
         echo 'Entropy Engine is a game engine created primarily with TypeScript, with a Javascript API. 
-        It can be used with the online editor at https://entropyengine.dev or by importing it from https://entropyengine.dev/entropy-engine/1.0/index.js';
+        It can be used with the online editor at https://entropyengine.dev or by importing it from https://entropyengine.dev/entropy-engine/1.0/index.ts';
         break;
     case 'ECS':
         echo <<<END
@@ -56,7 +56,7 @@ function EntropyScript ($page) { switch ($page) {
 function Editor ($page) { switch ($page) {
     case'home':
         echo 'Entropy Engine is a game engine created primarily with TypeScript, with a Javascript API. 
-        It can be used with the online editor at https://entropyengine.dev or by importing it from https://entropyengine.dev/entropy-engine/1.0/index.js';
+        It can be used with the online editor at https://entropyengine.dev or by importing it from https://entropyengine.dev/entropy-engine/1.0/index.ts';
         break;
 }}
 

@@ -17,7 +17,6 @@ const now = () => Math.round(performanceNow());
 
 // beatify
 const chalk = require('chalk');
-const Confirm = require('prompt-confirm');
 
 const {buildHTML} = require('./buildHTMLPath');
 
@@ -126,12 +125,6 @@ async function buildWebpack () {
 }
 
 async function main () {
-
-	const prompt = new Confirm(chalk.blue('Are you sure you want to deploy to production?'));
-	const res = await prompt.run();
-	if (!res) {
-		return;
-	}
 
 	const start = now();
 

@@ -1,59 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>
-        Your Account
-    </title>
+<main>
+    <div style="text-align: center; margin-top: 20px">
+        <div id="username" style="font-size: xx-large; margin: 10px"></div>
+        <p id="name"></p>
+        <p id="email"></p>
 
-    <meta name="viewport" content="width=device-width">
-    <link rel='stylesheet' href="../global.css">
-    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+        <div style="height: 30px"></div>
 
-    <script>
-        $(() => {
-            $("#header").load("../header.html");
-        });
-    </script>
-</head>
-<body>
-<div id="header"></div>
-<div style="text-align: center; margin-top: 20px">
-    <div id="username" style="font-size: xx-large; margin: 10px"></div>
-    <p id="name"></p>
-    <p id="email"></p>
-
-    <div style="height: 30px"></div>
-
-    <button id="delete" style="color: var(--warning)"> Delete Account </button>
-    <button id="sign-out" style="color: var(--warning)"> Sign Out </button>
-</div>
-
-</body>
-</html>
-
-<script type="module">
-	import {APIToken, request} from '../request.js';
-    import {mustBeSignedIn, signOut} from '../util.js';
-
-    let apiToken = new APIToken({});
-
-    mustBeSignedIn(async () => {
-        $(`#delete`).click(async () => {
-        	signOut();
-            await request(`/delete-account/`, apiToken);
-            window.location.href = 'https://entropyengine.dev';
-        });
-
-        $(`#sign-out`).click(() => {
-            signOut();
-            window.location.href = 'https://entropyengine.dev';
-        });
-
-        const details = await request(`/get-details`, apiToken);
-
-        $(`#username`).html(details.username);
-        $(`#email`).html(details.email);
-        $(`#name`).html(details.name);
-    });
-</script>
+        <button id="delete" style="color: var(--warning)"> Delete Account </button>
+        <button id="sign-out" style="color: var(--warning)"> Sign Out </button>
+    </div>
+</main>

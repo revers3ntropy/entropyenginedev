@@ -1,7 +1,7 @@
 /*
 Common bits of HTML that I want to use in lots of different places.
 
-Only use CSS inline and from global.css
+Only use CSS inline and from global.less
 
  */
 

@@ -71,7 +71,7 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 		else if (path === 'index.ts') {
 			const start = now();
 
-			await run (`tsc --esModuleInterop --outDir ${distPath} --moduleResolution node --typeRoots "./types" --module ES6 --lib "ES2018,DOM" ${fullPath} > ts_less_log.txt`);
+			await run (`tsc --esModuleInterop --outDir ${distPath} --moduleResolution node --typeRoots "./types,./node_modules/@types" --module ES6 --lib "ES2018,DOM" ${fullPath} > ts_less_log.txt`);
 			if (!fs.existsSync(`${distPath}/index.js`)) {
 				console.log(chalk.red`FILE '${distPath}/index.js' REQUIRED!`);
 				continue;

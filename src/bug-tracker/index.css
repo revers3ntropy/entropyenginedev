@@ -1,0 +1,19 @@
+#status {
+    text-align: center;
+    font-size: 30px;
+}
+
+#time {
+    margin: 25px;
+    font-size: 15px;
+}
+
+#report-message {
+    font-size: 30px;
+    border-left: 1px solid vaR(--text-colour);
+    padding: 15px;
+}
+
+#main {
+    margin: 10px;
+}

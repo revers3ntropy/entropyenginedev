@@ -1,115 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Build</title>
+<main>
 
-    <meta name="viewport" content="width=device-width">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-    <link rel='stylesheet' href="../global.css">
-    <script>
-		$(() => {
-			$("#header").load("../../accounts/header.html");
-		});
-    </script>
+    <input type="text" id="clipboard" style="position: absolute; top: -100000px"/>
 
-    <style>
-
-        #has-built {
-
-        }
-
-        #share-url-container {
-            border: 1px solid vaR(--text-colour);
-            border-radius: 10px;
-            height: 50px;
-            width: 700px;
-            padding: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        #share-url {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            font-size: 20px;
-        }
-
-        #copy-url-to-clipboard {
-            background: url(../svg/copy.svg) no-repeat center center;
-            background-size: contain;
-            width: 30px; height: 30px;
-        }
-
-        #go-to-build {
-            background: url(../svg/link.svg) no-repeat center center;
-            background-size: contain;
-            width: 30px; height: 30px;
-        }
-
-        #back {
-            background: url(../svg/back-plain.svg) no-repeat center center;
-            background-size: contain;
-            width: 40px; height: 40px;
-        }
-
-        #copy-url-to-clipboard:hover, #back:hover, #go-to-build:hover {
-            transform: scale(1.1);
-        }
-
-    </style>
-</head>
-<body>
-<div id="header"></div>
-
-<input type="text" id="clipboard" style="position: absolute; top: -100000px"/>
-
-<div style="height: 30px;
-    display: flex;">
-    <a class="button" id="back" href="../editor?p="></a>
-</div>
-
-
-<p style="text-align: center; font-size: 50px">
-    Build project <span id="project-name"></span>
-</p>
-
-<div style="display: none" id="has-built">
-    <div style="font-size: 18px; text-align: center">
-        Play the built project here
+    <div style="height: 30px; display: flex;">
+        <a class="button" id="back" href="../editor?p="></a>
     </div>
 
-    <div style="display: flex; justify-content: center">
-        <div id="share-url-container">
-            <div id="share-url"></div>
 
-            <div id="copy-url-to-clipboard"></div>
-            <button id="go-to-build"></button>
+    <p style="text-align: center; font-size: 50px">
+        Build project <span id="project-name"></span>
+    </p>
+
+    <div style="display: none" id="has-built">
+        <div style="font-size: 18px; text-align: center">
+            Play the built project here
+        </div>
+
+        <div style="display: flex; justify-content: center">
+            <div id="share-url-container">
+                <div id="share-url"></div>
+
+                <div id="copy-url-to-clipboard"></div>
+                <button id="go-to-build"></button>
+            </div>
+        </div>
+        <div style="text-align: center; padding-top: 10px">
+            <button onclick="window.downloadHTML();" style="font-size: 20px; padding: 8px; border-radius: 4px" id="download">
+                Download HTML
+            </button>
+
+            <a style="font-size: 20px; padding: 8px; border-radius: 4px" id="play-build">
+                Play Build
+            </a>
         </div>
     </div>
-    <div style="text-align: center; padding-top: 10px">
-        <button onclick="window.downloadHTML();" style="font-size: 20px; padding: 8px; border-radius: 4px" id="download">
-            Download HTML
+
+    <div style="text-align: center; padding-top: 30px">
+        <button onclick="window.build();" style="font-size: 25px; padding: 8px; border-radius: 4px" id="build">
+            Build Project
         </button>
-
-        <a style="font-size: 20px; padding: 8px; border-radius: 4px" id="play-build">
-            Play Build
-        </a>
     </div>
-
-
-</div>
-
-<div style="text-align: center; padding-top: 30px">
-    <button onclick="window.build();" style="font-size: 25px; padding: 8px; border-radius: 4px" id="build">
-        Build Project
-    </button>
-</div>
-
-
-</body>
-</html>
-
-<script defer type="module" src="index.js"></script>
+</main>

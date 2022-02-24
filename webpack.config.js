@@ -2,14 +2,14 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
-	entry: './index.ts',
+	entry: './main.ts',
 	output: {
 		filename: 'webpack_out.js',
 		path: path.resolve(__dirname, ''),
 	},
 	mode: 'production',
 	resolve: {
-		extensions: ['.tsx', '.ts', '.js'],
+		extensions: ['.ts', '.js'],
 	},
 	module: {
 		rules: [
@@ -20,6 +20,7 @@ module.exports = {
 					'css-loader',
 					'less-loader'
 				],
+				exclude: /node_modules|src/,
 			},
 			{
 				test: /\.ts$/,
@@ -27,13 +28,14 @@ module.exports = {
 				options: {
 					configFile: "tsconfig.json"
 				},
-				exclude: /node_modules/,
+				exclude: /node_modules|src/,
 			},
 		]
 	},
 	plugins: [
 		new MiniCssExtractPlugin()
 	],
+	/*
 	devServer: {
 		static: {
 		  directory: path.join(__dirname, 'dist/public_html'),
@@ -41,4 +43,5 @@ module.exports = {
 		compress: true,
 		port: 9000,
 	},
+	 */
 };

@@ -1,150 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>
-        New Account
-    </title>
+<main>
+    <div style="display: flex; align-items: center; justify-content: center">
+        <div style="margin-top: 50px; border-radius: 20px; display: inline-block; padding: 10px; border: 1px solid var(--text-colour)" class="blur">
+            <div style="text-align: center; margin: 10px">
+                <label>
+                    Username:
+                    <input type="text" id="username" style="border-bottom: 1px solid var(--text-colour)">
+                </label>
+            </div>
 
-    <meta name="viewport" content="width=device-width">
-    <link rel='stylesheet' href="../../global.css">
-    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
-    <script>
-        $(() => {
-            $("#header").load("../../header.html");
-        });
-    </script>
-</head>
-<body>
-<div id="header"></div>
+            <div style="text-align: center; margin: 10px">
+                <label>
+                    Name:
+                    <input type="text" id="name" style="border-bottom: 1px solid var(--text-colour)">
+                </label>
+            </div>
 
-<div style="display: flex; align-items: center; justify-content: center">
-    <div style="margin-top: 50px; border-radius: 20px; display: inline-block; padding: 10px; border: 1px solid var(--text-colour)" class="blur">
-        <div style="text-align: center; margin: 10px">
-            <label>
-                Username:
-                <input type="text" id="username" style="border-bottom: 1px solid var(--text-colour)">
-            </label>
-        </div>
+            <div style="text-align: center; margin: 10px">
+                <label>
+                    Email:
+                    <input type="text" id="email" style="border-bottom: 1px solid var(--text-colour)">
+                </label>
+            </div>
 
-        <div style="text-align: center; margin: 10px">
-            <label>
-                Name:
-                <input type="text" id="name" style="border-bottom: 1px solid var(--text-colour)">
-            </label>
-        </div>
+            <div style="text-align: center; margin: 10px">
+                <label>
+                    Password:
+                    <input type="password" id="password" style="border-bottom: 1px solid var(--text-colour)">
+                </label>
+            </div>
 
-        <div style="text-align: center; margin: 10px">
-            <label>
-                Email:
-                <input type="text" id="email" style="border-bottom: 1px solid var(--text-colour)">
-            </label>
-        </div>
+            <div style="text-align: center; margin: 10px">
+                <button id="submit" style="font-size: 18px">Create</button>
+            </div>
 
-        <div style="text-align: center; margin: 10px">
-            <label>
-                Password:
-                <input type="password" id="password" style="border-bottom: 1px solid var(--text-colour)">
-            </label>
-        </div>
-
-        <div style="text-align: center; margin: 10px">
-            <button id="submit" style="font-size: 18px">Create</button>
-        </div>
-
-        <div style="text-align: center; min-height: 10px">
-            <div id="error" style="color: #fd6262"></div>
+            <div style="text-align: center; min-height: 10px">
+                <div id="error" style="color: #fd6262"></div>
+            </div>
         </div>
     </div>
-</div>
-</body>
-</html>
-
-<script type="module">
-    import {request} from '../../request.js';
-
-    const error = $('#error');
-
-    const illegalChars = '<>/-"\\`\'?&=';
-
-    const usernameElement = $('#username');
-    const passwordElement = $('#password');
-    const nameElement = $('#name');
-    const emailElement = $('#email');
-
-    usernameElement.change(() => {
-        usernameElement.val(usernameElement.val());
-    });
-
-    passwordElement.change(() => {
-        passwordElement.val(passwordElement.val());
-    });
-
-    nameElement.change(() => {
-        nameElement.val(nameElement.val());
-    });
-
-    $(`#submit`).click(async () => {
-        const username = usernameElement.val();
-        const password = passwordElement.val();
-        const name = nameElement.val();
-        const email = emailElement.val();
-
-        if (username.length < 3) {
-            error.html('Username too short - must be longer than 2 characters');
-            return;
-        }
-
-        const usernameExists = await request('/username-exists', undefined, {username});
-        if (usernameExists.exists === '1') {
-            error.html('That username already exists');
-            return;
-        }
-
-        if (password.length < 5) {
-            error.html('Password must be longer than 4 characters');
-            return;
-        }
-
-        if (name.length < 2) {
-            error.html('Name must be longer than 1 character');
-            return;
-        }
-
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            error.html('Not a valid email');
-            return;
-        }
-
-        for (let char of illegalChars) {
-        	if (username.includes(char)) {
-				error.html('Sorry, your username is invalid. Try removing some special characters.');
-				return;
-            }
-		}
-
-		for (let char of illegalChars) {
-			if (password.includes(char)) {
-				error.html('Sorry, your password is invalid. Try removing some special characters.');
-				return;
-			}
-		}
-
-		for (let char of illegalChars) {
-			if (name.includes(char)) {
-				error.html('Sorry, your name is invalid. Try removing some special characters.');
-				return;
-			}
-		}
-
-       await request('/new-user', undefined, {
-            username,
-            password,
-            name,
-            email,
-        });
-
-        window.location.href = 'https://entropyengine.dev/accounts/sign-in';
-    });
-
-</script>
+</main>

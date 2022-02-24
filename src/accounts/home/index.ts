@@ -22,7 +22,7 @@ validID(localStorage.id).then(signedIn => {
     }
 });
 
-request ('/top-projects-by-views', apiToken)
+request ('top-projects-by-views', apiToken)
     .then(async data => {
         for (const project of data) {
             const projectID = project.id;
@@ -81,86 +81,87 @@ request ('/top-projects-by-views', apiToken)
 
 
 function recentProjects () {
-    request('/get-project-names', apiToken).then(async projectNames => {
+    request('get-project-names', apiToken)
+        .then(async projectNames => {
 
-        const projectsDiv = $('#recent-projects');
+            const projectsDiv = $('#recent-projects');
 
-        const myUsername = (await request('/get-username', apiToken)).username;
+            const myUsername = (await request('/get-username', apiToken)).username;
 
-        let i = 0;
-        for (let projectName of projectNames) {
-            // only show 5 projects
-            if (i > 4) {
-                window.scrollTo(0, 0);
-                return;
-            }
-            i++;
+            let i = 0;
+            for (let projectName of projectNames) {
+                // only show 5 projects
+                if (i > 4) {
+                    window.scrollTo(0, 0);
+                    return;
+                }
+                i++;
 
-            projectsDiv.append(`
+                projectsDiv.append(`
+    
+                    <div
+                        class="project-button"
+                        onclick="window.location.href = '../../editor?p=${projectName._id}'">
+                        <div class="projectName">
+                            <img
+                                src="../../projects/${projectName._id}/build/assets/COVER.png"
+                                alt="COVER"
+                                style="
+                                    width:40px;
+                                    height:40px;
+                                    border-radius: 4px;
+                                    margin-right: 4px;
+                                    font-size: 12px;
+                                "
+                            />
+                            ${projectName.name}
+                        </div>
+    
+                        <div id="other-people-${projectName._id}"></div>
+    
+                        <div style="font-size: 12px; text-align: right; margin-right: 2px">
+                            ${unixTimeAgo(projectName.latest)} ago
+                        </div>
+                     </div>
+    
+                    `);
 
-                <div
-                    class="project-button"
-                    onclick="window.location.href = '../../editor?p=${projectName._id}'">
-                    <div class="projectName">
-                        <img
-                            src="../../projects/${projectName._id}/build/assets/COVER.png"
-                            alt="COVER"
-                            style="
-                                width:40px;
-                                height:40px;
-                                border-radius: 4px;
-                                margin-right: 4px;
-                                font-size: 12px;
-                            "
-                        />
-                        ${projectName.name}
-                    </div>
+                const editors = await request(`/get-project-editors`, {
+                    project: projectName._id
+                });
 
-                    <div id="other-people-${projectName._id}"></div>
+                const editorsHTML = () => {
+                    // these are just my projects, always have 'me' first
+                    let html = ['me'];
 
-                    <div style="font-size: 12px; text-align: right; margin-right: 2px">
-                        ${unixTimeAgo(projectName.latest)} ago
-                    </div>
-                 </div>
+                    let i = 0;
+                    for (const editor of editors) {
+                        if (i > 5) {
+                            html.push(`and ${editors.length-5} others`);
+                            return html.join(', ');
+                        }
 
-                `);
+                        if (editor.username === myUsername)
+                            continue;
 
-            const editors = await request(`/get-project-editors`, {
-                project: projectName._id
-            });
-
-            const editorsHTML = () => {
-                // these are just my projects, always have 'me' first
-                let html = ['me'];
-
-                let i = 0;
-                for (const editor of editors) {
-                    if (i > 5) {
-                        html.push(`and ${editors.length-5} others`);
-                        return html.join(', ');
+                        html.push(editor.username);
+                        i++;
                     }
 
-                    if (editor.username === myUsername)
-                        continue;
+                    return html.join(', ');
+                };
 
-                    html.push(editor.username);
-                    i++;
-                }
+                $(`#other-people-${projectName._id}`).html(`(${editorsHTML()})`);
+            }
+            if (!projectsDiv.html()) {
 
-                return html.join(', ');
-            };
+                projectsDiv.html(`
+                    <div style="text-align: center">
+                        Looks like you haven't made any projects yet!
+                    </div>
+                    `);
+            }
 
-            $(`#other-people-${projectName._id}`).html(`(${editorsHTML()})`);
-        }
-        if (!projectsDiv.html()) {
-
-            projectsDiv.html(`
-                <div style="text-align: center">
-                    Looks like you haven't made any projects yet!
-                </div>
-                `);
-        }
-
-        window.scrollTo(0, 0);
-    });
+            window.scrollTo(0, 0);
+        });
 }

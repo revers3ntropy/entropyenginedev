@@ -1,7 +1,7 @@
 "use strict";
 
 import {urlParam} from "../util.js";
-import entropyEngine from "../entropy-engine/1.0/index.js";
+import entropyEngine from "../entropy-engine/1.0/index.ts";
 import {reRender} from "./renderer.js";
 import {reloadScriptsOnEntities} from "./scripts.js";
 import {global} from "../entropy-engine/1.0/scripting/EEScript/constants.js";

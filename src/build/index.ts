@@ -1,15 +1,14 @@
-import { urlParam } from '../util.js';
-import {APIToken, request} from '../request.ts';
-import {download} from '../editor/downloader.js';
-
-const projectID = urlParam('p');
-const apiToken = new APIToken({project: projectID});
-
-document.getElementById('back').href += projectID;
+const backButton = <null|HTMLLinkElement>document.getElementById('back');
+if (backButton) {
+	backButton.href += projectID;
+}
 
 const buildURL = `https://entropyengine.dev/play/?p=${projectID}`;
 
-document.getElementById('play-build').href = buildURL;
+const playBuildButton = <null|HTMLLinkElement>document.getElementById('play-build');
+if (playBuildButton) {
+	playBuildButton.href = buildURL;
+}
 
 $('#share-url').html(buildURL);
 $('#go-to-build').click(() => {
@@ -21,15 +20,6 @@ $('#copy-url-to-clipboard').click(() => {
 	copyToClipboard(buildURL);
 });
 
-function copyToClipboard(text) {
-	const clipboard = document.getElementById('clipboard');
-	clipboard.value = text;
-	clipboard.select();
-	clipboard.setSelectionRange(0, 99999); /* For mobile devices */
-	document.execCommand("copy");
-	clipboard.innerText = '';
-}
-
 request('/get-project-name', apiToken)
 	.then(name => {
 		$('#project-name').append(name.name);
@@ -38,7 +28,7 @@ request('/get-project-name', apiToken)
 			const response = await fetch(`../../projects/${projectID}/build/index.html`);
 			const html = await response.text();
 
-			download(name.name + '.html', html);
+			window.download(name.name + '.html', html);
 		};
 	});
 
@@ -66,7 +56,9 @@ request('/has-been-built', apiToken).then(hasBeenBuilt => {
 			});
 	};
 
-	if (!beenBuilt) return;
+	if (!beenBuilt) {
+		return;
+	}
 
 	$('#has-built').css('display', 'inline');
 });

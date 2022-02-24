@@ -13,10 +13,13 @@ const apiURL = `https://entropyengine.dev:${apiPort}`;
  *
  * @param {string} url - does not start with /
  * @param {apiTok} token
- * @param {{[k: string]: any}} body
+ * @param [body={}]
  * @return {Promise<object>}
  */
 request = async (url: string, token: apiTok = {user: -1, project: -1}, body={}) => {
+    if (!token.user) {
+        token.user = localStorage.id;
+    }
     if (!token.project || !token.user) {
         console.error(`Bad API token: `, token);
         return {};

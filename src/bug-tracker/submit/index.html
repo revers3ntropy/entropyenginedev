@@ -1,26 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>
-        Home
-    </title>
-
-    <meta name="viewport" content="width=device-width">
-    <link rel='stylesheet' id="stylesheet">
-    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
-    <link rel='stylesheet' href="../../global.css">
-    <script>
-		$(() => {
-			$("#header").load("../../accounts/header.html");
-		});
-    </script>
-</head>
-
-<body>
-<div id="header"></div>
-
-<main id="main" role="main">
+<main>
     <div id="form">
         <div class="container">
             <label for="title">
@@ -82,41 +60,4 @@
             <div id="submit"></div>
         </div>
     </div>
-
 </main>
-
-</body>
-</html>
-
-<style>
-
-    .container {
-        margin: 30px;
-        font-size: 16px;
-    }
-
-    #main {
-        text-align: center;
-         margin-top: 10vh;
-    }
-
-
-</style>
-
-<script type="module">
-	import {urlParam, mustBeSignedIn} from '../../util.js';
-	import {request} from '../../request.js';
-
-	const bugID = urlParam('b');
-
-	mustBeSignedIn(() => {
-        $('#submit').html(`
-            <button onclick="window.">
-                Submit
-            </button>
-
-        `);
-    });
-
-
-</script>

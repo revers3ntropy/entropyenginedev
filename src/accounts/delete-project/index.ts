@@ -1,10 +1,10 @@
 const projectID = urlParam('p') || '0';
-const confirm = $('#confirm');
+let confirmButton = $('#confirm');
 
 apiToken.project = parseInt(projectID);
 
 request('/get-project-name', apiToken).then(async value => {
-    confirm.html(`
+    confirmButton.html(`
             <p style="font-size: 30px">
                 Are you sure you want to delete the project
                 <a href="../../editor?p=${projectID}">
@@ -22,7 +22,7 @@ request('/get-project-name', apiToken).then(async value => {
         window.location.href = 'https://entropyengine.dev/accounts/my-projects';
     };
 
-    confirm.append(`
+    confirmButton.append(`
         <br>
         <button onclick="window.delete()" style="font-size: 20px">
             Yes

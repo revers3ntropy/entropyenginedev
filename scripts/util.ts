@@ -28,17 +28,18 @@ validID = async (userID: number) => {
  * @param {Function} whenSignedIn
  * @param {Function} whenNotSignedIn
  */
-mustBeSignedIn = (whenSignedIn, whenNotSignedIn) => {
-    validID(localStorage.id)
-        .then(signedIn => {
-            if (!signedIn) {
-                forceSignOut('notSignedIn');
-                whenNotSignedIn();
-                return;
-            }
+mustBeSignedIn = async (whenSignedIn, whenNotSignedIn) => {
+    const signedIn = await validID(localStorage.id);
 
-            whenSignedIn();
-        });
+    if (!signedIn) {
+        forceSignOut('notSignedIn');
+        if (whenNotSignedIn) {
+            whenNotSignedIn();
+        }
+        return;
+    }
+
+    whenSignedIn();
 }
 
 const queryString = window.location.search;
@@ -130,3 +131,19 @@ nameFromScriptURL = (path: string) => {
     let file = path.substring(path.lastIndexOf('/')+1);
     return file.substring(0, file.length-3);
 };
+
+/**
+ *
+ * @param {string} text
+ */
+copyToClipboard = (text: string) => {
+    const clipboard = document.createElement('input');
+    clipboard.style.position = 'absolute';
+    clipboard.style.position = '-10000px';
+    clipboard.value = text;
+    clipboard.select();
+    clipboard.setSelectionRange(0, 99999); /* For mobile devices */
+    document.execCommand("copy");
+    clipboard.innerText = '';
+    document.removeChild(clipboard);
+}

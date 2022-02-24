@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <title> TITLE </title>
     <meta name="viewport" content="width=device-width">
-    <script type="module" src="https://entropyengine.dev/entropy-engine/index.js"></script>
+    <script type="module" src="https://entropyengine.dev/entropy-engine/index.ts"></script>
     <script defer type="module">
-        import {runFromJSON} from "https://entropyengine.dev/entropy-engine/index.js";
+        import {runFromJSON} from "https://entropyengine.dev/entropy-engine/index.ts";
         runFromJSON('https://entropyengine.dev/projects/ID/build/index.json');
     </script>
 

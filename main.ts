@@ -1,8 +1,8 @@
-import './styles/global.css';
+import './styles/global.less';
 
-import 'scripts/util';
-import 'scripts/request';
-import 'scripts/globalComponents';
+import './scripts/util';
+import './scripts/request';
+import './scripts/globalComponents';
 
 var apiToken: apiTok = {
     user: localStorage.id
