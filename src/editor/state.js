@@ -1,6 +1,6 @@
 "use strict";
 
-import {urlParam} from "../util.js";
+import {urlParam} from "../util.ts";
 import entropyEngine from "../entropy-engine/1.0/index.ts";
 import {reRender} from "./renderer.js";
 import {reloadScriptsOnEntities} from "./scripts.js";

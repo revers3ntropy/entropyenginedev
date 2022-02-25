@@ -1,9 +1,6 @@
 {
     "compilerOptions": {
         "strict": true,
-        "module": "es6",
-        "target": "es5",
-        "lib": ["es2018", "dom"],
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
@@ -11,9 +8,7 @@
         "noEmit": false,
         "removeComments": true,
         "typeRoots": [
-            "./types/types.d.ts",
             "./node_modules/@types",
-            "./node_modules/@types/matter-js/index.d.ts"
         ],
         "downlevelIteration": true
     },

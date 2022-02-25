@@ -1,7 +1,6 @@
 const fs = require("fs");
 const p = require('path');
 const minifyHTML = require('html-minifier').minify;
-const uglifyJS = require('uglify-js').minify;
 const performanceNow = require("performance-now");
 const chalk = require("chalk");
 const {run} = require("./utils");
@@ -20,8 +19,6 @@ const
  * @returns {Promise<number>} time taken to execute
  */
 exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
-	if (!QUIET) console.log(`Building HTML at '${dir}'`);
-
 	const start = now();
 
 	const paths = fs.readdirSync(p.join('./src/', dir));
@@ -37,6 +34,8 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 	if (paths.indexOf('index.html') === -1) {
 		return now() - start - subDirTime;
 	}
+
+	if (!QUIET) console.log(`Building HTML at '${dir}'`);
 
 	for (const path of paths) {
 		if (path[path.length-1] === '~') {
@@ -109,7 +108,8 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 								test: /\\.ts$/,
 								loader: 'ts-loader',
 								options: {
-									configFile: "${p.resolve('./tsconfig.json')}"
+									configFile: "${p.resolve('./tsconfig.json')}",
+									'allowTsInNodeModules': true
 								}
 							},
 						]

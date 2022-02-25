@@ -2,23 +2,16 @@
 **/*.pem
 *.env
 *.pem
-/.idea/
 *.htaccess
 **/*.htaccess
+/package-lock.json
+**/package-lock.json
+*.txt
+**/*.txt
 
+/.idea/
 **/node_modules/
 /node_modules/
 
-/server/*.js
-/server/**/*.js
-
-/build/sshPass.txt
-/build/github_token.txt
-/package-lock.json
-
-/webpack_log.txt
-/ts_less_log.txt
-/server/log.txt
-
 /dist/public_html/
-/server/package-lock.json
+/dist/server/

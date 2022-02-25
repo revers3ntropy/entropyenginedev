@@ -2,9 +2,9 @@
 
 import {apiToken, globalEESContext, projectID, scripts, scriptURLS} from "./state.js";
 import {reRender} from "./renderer.js";
-import {genCacheBust} from "../util.js";
+import {genCacheBust} from "../util.ts";
 import {request} from "../request.ts";
-import {nameFromScriptURL} from "../util.js";
+import {nameFromScriptURL} from "../util.ts";
 import {run} from "../entropy-engine/1.0/scripting/EEScript";
 import {ESBehaviourInstance} from "../entropy-engine/1.0/scripting/EEScript/ESBehaviour.js";
 import {Entity} from "../entropy-engine/1.0";

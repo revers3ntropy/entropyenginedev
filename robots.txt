@@ -1,6 +1,0 @@
-User-agent: *
-Disallow: /server/
-Disallow: /libraries/
-Disallow: /node_modules/
-Disallow: /svg/
-Disallow: /templates/

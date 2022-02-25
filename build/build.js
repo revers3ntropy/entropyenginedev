@@ -38,22 +38,11 @@ if (process.argv.indexOf('--silent') !== -1) {
 
 let MAIN = '';
 
-async function cpServer () {
+async function buildServer () {
 	const start = now();
 
-	const paths = fs.readdirSync(p.resolve('./server/'));
-	const distPath = p.resolve(`./dist/server/`);
-
-	for (const path of paths) {
-		const absPath = p.join(p.resolve('./server/'), path);
-		if (
-			fs.statSync(absPath).isDirectory() ||
-			path.split('.').pop() !== 'py'
-		) {
-			continue;
-		}
-		await run(`cp ${absPath} ${distPath}`);
-	}
+	await run ('cd server; webkit --config webkit.config.js > log.txt')
+		.catch(_ => throw new Error('failed to build server: ' + fs.readFileSync('./server/log.txt').toString()));
 
 	timings[`Build Node Server`] = now() - start;
 }
@@ -115,7 +104,7 @@ async function buildWebpack () {
 	const start = now();
 
 	await run('webpack --config webpack.config.js > webpack_log.txt')
-		.catch(e => {
+		.catch(_ => {
 			console.log(chalk.red`Failed to run webpack:`,
 				String(fs.readFileSync('webpack_log.txt')));
 		});
@@ -136,12 +125,13 @@ async function main () {
 		if (!QUIET) console.log('Building WebPack...');
 		await buildWebpack().catch(handleError);
 
-		await buildHTML('', QUIET, MAIN, timings, true).catch(handleError);
+		await buildHTML('', QUIET, MAIN, timings, true)
+			.catch(handleError);
 	}
 
 	if (process.argv.indexOf('--no-backend') === -1) {
 		if (!QUIET) console.log('Building Node Server...');
-		await cpServer().catch(handleError);
+		await buildServer().catch(handleError);
 	}
 
 	if (process.argv.indexOf('--no-upload') === -1) {

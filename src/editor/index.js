@@ -5,7 +5,7 @@ import {initialiseScenes} from '../entropy-engine/1.0/JSONprocessor.js';
 import {cullString} from '../entropy-engine/1.0/util/general.js';
 import {init} from "../entropy-engine/1.0/scripting/EEScript";
 
-import {genCacheBust, mustBeSignedIn} from '../util.js';
+import {genCacheBust, mustBeSignedIn} from '../util.ts';
 import {request} from '../request.ts';
 
 import "./builder.js";

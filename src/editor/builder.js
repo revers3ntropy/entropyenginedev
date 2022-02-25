@@ -1,7 +1,7 @@
 import {Entity, Scene} from "../entropy-engine/1.0";
 import {scripts, projectID, scriptURLS, apiToken, state} from "./state.js";
 import {request} from '../request.ts';
-import {sleep} from '../util.js';
+import {sleep} from '../util.ts';
 
 // needed for it to actually import and run this script
 export const myExport = 0;

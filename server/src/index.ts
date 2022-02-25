@@ -1,12 +1,12 @@
-const https = require("https"),
-    fs = require("fs");
+import * as https from "https";
+import * as fs from "fs";
+import * as http from "http";
+import { IncomingMessage, ServerResponse } from "http";
 
-const accounts = require('./accounts'),
-      projects = require('./projects'),
-      misc = require('./misc'),
-      bugs = require('./bugTracking'),
-      util = require('./util');
-const http = require("http");
+import * as accounts from './accounts';
+import * as projects from './projects';
+import * as misc from './misc';
+import * as util from './util';
 
 const DEV = process.argv.indexOf('--dev') !== -1;
 
@@ -21,31 +21,32 @@ if (!DEV) {
 
 const PORT = 50_001;
 
-/**
- * All function take
-        url: string[] - array of parts of the URL. 
-            e.g. path/to/something passed as ['path', 'to', 'something']
-            e.g. ['get-id']
-        req: any - the node request
-        res: any - the node response
-        data: object - the JSON passed through
- */
-const handlers = {
-    'robots.text': ({res}) => {
+export type Handler = (props: {
+    url: string[],
+    req: any,
+    res: any,
+    body: {[k: string]: any},
+    token?: {
+        user: number,
+        project: number
+    }
+}) => Promise<void>;
+
+const handlers: {[k: string]: Handler} = {
+    'robots.text': async ({res}) => {
         // block all bots from backend entirely
         res.end(`
             User-agent: *
             Disallow: /
         `);
     },
-    'favicon.ico': () => 0,
+    'favicon.ico': async () => void 0,
 
     // Debug
     'ping': ({res}) => res.end('{"ok": "true"}'),
-    'log': ({body}) => console.log(body),
     
     // accounts
-    'delete-account': accounts.delete,
+    'delete-account': accounts.deleteAccount,
     'new-user': accounts.newUser,
     'change-user': accounts.changeData,
     'get-id': accounts.id,
@@ -55,17 +56,10 @@ const handlers = {
     'user-exists': accounts.userExists,
     
     'viewed-project': projects.viewed,
-    'report': misc.report,
-    'get-report': misc.getReport,
     'comment': misc.comment,
     'get-comments': misc.getComments,
     'get-comment': misc.getComment,
     'delete-comment': misc.deleteComment,
-
-    // bug tracker
-    'get-bug': bugs.getBug,
-    'get-bugs': bugs.getBugs,
-    'report-bug': bugs.reportBug,
     
     // projects
     'new-project': projects.createProject,
@@ -104,9 +98,14 @@ const rawPaths = [
     'all-contributions'
 ];
 
-async function serverResponse (req, res) {
+async function serverResponse (req: IncomingMessage, res: ServerResponse) {
 
     res.setHeader("Access-Control-Allow-Origin", "*");
+
+    if (!req.url) {
+        console.error('no url on request!');
+        return;
+    }
 
     try {
         const url = req.url.split('/');
@@ -123,7 +122,7 @@ async function serverResponse (req, res) {
         if (rawPaths.includes(url[1])) {
             url.shift();
             const handler = handlers[url[0]];
-            handler({url, req, res});
+            await handler({url, req, res, body: {}});
             return;
         }
 
@@ -139,7 +138,7 @@ async function serverResponse (req, res) {
 
             res.writeHead(200);
 
-            let body = {};
+            let body: any = {};
             try {
                 body = JSON.parse(data ?? '{}');
             } catch (E) {
@@ -152,7 +151,7 @@ async function serverResponse (req, res) {
             url.shift();
 
             const handler = handlers[url[0]];
-            let token = body.token;
+            let token = body['token'];
 
             handler({url, res, body, req, token});
         });
