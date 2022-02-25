@@ -33,6 +33,7 @@ module.exports = {
 	plugins: [
 		new MiniCssExtractPlugin()
 	],
+	/*
 	devServer: {
 		static: {
 		  directory: path.join(__dirname, 'dist/public_html'),
@@ -40,4 +41,6 @@ module.exports = {
 		compress: true,
 		port: 9000,
 	},
+
+	 */
 };

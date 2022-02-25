@@ -12,7 +12,9 @@
         "noEmit": false,
         "removeComments": true,
         "typeRoots": [
-            "./types/types.d.ts"
+            "./types/types.d.ts",
+            "./node_modules/@types",
+            "./node_modules/@types/matter-js/index.d.ts"
         ]
     },
     "exclude": ["node_modules"]

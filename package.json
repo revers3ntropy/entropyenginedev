@@ -12,9 +12,11 @@
     },
     "homepage": "https://entropyengine.dev",
     "dependencies": {
+        "@types/chartist": "^0.11.1",
         "@types/jquery": "^3.5.13",
         "axios": "^0.26.0",
         "chalk": "4.1.2",
+        "chartist": "^0.11.4",
         "chokidar": "^3.5.3",
         "css-loader": "^6.6.0",
         "entropy-engine": "^0.0.1",

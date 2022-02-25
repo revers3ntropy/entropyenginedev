@@ -1,6 +1,4 @@
-import {} from '../../types/types';
-
-const projectID = urlParam('p');
+let projectID = urlParam('p');
 
 const backButton = <null|HTMLLinkElement>document.getElementById('back');
 if (backButton) {

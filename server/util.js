@@ -1,4 +1,4 @@
-const fastFolderSize = require('./node_modules/fast-folder-size');
+const fastFolderSize = require('fast-folder-size');
 
 /**
  * Gets the total recursive size of a folder from this location

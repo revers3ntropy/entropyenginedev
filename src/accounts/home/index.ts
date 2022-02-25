@@ -1,5 +1,3 @@
-import {} from '../../../types/types';
-
 const toFill = $('#links');
 
 validID(localStorage.id)

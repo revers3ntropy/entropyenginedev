@@ -1,0 +1,46 @@
+#podium {
+    display: grid;
+}
+
+#title {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 40px;
+}
+
+#latest-contributor {
+    border: 1px solid #7d7d7d;
+    margin: 10px;
+    border-radius: 10px;
+    background-color: #555555;
+    grid-column: 1/1;
+    text-align: center;
+    padding: 10px;
+}
+
+#contributor-podium {
+    border: 1px solid #7d7d7d;
+    background-color: #444444;
+    border-radius: 10px;
+    grid-column: 2/4;
+    text-align: center;
+    display: grid;
+    margin: 5px 10px 5px 5px;
+}
+
+#all-contributors {
+    text-align: center;
+    display: grid;
+    grid-auto-rows: auto;
+    grid-gap: 1rem;
+    grid-template-columns: repeat(auto-fill, 32%);
+    margin: 10px;
+}
+
+.chart {
+    height: 300px;
+    width: 500px;
+    background-color: #a7a7a7;
+    margin: 0 8px 8px 8px;
+    border-radius: 5px;
+}

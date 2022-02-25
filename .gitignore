@@ -9,8 +9,6 @@
 **/node_modules/
 /node_modules/
 
-src/projects/
-src/svg/
 /server/*.js
 /server/**/*.js
 
@@ -21,3 +19,6 @@ src/svg/
 /webpack_log.txt
 /ts_less_log.txt
 /server/log.txt
+
+/dist/public_html/
+/server/package-lock.json

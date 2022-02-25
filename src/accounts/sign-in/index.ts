@@ -1,5 +1,3 @@
-import {} from '../../../types/types';
-
 validID(localStorage.id).then(valid => {
     if (valid) {
         window.location.href = 'https://entropyengine.dev/accounts';

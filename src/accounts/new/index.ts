@@ -1,5 +1,3 @@
-import {} from '../../../types/types';
-
 let error = $('#error');
 
 const illegalChars = '<>/-"\\`\'?&=';

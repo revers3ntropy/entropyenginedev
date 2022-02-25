@@ -1,7 +1,5 @@
-import {} from '../../../types/types';
-
-const error = $('#error');
-const nameElement = $('#name');
+error = $('#error');
+nameElement = $('#name');
 
 document.addEventListener('keypress', () => {
     nameElement.val(nameElement.val() || '');

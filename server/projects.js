@@ -2,12 +2,12 @@ const query = require('./sql').query,
     {clean} = require("./util"),
     fs = require('fs'),
     path = require('path'),
-    fse = require('./node_modules/fs-extra'),
-    mv = require('./node_modules/mv'),
+    fse = require('fs-extra'),
+    mv = require('mv'),
     util = require('./util.js'),
-    formidable = require('./node_modules/formidable');
+    formidable = require('formidable');
 
-require('./node_modules/dotenv').config();
+require('dotenv').config();
 
 const idMax = parseInt(process.env.SEC_IDMAX);
 

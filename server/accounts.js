@@ -1,6 +1,6 @@
 const {clean} = require("./util");
 const query = require('./sql').query;
-const dotenv = require('./node_modules/dotenv').config();
+const dotenv = require('dotenv').config();
 
 const saltCharacters = process.env.SEC_SALTCHARS,
       pepper = process.env.SEC_PEPPER,

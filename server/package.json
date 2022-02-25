@@ -1,0 +1,11 @@
+{
+  "name": "entropy-engine-server",
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "fast-folder-size": "^1.6.1",
+    "formidable": "^2.0.1",
+    "fs-extra": "^10.0.1",
+    "mv": "^2.1.1",
+    "mysql": "^2.18.1"
+  }
+}

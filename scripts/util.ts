@@ -42,7 +42,7 @@ mustBeSignedIn = async (whenSignedIn, whenNotSignedIn) => {
     whenSignedIn();
 }
 
-const queryString = window.location.search;
+let queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 
 /**

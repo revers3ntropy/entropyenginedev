@@ -1,6 +1,3 @@
-import {} from '../../types/types';
-import {} from '../../node_modules/@types/jquery';
-
 $('#userID').html(localStorage.id || '<your-user-id>');
 
 if (!localStorage.id) {

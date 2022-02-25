@@ -1,8 +1,4 @@
-import {} from '../../types/types';
-import {} from '../../node_modules/@types/jquery';
-import {} from '../../node_modules/@types/matter-js';
-
-import * as ee from '../../node_modules/entropy-engine/src';
+//import * as ee from '../../node_modules/entropy-engine/src';
 
 import {comment as commentComponent} from '../../scripts/globalComponents';
 
@@ -34,7 +30,7 @@ request ('has-build', apiToken)
         $('#contributors-link').attr('href',  (_, v) => v + apiToken.project);
 
         // run the actual game - use cache-bust to get the most recent version
-        await ee.runFromJSON(`../projects/${apiToken.project}/build/index.json?cache-bust=${cacheBust}`);
+        //await ee.runFromJSON(`../projects/${apiToken.project}/build/index.json?cache-bust=${cacheBust}`);
 
         const owner = await request('project-owner', apiToken);
         if (owner.totalContributors-1 < 1) {

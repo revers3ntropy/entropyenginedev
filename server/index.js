@@ -6,11 +6,18 @@ const accounts = require('./accounts'),
       misc = require('./misc'),
       bugs = require('./bugTracking'),
       util = require('./util');
+const http = require("http");
 
-const options = {
-    key: fs.readFileSync("./privatekey.pem"),
-    cert: fs.readFileSync("./certificate.pem")
-};
+const DEV = process.argv.indexOf('--dev') !== -1;
+
+let options = {};
+
+if (!DEV) {
+    options = {
+        key: fs.readFileSync("./privatekey.pem"),
+        cert: fs.readFileSync("./certificate.pem")
+    };
+}
 
 const PORT = 50_001;
 
@@ -99,7 +106,7 @@ const rawPaths = [
 
 async function serverResponse (req, res) {
 
-    res.setHeader("Access-Control-Allow-Origin", "https://entropyengine.dev");
+    res.setHeader("Access-Control-Allow-Origin", "*");
 
     try {
         const url = req.url.split('/');
@@ -155,7 +162,14 @@ async function serverResponse (req, res) {
 
 }
 
-https.createServer(options, serverResponse)
-    .listen(PORT, () => {
-        console.log(`Server started on port ` + PORT);
-    });
+if (DEV) {
+    http.createServer(options, serverResponse)
+        .listen(PORT, () => {
+            console.log(`DEV: Server started on port ` + PORT);
+        });
+} else {
+    https.createServer(options, serverResponse)
+        .listen(PORT, () => {
+            console.log(`PROD: Server started on port ` + PORT);
+        });
+}

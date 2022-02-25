@@ -1,5 +1,5 @@
-const mysql = require('./node_modules/mysql');
-const dotenv = require('./node_modules/dotenv').config();
+const mysql = require('mysql');
+const dotenv = require('dotenv').config();
 
 const dbConfig = {
     host     : process.env.DB_HOST,
@@ -18,7 +18,7 @@ let hasConnectedSQL = false;
  *   Queries the mySQL database 'entropye_ngine_users'
  *
  *   @param {string} sql The SQL query
- *   @param {function} then Called when the query has been completed, passes the result of the query
+ *   @param {function | undefined} then Called when the query has been completed, passes the result of the query
  *   @returns {boolean} Has connected yet
  */
 exports.query = (sql, then) => {
@@ -27,7 +27,9 @@ exports.query = (sql, then) => {
     con.query(sql, (err, result) => {
         if (err) console.error(err);
 
-        if (then) then(result);
+        if (then) {
+            then(result);
+        }
     });
 
     return true;

@@ -1,5 +1,3 @@
-import {} from '../../../types/types';
-
 const cb = urlParam('cb');
 
 window.goToCB = () => {

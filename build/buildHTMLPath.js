@@ -34,6 +34,10 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 
 	let subDirTime = 0;
 
+	if (paths.indexOf('index.html') === -1) {
+		return now() - start - subDirTime;
+	}
+
 	for (const path of paths) {
 		if (path[path.length-1] === '~') {
 			// is a backup file that will get deleted automatically by IDE
@@ -71,8 +75,9 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 		} else if (path === 'index.ts') {
 			const start = now();
 
-			const webpackConfigPath = p.join(p.basename(fullPath), 'webpack.config.js');
-			const logPath = p.join(p.basename(fullPath), 'log.txt');
+
+			const webpackConfigPath = p.join(p.resolve(p.dirname(fullPath)), 'webpack.config.js');
+			const logPath = p.join(p.resolve(p.dirname(fullPath)), 'log.txt');
 
 			fs.writeFileSync(logPath, '');
 
@@ -81,7 +86,7 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 				const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 				
 				module.exports = {
-					entry: './index.ts',
+					entry: '${p.resolve(fullPath)}',
 					output: {
 						filename: 'bundle.js',
 						path: path.resolve(__dirname, ''),
@@ -98,16 +103,14 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 									'style-loader',
 									'css-loader',
 									'less-loader'
-								],
-								exclude: /node_modules|src/,
+								]
 							},
 							{
 								test: /\\.ts$/,
 								loader: 'ts-loader',
 								options: {
 									configFile: "${p.resolve('./tsconfig.json')}"
-								},
-								exclude: /node_modules|src/,
+								}
 							},
 						]
 					},
@@ -117,16 +120,28 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 				};
 			`);
 
-			await run (`--config ${webpackConfigPath} > ${logPath}`)
+
+
+			await run (`webpack --config ${webpackConfigPath} > ${logPath}`)
 				.catch(e => {
 					console.log(chalk.red`Failed to compile & bundle @ ${distPath}: \n`,
-						fs.readFileSync('log.txt').toString());
+						fs.readFileSync(logPath).toString());
+
+					if (!fs.readFileSync(logPath).toString()) {
+						console.log('ERROR NOT FOUND. GENERATED ERROR: ', e);
+						console.log('WEBPACK CONFIG: ');
+						console.log(fs.readFileSync(webpackConfigPath).toString());
+					}
+					fs.unlinkSync(webpackConfigPath);
+					fs.unlinkSync(logPath);
 					throw new Error();
 				});
 
-			const bundlePath = p.join(p.basename(fullPath), 'bundle.js');
+			const bundlePath = p.join(p.dirname(fullPath), 'bundle.js');
 			if (!fs.existsSync(bundlePath)) {
 				console.log(chalk.red`FILE '${bundlePath}' REQUIRED!`);
+				fs.unlinkSync(webpackConfigPath);
+				fs.unlinkSync(logPath);
 				throw new Error();
 			}
 

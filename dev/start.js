@@ -99,7 +99,7 @@ async function fileWatcher () {
 		// remove src/ from stat of path and remove the actual filename
 		p = path.dirname(p.substring(4));
 		console.log('File changed in path ' + p);
-		buildHTML(p, true, true, MAIN, {}, false);
+		buildHTML(p, true, MAIN, {}, false);
 	});
 }
 
@@ -112,7 +112,7 @@ async function webpackBundleWatcher () {
 		console.log('change in ' + p + '. Rebuilding WebPack Bundle...')
 		await buildWebpack();
 		console.log('Rebuilding with new bundle...');
-		await buildHTML('', true, true, MAIN, {}, true);
+		await buildHTML('', true, MAIN, {}, true);
 		console.log('Finished rebuilding Webpack Bundle');
 	});
 }
