@@ -1,22 +1,21 @@
-"use strict";
-
-import {urlParam} from "../util.ts";
-import entropyEngine from "../entropy-engine/1.0/index.ts";
+import entropyEngine from "entropy-engine/src";
 import {reRender} from "./renderer.js";
-import {reloadScriptsOnEntities} from "./scripts.js";
-import {global} from "../entropy-engine/1.0/scripting/EEScript/constants.js";
-import {APIToken} from "../request.ts";
-import {v2} from "../entropy-engine";
+import {reloadScriptsOnEntities} from "./scripts";
+import {global} from "entropy-script/src";
+import {v2} from "entropy-engine/src";
+import { Entity } from "entropy-engine/src";
 
 export let globalEESContext = global;
 
 export const projectID = urlParam('p');
 
-export const apiToken = new APIToken({
-	project: projectID
-});
+if (!projectID) {
+	throw 'no project id specified';
+}
 
-window.parseBool = string => string === 'true';
+apiToken.project = parseInt(projectID);
+
+window.parseBool = (s: string) => s === 'true';
 
 export const canvasID = 'myCanvas';
 export const canvas = document.getElementById(canvasID);
@@ -59,7 +58,17 @@ export const sceneSettings = window.sceneSettings;
 window.comments = 5;
 export const comments = window.comments;
 
-export const state = {
+export const state: {
+	dragging: boolean,
+	running: boolean,
+	sceneCamera: Entity | null,
+	selectedEntity: Entity | null,
+	window: any,
+	eeReturns: any,
+	currentScript: string,
+	dragStart: v2,
+	dragEnd: v2,
+} = {
 	window: parseInt(localStorage.statewindow) ?? sceneView,
 	eeReturns: {},
 	currentScript: localStorage.currentScript ?? '',
@@ -71,7 +80,7 @@ export const state = {
 	running: false
 };
 
-export const setSelected = sprite => state.selectedEntity = sprite;
+export const setSelected = (sprite: Entity) => state.selectedEntity = sprite;
 
 export const setState = newState => {
 	if (state.window === newState) return;

@@ -1,5 +1,5 @@
 import {state, setSelected} from "../state.js";
-import {Scene, Entity, Transform} from "../../entropy-engine/1.0";
+import {Scene, Entity, Transform} from "../entropy-engine/src";
 import {reRender, rightClickOption, setRightClick} from "../renderer.js";
 import {setRightClickAddEntityMenu} from "./rightClickCreateMenu.js";
 

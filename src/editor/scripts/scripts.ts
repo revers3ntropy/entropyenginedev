@@ -5,10 +5,10 @@ import {reRender} from "./renderer.js";
 import {genCacheBust} from "../util.ts";
 import {request} from "../request.ts";
 import {nameFromScriptURL} from "../util.ts";
-import {run} from "../entropy-engine/1.0/scripting/EEScript";
-import {ESBehaviourInstance} from "../entropy-engine/1.0/scripting/EEScript/ESBehaviour.js";
-import {Entity} from "../entropy-engine/1.0";
-import {ESError} from "../entropy-engine/1.0/scripting/EEScript/errors.js";
+import {run} from "entropy-engine/src/scripting/EEScript";
+import {ESBehaviourInstance} from "entropy-engine/src/scripting/EEScript/ESBehaviour.js";
+import {Entity} from "entropy-engine/src";
+import {ESError} from "entropy-engine/src/scripting/EEScript/errors.js";
 
 export const scriptTemplate = async scriptName => {
 	let template = await fetch('https://entropyengine.dev/templates/script.txt?c=' + genCacheBust());

@@ -12,6 +12,3 @@
 /.idea/
 **/node_modules/
 /node_modules/
-
-/dist/public_html/
-/dist/server/

@@ -1,4 +1,4 @@
-import {Entity, Scene} from "../entropy-engine/1.0";
+import {Entity, Scene} from "entropy-engine/src";
 import {scripts, projectID, scriptURLS, apiToken, state} from "./state.js";
 import {request} from '../request.ts';
 import {sleep} from '../util.ts';

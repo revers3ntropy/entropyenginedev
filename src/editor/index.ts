@@ -1,21 +1,16 @@
-"use strict";
-import entropyEngine, * as ee from "../entropy-engine/1.0";
-import {Entity, entitiesFromJSON} from "../entropy-engine/1.0";
-import {initialiseScenes} from '../entropy-engine/1.0/JSONprocessor.js';
-import {cullString} from '../entropy-engine/1.0/util/general.js';
-import {init} from "../entropy-engine/1.0/scripting/EEScript";
-
-import {genCacheBust, mustBeSignedIn} from '../util.ts';
-import {request} from '../request.ts';
+import entropyEngine, * as ee from "entropy-engine/src";
+import {Entity, entitiesFromJSON} from "entropy-engine/src";
+import {initialiseScenes} from 'entropy-engine/src/JSONprocessor';
+import {cullString} from 'entropy-engine/src/util/general';
 
 import "./builder.js";
 import './events.js';
-import {loadScripts, reloadScriptsOnEntities} from "./scripts.js";
+import {loadScripts, reloadScriptsOnEntities} from "./scripts/scripts";
 import './state.js';
-import {state, scripts, projectID, setSelected, apiToken} from './state.js';
+import {state, scripts, projectID, setSelected} from './scripts/state.js';
 
-import './updatePing.js';
-import './eeclient.js';
+import './updatePing';
+import './eeclient';
 
 // cache busting
 const scriptFetchHeaders = new Headers();
@@ -27,8 +22,7 @@ const scriptFetchInit = {
     headers: scriptFetchHeaders,
 };
 
-async function initFromFiles (id) {
-    init();
+async function initFromFiles (id: number) {
     const path = `../projects/${id}`;
     const config = {};
 
@@ -63,7 +57,7 @@ async function initFromFiles (id) {
     ee.Scene.active = parseInt(sessionStorage.sceneID) || 0;
 }
 
-async function checkCredentials(callback) {
+async function checkCredentials (callback) {
     mustBeSignedIn(async () => {
         const accessLevel = (await request('/get-project-access', apiToken)).accessLevel;
 
@@ -79,7 +73,7 @@ async function checkCredentials(callback) {
     });
 }
 
-checkCredentials(async accessLevel => {
+checkCredentials (async accessLevel => {
     // it is safe now
 
     await loadScripts();

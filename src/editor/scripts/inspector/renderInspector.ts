@@ -13,7 +13,7 @@ import {
     CircleRenderer, ImageRenderer2D, RectRenderer,
     GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox,
     Camera
-} from '../../entropy-engine/1.0';
+} from '../entropy-engine/src';
 
 Script;
 

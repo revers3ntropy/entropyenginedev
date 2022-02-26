@@ -9,9 +9,9 @@ import {
 } from "./state.js";
 
 import {reRender, reRenderCanvas, reRenderCanvasDebug, reRenderSceneToolbar} from "./renderer.js";
-import {rect} from "../entropy-engine/1.0/systems/rendering/basicShapes.js";
-import {v2, Entity, Scene, Camera} from '../entropy-engine/1.0';
-import {getMousePos} from "../entropy-engine/1.0/input.js";
+import {rect} from "entropy-engine/src/systems/rendering/basicShapes.js";
+import {v2, Entity, Scene, Camera} from 'entropy-engine/src';
+import {getMousePos} from "entropy-engine/src/input.js";
 import {reloadScriptsOnEntities} from "./scripts.js";
 
 window.addEventListener('click', () => {
