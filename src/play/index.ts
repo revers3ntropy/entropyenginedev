@@ -2,7 +2,7 @@ import * as ee from '../../node_modules/entropy-engine/src';
 
 import {comment as commentComponent} from '../../scripts/globalComponents';
 
-apiToken.project = parseInt(urlParam('p') || '0');
+window.apiToken.project = parseInt(window.urlParam('p') || '0');
 
 const cacheBust = Math.floor(Math.random() * 10**5);
 
@@ -14,25 +14,25 @@ document.addEventListener('keypress', evt => evt.preventDefault());
 document.addEventListener('keydown', evt => evt.preventDefault());
 document.addEventListener('keyup', evt => evt.preventDefault());
 
-request ('has-build', apiToken)
+window.request ('has-build', window.apiToken)
     .then (async beenBuilt => {
         if (!beenBuilt.built) {
             notAvailable(beenBuilt);
             return;
         }
 
-        const access = await request('/get-project-access', apiToken);
+        const access = await window.request('/get-project-access', window.apiToken);
         if (access.accessLevel < 1) {
             notAvailable(access);
             return;
         }
 
-        $('#contributors-link').attr('href',  (_, v) => v + apiToken.project);
+        $('#contributors-link').attr('href',  (_, v) => v + window.apiToken.project);
 
         // run the actual game - use cache-bust to get the most recent version
-        await ee.runFromJSON(`../projects/${apiToken.project}/build/index.json?cache-bust=${cacheBust}`);
+        await ee.runFromJSON(`../projects/${window.apiToken.project}/build/index.json?cache-bust=${cacheBust}`);
 
-        const owner = await request('project-owner', apiToken);
+        const owner = await window.request('project-owner', window.apiToken);
         if (owner.totalContributors-1 < 1) {
             $('#project-owner').html(owner.owner);
         }
@@ -42,9 +42,9 @@ request ('has-build', apiToken)
             `);
         }
 
-        request('viewed-project', apiToken);
+        window.request('viewed-project', window.apiToken);
 
-        const projectViewsData = await request('/project-views', apiToken);
+        const projectViewsData = await window.request('project-views', window.apiToken);
         $('#views').html(`
             <span style="margin-right: 10px">
                 ${projectViewsData.unique} viewers
@@ -56,7 +56,7 @@ request ('has-build', apiToken)
         `);
 
         async function refreshComments (username: string) {
-            const comments = await request('get-comments', apiToken, {
+            const comments = await window.request('get-comments', window.apiToken, {
                 public: true
             });
             $('#num-comments').html(comments.length);
@@ -78,7 +78,7 @@ request ('has-build', apiToken)
                     $(`#comment-${comment._id}-menu`).hide();
                     $(`#comment-${comment._id}`).hide();
 
-                    await request('delete-comment', apiToken, {
+                    await window.request('delete-comment', window.apiToken, {
                         commentID: comment._id
                     });
                     refreshComments(username);
@@ -89,7 +89,7 @@ request ('has-build', apiToken)
 
         const addMessage = $("#add-comment");
 
-        const username = await request('get-username', apiToken);
+        const username = await window.request('get-username', window.apiToken);
 
         addMessage.keyup(async event => {
             if (event.keyCode !== 13) return;
@@ -97,7 +97,7 @@ request ('has-build', apiToken)
             const content = addMessage.val();
             addMessage.val('');
 
-            await request('comment', apiToken, {
+            await window.request('comment', window.apiToken, {
                 content,
                 public: true
             });

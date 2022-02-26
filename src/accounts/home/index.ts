@@ -1,6 +1,6 @@
 const toFill = $('#links');
 
-validID(localStorage.id)
+window.validID(localStorage.id)
     .then(signedIn => {
         if (signedIn) {
             toFill.html(`
@@ -23,7 +23,7 @@ validID(localStorage.id)
         }
     });
 
-request ('top-projects-by-views', apiToken)
+window.request ('top-projects-by-views', window.apiToken)
     .then(async data => {
         for (const project of data) {
             const projectID = project.id;
@@ -32,11 +32,11 @@ request ('top-projects-by-views', apiToken)
                 project: projectID,
             };
 
-            const name = (await request('/get-project-name', token)).name;
+            const name = (await window.request('get-project-name', token)).name;
 
-            const owner = await request('/project-owner', token);
+            const owner = await window.request('project-owner', token);
 
-            const views = await request('/project-views', token);
+            const views = await window.request('project-views', token);
 
             $('#top-projects').append(`
                     <div class="project" id="project-${projectID}">
@@ -82,12 +82,12 @@ request ('top-projects-by-views', apiToken)
 
 
 function recentProjects () {
-    request('get-project-names', apiToken)
+    window.request('get-project-names', window.apiToken)
         .then(async projectNames => {
 
             const projectsDiv = $('#recent-projects');
 
-            const myUsername = (await request('/get-username', apiToken)).username;
+            const myUsername = (await window.request('/get-username', window.apiToken)).username;
 
             let i = 0;
             for (let projectName of projectNames) {
@@ -121,13 +121,13 @@ function recentProjects () {
                         <div id="other-people-${projectName._id}"></div>
     
                         <div style="font-size: 12px; text-align: right; margin-right: 2px">
-                            ${unixTimeAgo(projectName.latest)} ago
+                            ${window.unixTimeAgo(projectName.latest)} ago
                         </div>
                      </div>
     
                     `);
 
-                const editors = await request(`/get-project-editors`, {
+                const editors = await window.request(`/get-project-editors`, {
                     project: projectName._id
                 });
 

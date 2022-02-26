@@ -35,7 +35,7 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 		return now() - start - subDirTime;
 	}
 
-	if (!QUIET) console.log(`Building HTML at '${dir}'`);
+	if (!QUIET) console.log(`Building '${dir}'`);
 
 	for (const path of paths) {
 		if (path[path.length-1] === '~') {
@@ -74,7 +74,6 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 		} else if (path === 'index.ts') {
 			const start = now();
 
-
 			const webpackConfigPath = p.join(p.resolve(p.dirname(fullPath)), 'webpack.config.js');
 			const logPath = p.join(p.resolve(p.dirname(fullPath)), 'log.txt');
 
@@ -109,7 +108,7 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 								loader: 'ts-loader',
 								options: {
 									configFile: "${p.resolve('./tsconfig.json')}",
-									'allowTsInNodeModules': true
+									allowTsInNodeModules: true
 								}
 							},
 						]
@@ -119,8 +118,6 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 					]
 				};
 			`);
-
-
 
 			await run (`webpack --config ${webpackConfigPath} > ${logPath}`)
 				.catch(e => {
@@ -145,11 +142,15 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 				throw new Error();
 			}
 
-			const fileContent = String(fs.readFileSync(bundlePath));
+			const fileContent = fs.readFileSync(bundlePath).toString();
 
 			fs.unlinkSync(bundlePath);
 			fs.unlinkSync(webpackConfigPath);
 			fs.unlinkSync(logPath);
+
+			if (fs.existsSync(p.join(p.dirname(fullPath), 'bundle.js.LICENSE.txt'))) {
+				fs.rmSync(p.join(p.dirname(fullPath), 'bundle.js.LICENSE.txt'))
+			}
 
 			js = '<script defer>' + fileContent + '</script>';
 			timings['Compile TS'] += now() - start;

@@ -1,9 +1,8 @@
-import {apiToken, projectID, state} from '../state.js';
-import {request} from '../../request.ts';
-import {reRender, rightClickOption, setRightClick} from "../renderer.js";
-import {cullString} from 'entropy-engine/src/util/general.js';
+import {projectID, state} from '../state';
+import {reRender, rightClickOption, setRightClick} from "../renderer";
+import {cullString} from 'entropy-engine/src/util/general';
 
-const _asset_ = (fileName) => `
+const _asset_ = (fileName: string) => `
 
 	<div id="asset${fileName}" class="asset-container">
 		<div style="
@@ -28,15 +27,17 @@ const _asset_ = (fileName) => `
 
 `;
 
-export const renderAssets = async div => {
-	const projectAssets = await request('/get-assets', apiToken);
+export const renderAssets = async (div: JQuery) => {
+	if (!state.selectedEntity) throw 'expected a selected entity';
+
+	const projectAssets = await window.request('get-assets', window.apiToken);
 	let assetsHTML = '';
 
 	for (const asset of projectAssets) {
 		assetsHTML += _asset_(asset.fileName);
 	}
 
-	const projectSize = await request('/folder-size', apiToken, {
+	const projectSize = await window.request('folder-size', window.apiToken, {
 		path: `../projects/${projectID}/`
 	});
 
@@ -86,7 +87,7 @@ export const renderAssets = async div => {
 
 		setRightClick(`asset${file}`, state.selectedEntity, `
 			${rightClickOption(`delete_asset_${file}`, () => {
-				request('/delete-asset', apiToken, {
+			window.request('delete-asset', window.apiToken, {
 					fileName: file
 				}).then(value => {
 					// once it has actually been deleted, then re-render

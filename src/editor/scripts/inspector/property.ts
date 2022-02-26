@@ -1,8 +1,9 @@
-import {Scene, v2, v3} from "../entropy-engine/src";
-import {reRender} from "../renderer.js";
-import {state} from '../state.js';
+import {reRender} from "../renderer";
+import {state} from '../state';
 
-function _colour_ (id, value, componentName) {
+import {Scene, v2, v3, colour} from "entropy-engine/src";
+
+function _colour_ (id: string, value: colour, componentName: string) {
 	return `
 		<input 
 			type="color" 
@@ -13,7 +14,7 @@ function _colour_ (id, value, componentName) {
 	`
 }
 
-function _transform_ (id, value, componentName, argumentChain, key, canBeSelf=false) {
+function _transform_ (id: string, value: string, componentName: string, argumentChain: string, key: string, canBeSelf=false) {
 	let showValue = `
 		<select
 			id="${id}"
@@ -58,7 +59,7 @@ function _transform_ (id, value, componentName, argumentChain, key, canBeSelf=fa
 	return showValue;
 }
 
-function _array_ (id, value, type=typeof value[0]) {
+function _array_ (id: string, value: any[], type=typeof value[0]) {
 
 	window[`addElement${id}`] = () => {
 		let defaultValue;
@@ -88,14 +89,16 @@ function _array_ (id, value, type=typeof value[0]) {
 	};
 
 	window[`removeElement${id}`] = () => {
-		object[key] = value.splice(parseInt($(`removeElementIndex${id}`).val()), 1);
+		const index = $(`removeElementIndex${id}`).val();
+		if (!index) throw 'no index to splice at';
+		value.splice(parseInt(index.toString()), 1);
 		reRender();
 	};
 
 	let showValue = `<div id="${id}" class="array">(${value.length})`;
 
 	for (let i = 0; i < value.length; i++) {
-		showValue = `${showValue} <div>${_componentProperty_(value, i, i)}</div>`;
+		showValue = `${showValue} <div>${_componentProperty_(value, i.toString(), i.toString())}</div>`;
 	}
 
 	showValue += `
@@ -110,7 +113,7 @@ function _array_ (id, value, type=typeof value[0]) {
 	return showValue;
 }
 
-export const _componentProperty_ = (object, key, componentName, chain=[], showName=key, type=null) => {
+export const _componentProperty_ = (object: any, key: string, componentName: string, chain: (string|number)[]=[], showName=key, type: string | null = null) => {
 
 	let showValue = '';
 	let value = object[key];
@@ -133,8 +136,9 @@ export const _componentProperty_ = (object, key, componentName, chain=[], showNa
 	const id = `input-${key}-${componentName}-${chain.join('-')}`;
 
 	let argumentChain = '';
-	for (let prop of chain)
+	for (let prop of chain) {
 		argumentChain += `'${prop}', `;
+	}
 
 	switch (type) {
 

@@ -1,7 +1,5 @@
 import {Entity, Scene} from "entropy-engine/src";
-import {scripts, projectID, scriptURLS, apiToken, state} from "./state.js";
-import {request} from '../request.ts';
-import {sleep} from '../util.ts';
+import {scripts, scriptURLS} from "./state";
 
 // needed for it to actually import and run this script
 export const myExport = 0;
@@ -25,13 +23,13 @@ function buildScripts () {
 
 window.backgroundSave = async () => {
     // raw save, no visible changes
-    await request('/save-project', apiToken, {
+    await window.request('save-project', window.apiToken, {
         scripts: buildScripts(),
         json: `
         {
             "canvasID": "myCanvas",
             "entities": [
-                ${await buildSpritesJSON(projectID)}
+                ${await buildSpritesJSON()}
             ],
             "scenes": [
                 ${buildScenesJSON()}
@@ -41,9 +39,14 @@ window.backgroundSave = async () => {
     });
 };
 
-//setInterval(async () => {
-    //if (!state.running) await backgroundSave();
-//}, 1000);
+/*
+setInterval(async () => {
+    if (!state.running) {
+        await backgroundSave();
+    }
+}, 1000);
+//*/
+
 
 window.save = async () => {
     // save with the css changes for teh save button
@@ -59,15 +62,15 @@ window.save = async () => {
 
     const now = performance.now();
     if (now - startTime < minTime)
-        await sleep(minTime - (now-startTime));
+        await window.sleep(minTime - (now-startTime));
 
     saveButton.html('Saved');
-    await sleep(1000);
+    await window.sleep(1000);
     saveButton.prop('disabled', false);
     saveButton.html('Save');
 };
 
-const buildSpritesJSON = async projectID => {
+const buildSpritesJSON = async () => {
     const json = [];
     for (const sprite of Entity.entities) {
         const spriteJSON = sprite.json();

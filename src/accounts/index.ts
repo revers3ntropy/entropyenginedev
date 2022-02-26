@@ -1,16 +1,16 @@
-mustBeSignedIn(async () => {
+window.mustBeSignedIn(async () => {
     $(`#delete`).click(async () => {
-        signOut();
-        await request(`/delete-account/`, apiToken);
+        window.signOut();
+        await window.request(`delete-account`, window.apiToken);
         window.location.href = 'https://entropyengine.dev';
     });
 
     $(`#sign-out`).click(() => {
-        signOut();
+        window.signOut();
         window.location.href = 'https://entropyengine.dev';
     });
 
-    const details = await request(`/get-details`, apiToken);
+    const details = await window.request(`get-details`, window.apiToken);
 
     $(`#username`).html(details.username);
     $(`#email`).html(details.email);

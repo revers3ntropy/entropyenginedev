@@ -1,4 +1,4 @@
-validID(localStorage.id).then(valid => {
+window.validID(localStorage.id).then(valid => {
     if (valid) {
         window.location.href = 'https://entropyengine.dev/accounts';
         return;
@@ -8,12 +8,12 @@ validID(localStorage.id).then(valid => {
         const username = $('#username').val();
         const password = $('#password').val();
 
-        localStorage.id = (await request('get-id', undefined, {
+        localStorage.id = (await window.request('get-id', undefined, {
             username,
             password
         }))._id;
 
-        validID(localStorage.id)
+        window.validID(localStorage.id)
             .then(valid => {
                 if (valid) {
                     window.location.href = 'https://entropyengine.dev/accounts';

@@ -1,35 +1,41 @@
-import entropyEngine from "entropy-engine/src";
-import {reRender} from "./renderer.js";
+import {reRender} from "./renderer";
 import {reloadScriptsOnEntities} from "./scripts";
-import {global} from "entropy-script/src";
+
 import {v2} from "entropy-engine/src";
+import entropyEngine from "entropy-engine/src";
 import { Entity } from "entropy-engine/src";
 
-export let globalEESContext = global;
-
-export const projectID = urlParam('p');
+export const projectID = window.urlParam('p');
 
 if (!projectID) {
 	throw 'no project id specified';
 }
 
-apiToken.project = parseInt(projectID);
+window.apiToken.project = parseInt(projectID);
 
 window.parseBool = (s: string) => s === 'true';
 
 export const canvasID = 'myCanvas';
-export const canvas = document.getElementById(canvasID);
-export const ctx = canvas.getContext('2d');
+const c = document.getElementById(canvasID);
+if (!(c instanceof HTMLCanvasElement)) {
+	throw 'canvas not a canvas';
+}
+export const canvas = c;
+export const ctx = c.getContext('2d');
+
+if (!ctx) {
+	throw 'context is not defined';
+}
 
 export const { run } = entropyEngine({
 	canvasID
 });
 
 // scripts script
-export const scripts = {};
-export const scriptURLS = {};
+export const scripts: {[k: string]: string} = {};
+export const scriptURLS: {[k: string]: string} = {};
 
-window.switchScripts = script => {
+window.switchScripts = (script: string) => {
 	state.currentScript = script;
 	localStorage.currentScript = script;
 	reRender();
@@ -45,31 +51,33 @@ export function numScripts () {
 // global state
 
 // window state management
-window.sceneView = 0;
-export const sceneView = window.sceneView;
-window.scriptEditor = 1;
-export const scriptEditor = window.scriptEditor;
-window.gameView = 2;
-export const gameView = window.gameView;
-window.assets = 3;
-export const assets = window.assets;
-window.sceneSettings = 4;
-export const sceneSettings = window.sceneSettings;
-window.comments = 5;
-export const comments = window.comments;
+export enum states {
+	sceneView,
+	scriptEditor,
+	gameView,
+	assets,
+	sceneSettings,
+	comments
+}
+window.sceneView = states.sceneView;
+window.scriptEditor = states.scriptEditor;
+window.gameView = states.gameView;
+window.assets = states.assets;
+window.sceneSettings = states.sceneSettings;
+window.comments = states.comments;
 
 export const state: {
 	dragging: boolean,
 	running: boolean,
 	sceneCamera: Entity | null,
 	selectedEntity: Entity | null,
-	window: any,
+	window: states,
 	eeReturns: any,
 	currentScript: string,
 	dragStart: v2,
 	dragEnd: v2,
 } = {
-	window: parseInt(localStorage.statewindow) ?? sceneView,
+	window: parseInt(localStorage.statewindow) ?? states.sceneView,
 	eeReturns: {},
 	currentScript: localStorage.currentScript ?? '',
 	dragging: false,
@@ -80,9 +88,9 @@ export const state: {
 	running: false
 };
 
-export const setSelected = (sprite: Entity) => state.selectedEntity = sprite;
+export const setSelected = (sprite: Entity | null) => void (state.selectedEntity = sprite);
 
-export const setState = newState => {
+export const setState = (newState: states) => {
 	if (state.window === newState) return;
 
 	reloadScriptsOnEntities();
@@ -94,5 +102,5 @@ export const setState = newState => {
 window.setState = setState;
 
 // effects
-document.getElementById('share').href += projectID;
-document.getElementById('build-button').href += projectID;
+$('#share').attr('href', (_, v) => v + projectID);
+$('#build-button').attr('href', (_, v) => v + projectID);

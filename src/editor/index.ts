@@ -1,16 +1,16 @@
+import "./scripts/builder";
+import './scripts/events';
+import {loadScripts, reloadScriptsOnEntities} from "./scripts/scripts";
+import './scripts/state';
+import {state, scripts, projectID, setSelected} from './scripts/state';
+
+import './scripts/updatePing';
+import './scripts/eeclient';
+
 import entropyEngine, * as ee from "entropy-engine/src";
-import {Entity, entitiesFromJSON} from "entropy-engine/src";
+import {entitiesFromJSON} from "entropy-engine/src";
 import {initialiseScenes} from 'entropy-engine/src/JSONprocessor';
 import {cullString} from 'entropy-engine/src/util/general';
-
-import "./builder.js";
-import './events.js';
-import {loadScripts, reloadScriptsOnEntities} from "./scripts/scripts";
-import './state.js';
-import {state, scripts, projectID, setSelected} from './scripts/state.js';
-
-import './updatePing';
-import './eeclient';
 
 // cache busting
 const scriptFetchHeaders = new Headers();
@@ -22,24 +22,28 @@ const scriptFetchInit = {
     headers: scriptFetchHeaders,
 };
 
+// new nav bar, remove old one
+$('nav').html('');
+
 async function initFromFiles (id: number) {
     const path = `../projects/${id}`;
-    const config = {};
+    const config: {[k: string]: any} = {};
 
     // get and init the
-    const data_ = await fetch(path + `/index.json?c=${genCacheBust()}`, scriptFetchInit);
+    const data_ = await fetch(path + `/index.json?c=${window.genCacheBust()}`, scriptFetchInit);
     const data = await data_.json();
 
     for (let key in data) {
-        if (['sprites', 'scenes'].includes(key))
+        if (['sprites', 'scenes'].includes(key)) {
             continue;
+        }
 
         config[key] = data[key];
     }
 
     initialiseScenes(data['scenes'] || []);
 
-    state.sceneCamera = new Entity({
+    state.sceneCamera = new ee.Entity({
         components: [
             new ee.Camera({})
         ]
@@ -49,7 +53,7 @@ async function initFromFiles (id: number) {
 
     await entitiesFromJSON(data['entities'] || []);
 
-    setSelected(Entity.entities[0]);
+    setSelected(ee.Entity.entities[0]);
 
     await reloadScriptsOnEntities();
 
@@ -57,34 +61,44 @@ async function initFromFiles (id: number) {
     ee.Scene.active = parseInt(sessionStorage.sceneID) || 0;
 }
 
-async function checkCredentials (callback) {
-    mustBeSignedIn(async () => {
-        const accessLevel = (await request('/get-project-access', apiToken)).accessLevel;
+async function checkCredentials () {
+    return new Promise(resolve => {
+        window.mustBeSignedIn(async () => {
+            const accessLevel = (await window.request('get-project-access', window.apiToken)).accessLevel;
 
-        if (accessLevel < 1) {
-            window.location.href = 'https://entropyengine.dev/accounts/error?type=projectAccessDenied';
-            return;
-        }
-        console.log(`ACCESS LEVEL: ${accessLevel}`);
+            if (accessLevel < 1) {
+                window.location.href = 'https://entropyengine.dev/accounts/error?type=projectAccessDenied';
+                return;
+            }
 
-        if (!accessLevel) return;
-        
-        callback(accessLevel);
-    });
+            console.log(`ACCESS LEVEL: ${accessLevel}`);
+
+            if (!accessLevel) {
+                return;
+            }
+
+            resolve(accessLevel);
+        });
+    })
 }
 
-checkCredentials (async accessLevel => {
-    // it is safe now
-
+async function main () {
+    const accessLevel = await checkCredentials();
     await loadScripts();
     state.currentScript ??= Object.keys(scripts)[0];
 
-    await initFromFiles(projectID)
+    if (!projectID) {
+        throw 'Invalid projectID';
+    }
 
-    const data = await request('/get-project-name', apiToken);
+    await initFromFiles(parseInt(projectID));
+
+    const data = await window.request('get-project-name', window.apiToken);
 
     const name = cullString(data.name, 16);
     $(`#project-name`).html(name);
     document.title = name;
-});
+}
+
+main();
 

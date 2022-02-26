@@ -3,7 +3,7 @@
 
 const currentTime = Math.round(new Date().getTime()/1000);
 
-fetch(`https://entropyengine.dev:50001/all-contributions/${urlParam('p')}`)
+fetch(`https://entropyengine.dev:50001/all-contributions/${window.urlParam('p')}`)
     .then(async (data: any) => {
         data = await data.json();
 
@@ -77,7 +77,7 @@ fetch(`https://entropyengine.dev:50001/all-contributions/${urlParam('p')}`)
 
         async function doForPeople () {
             if (!window.loadedPeople){
-                await sleep(0.1);
+                await window.sleep(0.1);
                 doForPeople();
                 return;
             }

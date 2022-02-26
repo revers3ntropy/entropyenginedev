@@ -1,10 +1,14 @@
-import {state} from './state.js';
+import {state} from './state';
+import { Camera, v3 } from "entropy-engine/src";
 
-export function renderSceneMenu (div) {
-	const cameraZoom = state.sceneCamera.getComponent('Camera').zoom.toFixed(2);
-	const cameraPos = state.sceneCamera.transform.position;
-	const worldSpacePos = $('#world-space-pos').text() || '0, 0';
-	const screenSpacePos = $('#screen-space-pos').text() || '0, 0';
+const worldSpacePosDiv = $('#world-space-pos');
+const screenSpacePosDiv = $('#screen-space-pos');
+
+export function renderSceneMenu (div: JQuery) {
+	const cameraZoom = state.sceneCamera?.getComponent<Camera>('Camera').zoom.toFixed(2) ?? 'N/A';
+	const cameraPos = state.sceneCamera?.transform.position ?? v3.zero;
+	const worldSpacePos = worldSpacePosDiv.text() || '0, 0';
+	const screenSpacePos = screenSpacePosDiv.text() || '0, 0';
 
 	div.html(`
 		<style>

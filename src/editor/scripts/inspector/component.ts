@@ -1,8 +1,14 @@
-import {reRender, rightClickOption, setRightClick} from "../renderer.js";
-import {state} from "../state.js";
-import {_componentProperty_} from "./property.js";
+import {reRender, rightClickOption, setRightClick} from "../renderer";
+import {state} from "../state";
+import {_componentProperty_} from "./property";
 
-export const _component_ = (component, i) => {
+import { Component, Script } from "entropy-engine/src";
+
+export const _component_ = (component: Component, i: JQuery) => {
+	if (!state.selectedEntity) {
+		throw 'no selected entity';
+	}
+
 	const cName = component.subtype || component.type;
 	i.append(`
             <div id="component-${cName}">
@@ -20,13 +26,13 @@ export const _component_ = (component, i) => {
 	if (cName !== 'Transform') {
 		setRightClick(`component-${cName}-title`, state.selectedEntity, `
              ${rightClickOption(`remove-${cName}`, () => {
-				let index = state.selectedEntity.components.indexOf(component);
-				if (index === -1) {
+				let index = state.selectedEntity?.components.indexOf(component);
+				if (index === -1 || index == undefined) {
 					console.error('No component found to delete: ' + component);
 					return;
 				}
 				
-				delete state.selectedEntity.components.splice(index, 1)[0];
+				delete state.selectedEntity?.components.splice(index, 1)[0];
 	
 				reRender();
 			}, 'remove')}
@@ -38,8 +44,9 @@ export const _component_ = (component, i) => {
 	let j = 0;
 	for (let property of component.public) {
 		let name = component.type;
-		if (name === 'Script')
-			name = component?.scriptName || component?.name || component.subtype;
+		if (name === 'Script') {
+			name = (component as Script).name || component.subtype;
+		}
 
 		componentHTML.append(`
                 <div style="border-bottom: 1px solid vaR(--input-bg); margin-bottom: 4px">

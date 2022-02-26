@@ -1,7 +1,7 @@
 export {};
 
 declare global {
-    let
+    interface Window {
         signOut: () => void,
         forceSignOut: (error: string) => void,
         validID: (userID: number) => Promise<boolean>,
@@ -14,8 +14,10 @@ declare global {
         nameFromScriptURL: (path: string) => string,
         request: (url: string, token?: apiTok, body?: {}) => Promise<any>,
         copyToClipboard: (text: string) => void;
+        apiToken: apiTok;
 
-    let apiToken: apiTok;
+        [k: string]: any;
+    }
 
     interface apiTok {
         user?: number,
@@ -27,10 +29,6 @@ declare global {
         content: string,
         username: string,
         date: number
-    }
-
-    interface Window {
-        [k: string]: any;
     }
 }
 

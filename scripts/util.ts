@@ -1,15 +1,15 @@
 /**
  * Removes the user ID from localStorage
  */
-signOut = () => {
+window.signOut = () => {
     localStorage.id = undefined;
 }
 
 /**
  * @param {string} error - error type: see accounts/error/index.html for the different types
  */
-forceSignOut = (error: string) => {
-    signOut();
+window.forceSignOut = (error: string) => {
+    window.signOut();
     window.location.href = 'https://entropyengine.dev/accounts/error?type=' + error;
 }
 
@@ -18,9 +18,9 @@ forceSignOut = (error: string) => {
  * @param userID
  * @return {Promise<boolean>}
  */
-validID = async (userID: number) => {
+window.validID = async (userID: number) => {
     return (![undefined, 0, '0', null, '', ' ', [], 'undefined', 'null', 'none'].includes(userID))
-        && !!(await request('user-exists', {user: userID})).exists;
+        && !!(await window.request('user-exists', {user: userID})).exists;
 }
 
 /**
@@ -28,11 +28,11 @@ validID = async (userID: number) => {
  * @param {Function} whenSignedIn
  * @param {Function} whenNotSignedIn
  */
-mustBeSignedIn = async (whenSignedIn, whenNotSignedIn) => {
-    const signedIn = await validID(localStorage.id);
+window.mustBeSignedIn = async (whenSignedIn, whenNotSignedIn) => {
+    const signedIn = await window.validID(localStorage.id);
 
     if (!signedIn) {
-        forceSignOut('notSignedIn');
+        window.forceSignOut('notSignedIn');
         if (whenNotSignedIn) {
             whenNotSignedIn();
         }
@@ -50,7 +50,7 @@ const urlParams = new URLSearchParams(queryString);
  * @param name
  * @return {string}
  */
-urlParam = (name: string) => {
+window.urlParam = (name: string) => {
     return urlParams.get(name);
 };
 
@@ -59,7 +59,7 @@ urlParam = (name: string) => {
  * @param {Number} ms
  * @return {Promise<unknown>}
  */
-sleep = (ms: number) => {
+window.sleep = (ms: number) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 };
 
@@ -67,7 +67,7 @@ sleep = (ms: number) => {
  * Generates a random number. Add ?p= genCacheBust() to always get the latest version of the file from the server
  * @return {number}
  */
-genCacheBust = () => {
+window.genCacheBust = () => {
     return Math.ceil(Math.random() * 10000);
 };
 
@@ -76,7 +76,7 @@ genCacheBust = () => {
  * @param {Number} seconds
  * @return {string}
  */
-secondsToReadable = (seconds: number) => {
+window.secondsToReadable = (seconds: number) => {
     const rawSeconds = seconds;
     let mins = seconds/60;
     let hours = mins/60;
@@ -114,8 +114,8 @@ secondsToReadable = (seconds: number) => {
  * @param {Number} time
  * @return {string} - for example, '3 weeks'
  */
-unixTimeAgo = (time: number) => {
-    return secondsToReadable(
+window.unixTimeAgo = (time: number) => {
+    return window.secondsToReadable(
         Math.round(
             new Date().getTime() / 1000
         ) - time
@@ -127,7 +127,7 @@ unixTimeAgo = (time: number) => {
  * @param {string} path - eg 'path/script.es'
  * @return {string} -  'script'
  */
-nameFromScriptURL = (path: string) => {
+window.nameFromScriptURL = (path: string) => {
     let file = path.substring(path.lastIndexOf('/')+1);
     return file.substring(0, file.length-3);
 };
@@ -136,7 +136,7 @@ nameFromScriptURL = (path: string) => {
  *
  * @param {string} text
  */
-copyToClipboard = (text: string) => {
+window.copyToClipboard = (text: string) => {
     const clipboard = document.createElement('input');
     clipboard.style.position = 'absolute';
     clipboard.style.position = '-10000px';

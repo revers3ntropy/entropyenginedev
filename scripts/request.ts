@@ -1,33 +1,56 @@
 /**
  * Make sure the connection is open and throw appropriate error if it not
  */
-function networkError () {
+async function networkError () {
     let location = window.location.href;
     window.location.href = 'https://entropyengine.dev/accounts/error?type=serverPingFailed&cb=' + encodeURIComponent(location);
+    await new Promise(_ => {});
 }
 
 const apiPort = '50001';
 const apiURL = `https://entropyengine.dev:${apiPort}`;
 
+let checkedServerConnection = false;
+
+async function checkServerConnection () {
+    checkedServerConnection = true;
+    return new Promise<void>(async resolve => {
+        try {
+            const ping = await window.request('ping')
+                .catch(async () => {
+                    await networkError();
+                });
+            if (!ping.ok) {
+                await networkError();
+            }
+        } catch (E) {
+            await networkError();
+        }
+
+        resolve();
+    });
+}
+
 /**
  *
  * @param {string} url - does not start with /
- * @param {apiTok} token
  * @param [body={}]
  * @return {Promise<object>}
  */
-request = async (url: string, token: apiTok = {user: -1, project: -1}, body={}) => {
-    if (!token.user) {
-        token.user = localStorage.id;
+window.request = async (url: string, body={}) => {
+
+    // only throw error if both can't connect to backend AND backend is actually needed
+    // prevents static pages going down if server goes down
+    if (!checkedServerConnection) {
+        await checkServerConnection();
     }
-    if (!token.project || !token.user) {
-        console.error(`Bad API token: `, token);
-        return {};
-    }
+
+    window.apiToken.user ||= localStorage.id;
+
     let response = await fetch(`${apiURL}/${url}`, {
         method: 'POST',
         body: JSON.stringify({
-            ...body, token
+            ...body, token: window.apiToken
         })
     }).catch(networkError);
 
@@ -38,16 +61,5 @@ request = async (url: string, token: apiTok = {user: -1, project: -1}, body={}) 
     return await response.json();
 }
 
-try {
-    request('ping')
-        .then(ping => {
-            if (!ping.ok) {
-                networkError();
-            }
-        })
-        .catch(() => {
-            networkError();
-        });
-} catch (E) {
-    networkError();
-}
+
+

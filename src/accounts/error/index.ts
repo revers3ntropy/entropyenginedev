@@ -1,4 +1,4 @@
-const cb = urlParam('cb');
+const cb = window.urlParam('cb');
 
 window.goToCB = () => {
     if (cb) {
@@ -8,7 +8,7 @@ window.goToCB = () => {
 
 
 let message;
-switch (urlParam('type')) {
+switch (window.urlParam('type')) {
     case 'notSignedIn':
         message = 'Looks like you need to sign in!';
         $('#options').html(`
@@ -65,11 +65,11 @@ switch (urlParam('type')) {
 
 if (cb) {
     message += `
-            <br><br>
-    	    <button onclick="window.goToCB()" style="font-size: xx-large">
-    	        Back
-    	    </button>
-    	`;
+        <br><br>
+        <button onclick="window.goToCB()" style="font-size: xx-large">
+            Back
+        </button>
+    `;
 }
 
 $('#error-message').html(message);

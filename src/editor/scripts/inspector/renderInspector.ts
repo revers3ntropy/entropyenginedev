@@ -1,24 +1,25 @@
-import {scripts, state} from "../state.js";
-import {reRender} from "../renderer.js";
-import {reloadScriptsOnEntities} from "../scripts.js";
+import {scripts, state} from "../state";
+import {reRender} from "../renderer";
+import {reloadScriptsOnEntities} from "../scripts";
 
-import {_componentProperty_} from "./property.js";
-import {_component_} from "./component.js";
+import {_componentProperty_} from "./property";
+import {_component_} from "./component";
 
 // importing all components
 import {
+    Component,
     Script,
     CircleCollider, RectCollider,
     Body,
     CircleRenderer, ImageRenderer2D, RectRenderer,
     GUIBox, GUICircle, GUIImage, GUIPolygon, GUIRect, GUIText, GUITextBox,
     Camera
-} from '../entropy-engine/src';
+} from 'entropy-engine/src';
 
 Script;
 
 
-const allComponents = {
+const allComponents: {[k: string]: (new (...args: any[]) => Component)[]} = {
     'General': [
         Camera
     ],
@@ -99,16 +100,19 @@ export function reRenderInspector () {
 
         if ($('.add-component-popup').length) return;
 
-        window.addComponent = type => {
+        window.addComponent = (type: string) => {
             try {
-                state.selectedEntity.addComponent(new (eval(type))({}));
+                state.selectedEntity?.addComponent(new (eval(type))({}));
             } catch(e) {
                 // scripts
-                const component = new Script({});
-                if (!state.selectedEntity.addComponent(component)) return;
+                const component = new Script({
+                    path: type
+                });
 
-                // new property defined just on these Script components
-                component.scriptName = type;
+                if (!state.selectedEntity?.addComponent(component)) {
+                    return;
+                }
+
                 component.name = type;
 
                 reloadScriptsOnEntities()
@@ -121,7 +125,7 @@ export function reRenderInspector () {
             reRender();
         };
 
-        const _button_ = text => (`
+        const _button_ = (text: string) => (`
             <div>
                 <button class='empty-button' onclick="window.addComponent(\`${text}\`)">
                     ${text}
@@ -168,6 +172,7 @@ export function reRenderInspector () {
             `);
             // show the whole add component menu
             let objDiv = document.getElementById("inspector");
+            if (!objDiv) throw 'expected inspector';
             objDiv.scrollTop = objDiv.scrollHeight;
         }, 5);
 

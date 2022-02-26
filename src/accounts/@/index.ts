@@ -1,4 +1,4 @@
-let username = urlParam('u') || '';
+let username = window.urlParam('u') || '';
 
 document.title = username;
 
@@ -6,10 +6,10 @@ $('#username').html(username);
 
 let projects = $('#projects');
 
-request('public-projects', apiToken, {username})
+window.request('public-projects', window.apiToken, {username})
     .then(async projectNames => {
 
-        const myUsername = (await request('get-username', apiToken)).username;
+        const myUsername = (await window.request('get-username', window.apiToken)).username;
 
         for (let projectName of projectNames) {
 
@@ -40,7 +40,7 @@ request('public-projects', apiToken, {username})
 
             `);
 
-            const editors = await request(`get-project-editors`, {
+            const editors = await window.request(`get-project-editors`, {
                 project: projectName._id
             });
 

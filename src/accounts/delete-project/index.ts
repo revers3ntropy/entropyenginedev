@@ -1,9 +1,9 @@
-projectID = urlParam('p') || '0';
+projectID = window.urlParam('p') || '0';
 let confirmButton = $('#confirm');
 
-apiToken.project = parseInt(projectID);
+window.apiToken.project = parseInt(projectID);
 
-request('/get-project-name', apiToken).then(async value => {
+window.request('get-project-name', window.apiToken).then(async value => {
     confirmButton.html(`
             <p style="font-size: 30px">
                 Are you sure you want to delete the project
@@ -15,10 +15,10 @@ request('/get-project-name', apiToken).then(async value => {
 
     $('#timer').css('animation', 'timer-shrink 2000ms ease');
 
-    await sleep(2000);
+    await window.sleep(2000);
 
     window.delete = () => {
-        request('delete-project', apiToken);
+        window.request('delete-project', window.apiToken);
         window.location.href = 'https://entropyengine.dev/accounts/my-projects';
     };
 

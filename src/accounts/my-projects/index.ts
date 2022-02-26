@@ -1,4 +1,4 @@
-mustBeSignedIn(() => {
+window.mustBeSignedIn(() => {
     let myProjects = $('#my-projects');
     let sharedWithMe = $('#shared-projects');
 
@@ -6,9 +6,9 @@ mustBeSignedIn(() => {
 
     };
 
-    request('get-project-names', apiToken).then(async projectNames => {
+    window.request('get-project-names', apiToken).then(async projectNames => {
 
-        const myUsername = (await request('get-username', apiToken)).username;
+        const myUsername = (await window.request('get-username', apiToken)).username;
 
         for (let projectName of projectNames) {
             const isShared = projectName.level != 3;
@@ -49,7 +49,7 @@ mustBeSignedIn(() => {
 
             `);
 
-            const editors = await request(`get-project-editors`, {
+            const editors = await window.request(`get-project-editors`, {
                 project: projectName._id
             });
 

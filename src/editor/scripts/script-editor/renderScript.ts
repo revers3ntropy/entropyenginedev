@@ -1,7 +1,7 @@
-import {state, scripts} from '../state.js';
-import {mapScripts} from "../scripts.js";
+import {state, scripts} from '../state';
+import {mapScripts} from "../scripts";
 
-export const renderScripts = (divID) => {
+export const renderScripts = (divID: string) => {
     const s = $(`#${divID}`);
 
     s.html(`
@@ -35,7 +35,9 @@ export const renderScripts = (divID) => {
         </div>
     `);
 
-    if (scripts.length < 1) return;
+    if (Object.keys(scripts).length < 1) {
+        return;
+    }
     if (!state.currentScript) return;
     $('#script-editor').html(`
         <textarea id="script-code">${scripts[state.currentScript] ?? ''}</textarea>
@@ -43,6 +45,8 @@ export const renderScripts = (divID) => {
 
     // save the new code locally
     $('#script-code').keyup(() => {
-        scripts[state.currentScript] = $('#script-code').val();
+        const code = $('#script-code').val()?.toString();
+        if (!code && code !== '') throw 'no code found...';
+        scripts[state.currentScript] = code;
     });
 };

@@ -1,9 +1,7 @@
-import {request} from "../request.ts";
-
 async function updatePing () {
 	const startTime = performance.now();
 
-	let response = await request('/ping');
+	let response = await window.request('ping');
 
 	if (!response.ok) {
 		console.error('Server ping failed');
@@ -12,7 +10,7 @@ async function updatePing () {
 
 	const time = performance.now() - startTime;
 
-	$('#ping').html(Math.floor(time));
+	$('#ping').html(Math.floor(time).toFixed(2));
 }
 
 setInterval(updatePing, 2000);

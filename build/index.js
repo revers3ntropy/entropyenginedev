@@ -12,15 +12,12 @@
 // utils
 const fs = require('fs');
 const {run, sortObjectEntries} = require('./utils');
-const performanceNow = require("performance-now");
-const now = () => Math.round(performanceNow());
+const {buildHTML} = require('./buildHTMLPath');
 
 const p = require('path');
-
-// beatify
 const chalk = require('chalk');
-
-const {buildHTML} = require('./buildHTMLPath');
+const performanceNow = require("performance-now");
+const now = () => Math.round(performanceNow());
 
 const
 	timings = {
@@ -30,10 +27,8 @@ const
 	QUIET = process.argv.indexOf('--quiet') !== -1;
 
 if (process.argv.indexOf('--silent') !== -1) {
-	console = {
-		log: () => {},
-		error: () => {},
-	};
+	console.log = () => {}
+	console.error = () => {};
 }
 
 let MAIN = '';
@@ -41,8 +36,10 @@ let MAIN = '';
 async function buildServer () {
 	const start = now();
 
-	await run ('cd server; webkit --config webkit.config.js > log.txt')
-		.catch(_ => throw new Error('failed to build server: ' + fs.readFileSync('./server/log.txt').toString()));
+	await run ('cd server; webpack --config webpack.config.js > log.txt')
+		.catch(_ => {
+			throw 'failed to build server: ' + fs.readFileSync('./server/log.txt').toString()
+		});
 
 	timings[`Build Node Server`] = now() - start;
 }

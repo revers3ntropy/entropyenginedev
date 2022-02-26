@@ -45,7 +45,7 @@ export const comment = (data: commentData, canDelete =false, options=true) => `
 		<aside style="min-width: 200px; margin-left: 20px">
 			<span style="margin-right: 10px">${data.username}</span>
 			<span>
-				${secondsToReadable(
+				${window.secondsToReadable(
 					Math.round(
 						new Date().getTime() / 1000
 					) - data.date

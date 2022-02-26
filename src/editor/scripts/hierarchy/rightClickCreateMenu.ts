@@ -1,15 +1,16 @@
-import {reRender, rightClickOption, setRightClick} from "../renderer.js";
-import {setSelected, state} from "../state.js";
-import {Entity, v3} from "../entropy-engine/src";
-import * as ee from "../entropy-engine/src";
+import {reRender, rightClickOption, setRightClick} from "../renderer";
+import {setSelected, state} from "../state";
+import { Camera, Entity, v3 } from "entropy-engine/src";
+import {Transform, CircleCollider, CircleRenderer, RectCollider, RectRenderer} from "entropy-engine/src";
 
-export function setRightClickAddEntityMenu(divID) {
+export function setRightClickAddEntityMenu(divID: string) {
+	if (!state.selectedEntity) throw 'no selected entity';
 	setRightClick(divID, state.selectedEntity, `
         <p style="
-            background-color: vaR(--input-bg); 
-            margin: 0; 
-            padding: 2px 5px; 
-            border-bottom: 1px solid vaR(--input-opposite-bg)
+            background-color: var(--input-bg); 
+            margin: 0;
+            padding: 2px 5px;
+            border-bottom: 1px solid var(--input-opposite-bg)
         ">
             Create
         </p>
@@ -20,12 +21,12 @@ export function setRightClickAddEntityMenu(divID) {
         ${rightClickOption('square', () => {
 			setSelected(Entity.newEntity({
 				name: 'square',
-				transform: new ee.Transform({
+				transform: new Transform({
 					scale: new v3(100, 100, 100)
 				}),
 				components: [
-					new ee.RectRenderer({}),
-					new ee.RectCollider({})
+					new RectRenderer({}),
+					new RectCollider({})
 				]
 			}));
 			reRender();
@@ -33,12 +34,12 @@ export function setRightClickAddEntityMenu(divID) {
         ${rightClickOption('circle', () => {
 			setSelected(Entity.newEntity({
 				name: 'circle',
-				transform: new ee.Transform({
+				transform: new Transform({
 					scale: new v3(50, 1, 1)
 				}),
 				components: [
-					new ee.CircleRenderer({}),
-					new ee.CircleCollider({})
+					new CircleRenderer({}),
+					new CircleCollider({})
 				]
 			}));
 			reRender();
@@ -47,19 +48,7 @@ export function setRightClickAddEntityMenu(divID) {
 			setSelected(Entity.newEntity({
 				name: 'camera',
 				components: [
-					new ee.Camera({}),
-				]
-			}));
-			reRender();
-		})}
-        
-        ${rightClickOption('cube', () => {
-			setSelected(Entity.newEntity({
-				name: 'cube',
-				components: [
-					new ee.MeshRenderer({
-						mesh: ee.MeshV3.cube
-					}),
+					new Camera({}),
 				]
 			}));
 			reRender();

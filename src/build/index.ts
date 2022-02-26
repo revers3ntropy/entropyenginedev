@@ -1,4 +1,4 @@
-let projectID = urlParam('p');
+let projectID = window.urlParam('p');
 
 const backButton = <null|HTMLLinkElement>document.getElementById('back');
 if (backButton) {
@@ -19,10 +19,10 @@ $('#go-to-build').click(() => {
 });
 
 $('#copy-url-to-clipboard').click(() => {
-	copyToClipboard(buildURL);
+	window.copyToClipboard(buildURL);
 });
 
-request('get-project-name', apiToken)
+window.request('get-project-name', window.apiToken)
 	.then(name => {
 		$('#project-name').append(name.name);
 
@@ -38,7 +38,7 @@ window.build = () => {
 	document.write('Sorry, looks like theres been a problem.... try reloading the page');
 };
 
-request('has-been-built', apiToken).then(hasBeenBuilt => {
+window.request('has-been-built', window.apiToken).then(hasBeenBuilt => {
 	const beenBuilt = hasBeenBuilt.built;
 
 	let building = false;
@@ -50,7 +50,7 @@ request('has-been-built', apiToken).then(hasBeenBuilt => {
 		const button = $('#build');
 		button.html('building...');
 
-		await request('build-project', apiToken);
+		await window.request('build-project', window.apiToken);
 
 		button.css('display', 'none');
 		button.html('');

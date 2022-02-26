@@ -1,12 +1,11 @@
 import {} from '../../types/types';
-import {} from '../../node_modules/@types/jquery';
 
 const errorDIV = $('#error');
-const projectID = urlParam('p');
+const projectID = window.urlParam('p');
 $('back').attr('href', (_, v) => v + projectID);
 $('see-contributors').attr('href', (_, v) => v + projectID);
 
-apiToken.project = parseInt(projectID || '0');
+window.apiToken.project = parseInt(projectID || '0');
 
 const usernameElement = $('#username');
 const accessElement = $('#access');
@@ -16,7 +15,7 @@ $(`#submit`).click(async () => {
     const accessLevel = accessElement.val();
 
     if (username) {
-        const usernameExists = await request('username-exists', apiToken, {
+        const usernameExists = await window.request('username-exists', window.apiToken, {
             username: username
         });
         if (usernameExists.exists !== '1') {
@@ -24,7 +23,7 @@ $(`#submit`).click(async () => {
             return;
         }
     }
-    let {error} = await request('share-project', apiToken, {
+    let {error} = await window.request('share-project', window.apiToken, {
         username,
         accessLevel
     });

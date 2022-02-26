@@ -1,12 +1,12 @@
-import {Scene} from "../entropy-engine/src";
+import { colour, Scene } from "entropy-engine/src";
 
-window.changeSceneSettings = (key, id) => {
+window.changeSceneSettings = (key: string, id: string) => {
 	const value = $(`#${id}`).val();
-	let toChange = Scene.activeScene.settings;
+	let toChange: any = Scene.activeScene.settings;
 	toChange[key] = value;
 }
 
-function _colour_ (key, value, id) {
+function _colour_ (key: string, value: colour, id: string) {
 	return `
 		<input 
 			type="color" 
@@ -17,7 +17,7 @@ function _colour_ (key, value, id) {
 	`;
 }
 
-function _numberOrString_ (key, value, id, isNum) {
+function _numberOrString_ (key: string, value: string, id: string, isNum: boolean) {
 	return `
 		<input 
 			type="${isNum ? 'number' : 'text'}"
@@ -33,6 +33,11 @@ function _setting_ ({
 	key,
 	showName = key,
 	type = typeof settings[key]
+}: {
+	settings: any,
+	key: string,
+	showName?: string,
+	type?: string
 }) {
 
 	const id = `input-${key}-${showName}`;
@@ -56,7 +61,7 @@ function _setting_ ({
 	return showValue;
 }
 
-const settingShowNames = {
+const settingShowNames: {[k: string]: string} = {
 	license: 'License',
 	version: 'Version',
 	gameName: 'Game Name',
@@ -73,13 +78,15 @@ const excludedSettings = [
 	'canvasID',
 ]
 
-export function renderSceneSettings (div) {
+export function renderSceneSettings (div: JQuery) {
 	const settings = Scene.activeScene.settings;
 
 	div.html(``);
 
 	for (let setting in settings) {
-		if (excludedSettings.includes(setting)) continue;
+		if (excludedSettings.includes(setting)) {
+			continue;
+		}
 		div.append(_setting_({
 			settings,
 			key: setting,

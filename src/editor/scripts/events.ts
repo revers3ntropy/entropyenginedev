@@ -1,18 +1,10 @@
-import {
-    state,
-    ctx,
-    canvas,
-    setState,
-    gameView,
-    projectID,
-    setSelected
-} from "./state.js";
+import {reloadScriptsOnEntities} from "./scripts";
+import { state, ctx, canvas, setState, states, projectID, setSelected } from "./state";
+import {reRender, reRenderCanvas, reRenderCanvasDebug, reRenderSceneToolbar} from "./renderer";
 
-import {reRender, reRenderCanvas, reRenderCanvasDebug, reRenderSceneToolbar} from "./renderer.js";
-import {rect} from "entropy-engine/src/systems/rendering/basicShapes.js";
-import {v2, Entity, Scene, Camera} from 'entropy-engine/src';
-import {getMousePos} from "entropy-engine/src/input.js";
-import {reloadScriptsOnEntities} from "./scripts.js";
+import {rect} from "entropy-engine/src/systems/rendering/basicShapes";
+import { v2, Entity, Scene, Camera, GUIElement, Transform, Collider} from 'entropy-engine/src';
+import {getMousePos} from "entropy-engine/src/input";
 
 window.addEventListener('click', () => {
     $('#pop-up').css('visibility', 'hidden');
@@ -26,36 +18,39 @@ window.addEventListener('click', () => {
     popup.remove();
 });
 
-document.addEventListener('contextmenu', event => {
+document.addEventListener('contextmenu', _ => {
     $('#pop-up').css('visibility', 'hidden');
 });
 
-window.onPropertyChange = (id, componentName, componentPropertyChain, parser) => {
-    let value = $(`#${id}`).val();
+window.onPropertyChange = (id: string, componentName: string, componentPropertyChain: string[], parser: (v: string) => any) => {
+    let value = $(`#${id}`).val()?.toString() || '';
 
     let component;
-    if (componentName === 'nocomponent')
+    if (componentName === 'nocomponent') {
         component = state.selectedEntity;
-    else
-        component = state.selectedEntity.getComponent(componentName);
+    } else {
+        component = state.selectedEntity?.getComponent(componentName);
+    }
 
-    let toChange = component;
-    for (let i = 0; i < componentPropertyChain.length-1; i++)
+    let toChange: any = component;
+    for (let i = 0; i < componentPropertyChain.length-1; i++) {
         toChange = toChange[componentPropertyChain[i]];
+    }
 
-    if (parser)
+    if (parser) {
         value = parser(value);
+    }
 
-    const lastPropertyName = componentPropertyChain [componentPropertyChain.length-1];
+    const lastPropertyName = componentPropertyChain[componentPropertyChain.length-1];
 
-    toChange [lastPropertyName] = value;
+    toChange[lastPropertyName] = value;
 
     reRender();
 };
 
-window.setParent = id => {
+window.setParent = (id: string | number) => {
     const name = $(`#${id}`).val();
-    state.selectedEntity.transform.setParentDirty(window.findNodeWithName(name));
+    state.selectedEntity?.transform.setParentDirty(window.findNodeWithName(name));
 
     reRender();
 }
@@ -63,22 +58,31 @@ window.setParent = id => {
 $(document).keydown(event => {
     // If Control or Command key is pressed and the S key is pressed
     // run save function. 83 is the key code for S.
-    if((event.ctrlKey || event.metaKey) && event.which === 83) {
+    if ((event.ctrlKey || event.metaKey) && event.which === 83) {
         window.save();
         event.preventDefault();
         return false;
     }
 });
 
+const runButton = document.getElementById('run');
+if (!runButton) {
+    throw 'no run button';
+}
+
 window.run = async () => {
+    if (!ctx) {
+        throw 'context is not defined';
+    }
+
     state.running = true;
     await window.backgroundSave();
     await reloadScriptsOnEntities();
 
-    setState(gameView);
+    setState(states.gameView);
     reRender();
 
-    rect(ctx, v2.zero, canvas.width, canvas.height, `rgb(255, 255, 255)`);
+    rect(ctx, v2.zero, canvas.width, canvas.height, `rgb(255, 255, 255)`, 0);
 
     const playButton = $('#run');
 
@@ -92,8 +96,8 @@ window.run = async () => {
 
     // if you add another listener then it will run this function before reloading,
     // which saves the project - not good
-    document.getElementById('run').onclick = () => {
-        localStorage.statewindow = sceneView;
+    runButton.onclick = () => {
+        localStorage.statewindow = states.sceneView;
         window.location.reload();
     };
 
@@ -102,11 +106,16 @@ window.run = async () => {
     state.eeReturns.run();
 };
 
-document.getElementById('myCanvas').onwheel = event => {
+canvas.onwheel = event => {
     event.preventDefault();
-    if (state.window !== sceneView) return;
+    if (state.window !== states.sceneView) return;
 
-    const cam = state.sceneCamera.getComponent('Camera');
+    if (!state.sceneCamera) {
+        throw 'no camera found';
+    }
+
+    const cam = state.sceneCamera.getComponent<Camera>('Camera');
+
     cam.zoom *= 1 + (event.deltaY * -0.0001);
 
     cam.zoom = Math.min(Math.max(5*10**-3, cam.zoom), 5*10**2);
@@ -118,23 +127,29 @@ document.getElementById('myCanvas').onwheel = event => {
     reRenderSceneToolbar();
 };
 
-export function setSelectedSpriteFromClick (pos) {
+export function setSelectedSpriteFromClick (pos: v2) {
+    if (!ctx) throw 'no ctx';
+
     let touching = [];
     for (let sprite of Scene.activeScene.entities) {
         for (const component of sprite.components) {
-            if (component.type === 'GUIElement')
-                if (component.touchingPoint(pos, ctx, sprite.transform))
+            if (component.type === 'GUIElement') {
+                if ((component as GUIElement).touchingPoint(pos, ctx, sprite.transform)) {
                     touching.push(sprite);
+                }
+            }
 
-            if (component.type === 'Collider')
-                if (component.overlapsPoint(sprite.transform, pos))
+            if (component.type === 'Collider') {
+                if ((component as Collider).overlapsPoint(sprite.transform, pos)) {
                     touching.push(sprite);
+                }
+            }
         }
     }
 
-    if (touching.length === 0)
+    if (touching.length === 0) {
         setSelected(null);
-    else {
+    } else {
         // TODO: sort by z position here
         setSelected(touching[0]);
     }
@@ -146,20 +161,23 @@ window.goToBuildMenu = async () => {
     window.location.href = `../build/?p=${projectID}`;
 };
 
-// sets the scene from the
+const sceneSelect = $('#scene-select');
+
 window.setScene = () => {
-    Scene.active = parseInt($('#scene-select').val()) || 0;
+    Scene.active = parseInt(sceneSelect.val()?.toString() || '0') || 0;
     setSelected(Scene.activeScene.entities[0]);
     sessionStorage.sceneID = Scene.active;
     reRender();
 };
 
 canvas.addEventListener('click', event => {
-    if (state.window !== sceneView) return;
+    if (state.window !== states.sceneView) return;
     const mousePos = getMousePos(canvas, event);
-    const clickPos = state.sceneCamera.getComponent('Camera')
+    const clickPos = state.sceneCamera?.getComponent<Camera>('Camera')
         .screenSpaceToWorldSpace(mousePos, canvas, state.sceneCamera.transform.position);
-    setSelectedSpriteFromClick(clickPos);
+    if (clickPos) {
+        setSelectedSpriteFromClick(clickPos);
+    }
 });
 
 
@@ -178,16 +196,16 @@ canvas.addEventListener('mouseup', event => {
     state.dragging = false;
 });
 
-function drag (event) {
+function drag (event: MouseEvent) {
     state.dragEnd = getMousePos(canvas, event);
     const diff = state.dragEnd.clone.sub(state.dragStart);
 
-    const camZoom = state.sceneCamera.getComponent('Camera').zoom;
+    const camZoom = state.sceneCamera?.getComponent<Camera>('Camera').zoom ?? 1;
 
     diff.scale(1/camZoom);
     // reverse to drag naturally in the right direction
     diff.scale(-1);
-    state.sceneCamera.transform.localPosition.add(diff.v3);
+    state.sceneCamera?.transform.localPosition.add(diff.v3);
     state.dragStart = state.dragEnd;
 
     reRenderCanvas();
@@ -197,13 +215,13 @@ function drag (event) {
 
 canvas.addEventListener('mousemove', evt => {
     if (!Camera.main) return;
-    if (state.window !== sceneView) return;
+    if (state.window !== states.sceneView) return;
     if (!state.sceneCamera) return;
 
     // update world and screen space values in scene view toolbar
 
     const screenSpace = getMousePos(canvas, evt);
-    const worldSpace = state.sceneCamera.getComponent('Camera')
+    const worldSpace = state.sceneCamera.getComponent<Camera>('Camera')
         .screenSpaceToWorldSpace(screenSpace, canvas, state.sceneCamera.transform.position);
 
     const worldSpaceDIV = $('#world-space-pos');
@@ -217,7 +235,7 @@ canvas.addEventListener('mousemove', evt => {
         ${screenSpace.x.toFixed(2)} | ${screenSpace.y.toFixed(2)}
     `);
 
-    if (state.dragging) drag(event);
+    if (state.dragging) drag(evt);
 
 }, false);
 
@@ -226,14 +244,14 @@ canvas?.parentNode?.addEventListener('resize', () => {
 });
 
 // for type Entity in the inspector
-window.findSpriteWithName = (name) => {
+window.findSpriteWithName = (name: string) => {
     return Entity.find(name);
 };
 
 // if no entity is found with that name, then the active scene is used instead
-window.findNodeWithName = name => {
+window.findNodeWithName = (name: string) => {
 
-    let node = Entity.find(name)?.transform;
+    let node: Transform | number | undefined = Entity.find(name)?.transform;
 
     node ??= Scene.active;
 

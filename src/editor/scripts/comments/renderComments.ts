@@ -1,4 +1,6 @@
-export function renderComments (div) {
+import {comment} from "../../../../scripts/globalComponents";
+
+export function renderComments (div: JQuery) {
 
 	div.html(`
 		<p>
@@ -24,43 +26,45 @@ export function renderComments (div) {
 		<footer style="height: 100px"></footer>
 	`);
 
-	function refreshComments (username: string) {
-		request('/get-comments', apiToken, {
+	async function refreshComments (username: string) {
+		const comments = await window.request('get-comments', window.apiToken, {
 			public: false
-		}).then(comments => {
-			$('#num-comments').html(comments.length);
+		})
+		$('#num-comments').html(comments.length);
 
-			if (!comments) return;
+		if (!comments) {
+			return;
+		}
 
-			const commentsDIV = $('#the-comments');
+		const commentsDIV = $('#the-comments');
 
-			commentsDIV.html('');
+		commentsDIV.html('');
 
-			for (let commentTxt of comments) {
-				let html = comment(commentTxt, commentTxt.username === username);
-				commentsDIV.append(html);
+		for (let commentTxt of comments) {
+			let html = comment(commentTxt, commentTxt.username === username);
+			commentsDIV.append(html);
 
-				// have to do this here
-				if (commentTxt.username !== username) continue;
-
-				$(`#delete-comment-${commentTxt._id}`).click(() => {
-
-					$(`#comment-${commentTxt._id}-menu`).hide();
-					$(`#comment-${commentTxt._id}`).hide();
-
-					request('/delete-comment', apiToken, {
-						commentID: commentTxt._id
-					}).then(() => {
-						refreshComments(username);
-					});
-				});
+			// have to do this here
+			if (commentTxt.username !== username) {
+				continue;
 			}
-		});
+
+			$(`#delete-comment-${commentTxt._id}`).click(async () => {
+
+				$(`#comment-${commentTxt._id}-menu`).hide();
+				$(`#comment-${commentTxt._id}`).hide();
+
+				await window.request('delete-comment', window.apiToken, {
+					commentID: commentTxt._id
+				})
+				refreshComments(username);
+			});
+		}
 	}
 
 	const addMessage = $("#add-comment");
 
-	request('/get-username', apiToken)
+	window.request('/get-username', window.apiToken)
 		.then(username => {
 			addMessage.keyup(event => {
 				if (event.keyCode !== 13) return;
@@ -68,7 +72,7 @@ export function renderComments (div) {
 				const content = addMessage.val();
 				addMessage.val('');
 
-				request('/comment', apiToken, {
+				window.request('comment', window.apiToken, {
 					content,
 					public: false,
 				}).then(() => {

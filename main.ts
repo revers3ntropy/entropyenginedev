@@ -1,12 +1,10 @@
-import {} from './node_modules/@types/matter-js';
-
 import './styles/global.less';
 
 import './scripts/util';
 import './scripts/request';
 import './scripts/globalComponents';
 
-apiToken = {
+window.apiToken = {
     user: localStorage.id
 };
 

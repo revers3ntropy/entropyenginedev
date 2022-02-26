@@ -25,7 +25,8 @@ module.exports = {
 				test: /\.ts$/,
 				loader: 'ts-loader',
 				options: {
-					configFile: "tsconfig.json"
+					configFile: "tsconfig.json",
+					transpileOnly: true,
 				},
 			},
 		]

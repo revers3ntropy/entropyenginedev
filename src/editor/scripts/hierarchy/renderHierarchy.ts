@@ -1,9 +1,9 @@
-import {state, setSelected} from "../state.js";
-import {Scene, Entity, Transform} from "../entropy-engine/src";
-import {reRender, rightClickOption, setRightClick} from "../renderer.js";
-import {setRightClickAddEntityMenu} from "./rightClickCreateMenu.js";
+import {state, setSelected} from "../state";
+import {Scene, Entity, Transform} from "entropy-engine/src";
+import {reRender, rightClickOption, setRightClick} from "../renderer";
+import {setRightClickAddEntityMenu} from "./rightClickCreateMenu";
 
-const _entity_ = (entity, selected) => `
+const _entity_ = (entity: Entity, selected: boolean): string => `
     <div style="margin: 0; padding: 0" id="entity${entity.id}">
         <button
             class="empty-button"
@@ -23,8 +23,13 @@ const _entity_ = (entity, selected) => `
     </div>
 `;
 
+const h = $('#hierarchy');
+let scenes = $('#scene-select');
+const addSceneButton = $('#add-scene');
+const renameSceneButton = $('#rename-scene');
+const renameSceneTo = $('#rename-scene-to');
+
 export function reRenderHierarchy () {
-    const h = $('#hierarchy');
 
     h.html(`
         <p class="header">
@@ -45,8 +50,6 @@ export function reRenderHierarchy () {
         </p>
     `);
 
-    let scenes = $('#scene-select');
-
     // add the drop-down menu to the html
     for (let scene of Scene.scenes) {
         let isActive = scene.id === Scene.active;
@@ -58,7 +61,7 @@ export function reRenderHierarchy () {
         `);
     }
 
-    $('#add-scene').click(() => {
+    addSceneButton.click(() => {
         let ctx = Scene.activeScene.settings.ctx;
         Scene.active = Scene.create({
             name: 'New Scene'
@@ -69,9 +72,14 @@ export function reRenderHierarchy () {
         window.save();
     });
 
-    $('#rename-scene').click(() => {
-        let val = $('#rename-scene-to').val();
-        if (!val) return;
+    renameSceneButton.click(() => {
+        let val = renameSceneTo.val();
+        if (!val) {
+            return;
+        }
+        if (typeof val !== 'string') {
+            return;
+        }
 
         Scene.activeScene.name = val;
         window.save();
@@ -84,13 +92,15 @@ export function reRenderHierarchy () {
     // draw the entities in the entity tree
     for (let entity of sceneEntities){
 
-        if (!entity.transform.isRoot()) continue;
+        if (!entity.transform.isRoot()){
+            continue;
+        }
 
         // so that only root nodes have <li>s around, children are just in divs
         entities += `
-        <li>
-            ${_entity_(entity, Object.is(state.selectedEntity, entity), h)}
-        </li>
+            <li>
+                ${_entity_(entity, Object.is(state.selectedEntity, entity))}
+            </li>
         `;
     }
 
@@ -118,14 +128,17 @@ export function reRenderHierarchy () {
 
         setRightClick(`entitybutton${entity.id}`, entity, `
             ${rightClickOption('delete', () => {
-                state.selectedEntity.delete();
-                for (let child of state.selectedEntity.transform.children) {
+                state.selectedEntity?.delete();
+                for (let child of state.selectedEntity?.transform.children || []) {
                     child.delete();
                 }
                 reRender();
             })}
             ${rightClickOption('duplicate', async () => {
-                let clone = await state.selectedEntity.getClone();
+                let clone = await state.selectedEntity?.getClone();
+                if (!clone) {
+                    return;
+                }
     
                 // entity (1) ==> entity (2)
                 const regex = /(.*)\(([0-9]+)\)/;
@@ -144,8 +157,8 @@ export function reRenderHierarchy () {
                 Entity.newEntity({
                     name: 'New Entity',
                     transform: new Transform({
-                        parent: state.selectedEntity.transform
-                    })
+                        parent: state.selectedEntity?.transform || Scene.active
+                    }),
                 });
                 reRender();
             })}

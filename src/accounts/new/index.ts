@@ -30,7 +30,7 @@ $(`#submit`).click(async () => {
         return;
     }
 
-    const usernameExists = await request('/username-exists', undefined, {username});
+    const usernameExists = await window.request('/username-exists', undefined, {username});
     if (usernameExists.exists === '1') {
         error.html('That username already exists');
         return;
@@ -72,7 +72,7 @@ $(`#submit`).click(async () => {
         }
     }
 
-    await request('/new-user', undefined, {
+    await window.request('/new-user', undefined, {
         username,
         password,
         name,
