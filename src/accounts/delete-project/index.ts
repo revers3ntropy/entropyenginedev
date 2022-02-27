@@ -3,7 +3,7 @@ let confirmButton = $('#confirm');
 
 window.apiToken.project = parseInt(projectID);
 
-window.request('get-project-name', window.apiToken).then(async value => {
+window.request('get-project-name').then(async value => {
     confirmButton.html(`
             <p style="font-size: 30px">
                 Are you sure you want to delete the project
@@ -18,7 +18,7 @@ window.request('get-project-name', window.apiToken).then(async value => {
     await window.sleep(2000);
 
     window.delete = () => {
-        window.request('delete-project', window.apiToken);
+        window.request('delete-project');
         window.location.href = 'https://entropyengine.dev/accounts/my-projects';
     };
 

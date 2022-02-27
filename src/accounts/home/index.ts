@@ -127,9 +127,8 @@ function recentProjects () {
     
                     `);
 
-                const editors = await window.request(`/get-project-editors`, {
-                    project: projectName._id
-                });
+                window.apiToken.project = projectName._id;
+                const editors = await window.request(`get-project-editors`);
 
                 const editorsHTML = () => {
                     // these are just my projects, always have 'me' first

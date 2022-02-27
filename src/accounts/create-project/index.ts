@@ -13,7 +13,7 @@ $(`#submit`).click(async () => {
         return;
     }
 
-    const id = await window.request('new-project', window.apiToken, {name});
+    const id = await window.request('new-project', {name});
 
     window.location.href = 'https://entropyengine.dev/editor?p=' + id.projectID;
 });

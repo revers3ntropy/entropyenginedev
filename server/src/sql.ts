@@ -44,7 +44,7 @@ export const query = (sql: string): Promise<any> => {
 function handleDisconnect() {
     con = mysql.createConnection(dbConfig);
 
-    con.connect((err: mysql.MysqlError) => {
+    con.connect((err) => {
         if (err) {
             console.log('error when connecting to db:', err);
             setTimeout(handleDisconnect, 500);

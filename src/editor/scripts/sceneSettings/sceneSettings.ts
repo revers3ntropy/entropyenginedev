@@ -1,4 +1,4 @@
-import { colour, Scene } from "entropy-engine/src";
+import { colour, Scene } from "entropy-engine";
 
 window.changeSceneSettings = (key: string, id: string) => {
 	const value = $(`#${id}`).val();

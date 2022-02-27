@@ -12,7 +12,7 @@ declare global {
         secondsToReadable: (seconds: number) => string,
         unixTimeAgo: (time: number) => string,
         nameFromScriptURL: (path: string) => string,
-        request: (url: string, token?: apiTok, body?: {}) => Promise<any>,
+        request: (url: string, body?: {}) => Promise<any>,
         copyToClipboard: (text: string) => void;
         apiToken: apiTok;
 

@@ -38,6 +38,7 @@ export const renderScripts = (divID: string) => {
     if (Object.keys(scripts).length < 1) {
         return;
     }
+
     if (!state.currentScript) return;
     $('#script-editor').html(`
         <textarea id="script-code">${scripts[state.currentScript] ?? ''}</textarea>

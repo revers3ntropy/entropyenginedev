@@ -1,9 +1,7 @@
 import {reRender} from "./renderer";
 import {reloadScriptsOnEntities} from "./scripts";
 
-import {v2} from "entropy-engine/src";
-import entropyEngine from "entropy-engine/src";
-import { Entity } from "entropy-engine/src";
+import {v2, Entity, EntropyEngine} from "entropy-engine";
 
 export const projectID = window.urlParam('p');
 
@@ -27,7 +25,7 @@ if (!ctx) {
 	throw 'context is not defined';
 }
 
-export const { run } = entropyEngine({
+export const { run } = EntropyEngine({
 	canvasID
 });
 

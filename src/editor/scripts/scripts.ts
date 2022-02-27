@@ -1,7 +1,7 @@
 import {projectID, scripts, scriptURLS} from "./state";
 import {reRender} from "./renderer";
 
-import {Entity, Script} from "entropy-engine/src";
+import {Entity, Script} from "entropy-engine";
 
 import {run, ESError, Primitive, ESNamespace, global, Context, ESString} from "entropy-script";
 
@@ -62,8 +62,8 @@ export async function runESScript (path: string, env: Context): Promise<ESError 
 		measurePerformance: false,
 		currentDir: path
 	});
+
 	if (res.error) {
-		console.error(res.error.str);
 		return res.error;
 	}
 	return res.val;
@@ -86,7 +86,7 @@ export async function reloadScriptsOnEntities () {
 		const res = await runESScript(scriptPath, env);
 
 		if (res instanceof ESError) {
-			console.error(res.colouredStr);
+			console.error(res.str);
 			continue;
 		}
 

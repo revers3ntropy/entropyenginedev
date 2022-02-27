@@ -140,6 +140,11 @@ async function main () {
 
 	timings['Total'] = now() - start;
 
+	const timingsDataFile = p.join(p.resolve(__dirname), 'build-data.json');
+	const timingsDataJSON = JSON.parse(fs.readFileSync(timingsDataFile).toString());
+	timingsDataFile.push(timings);
+	fs.writeFileSync(timingsDataFile, JSON.stringify(timingsDataJSON));
+
 	if (!QUIET) {
 		logTimings();
 	}

@@ -1,7 +1,7 @@
 import {reRender} from "../renderer";
 import {state} from '../state';
 
-import {Scene, v2, v3, colour} from "entropy-engine/src";
+import {Scene, v2, v3, colour} from "entropy-engine";
 
 function _colour_ (id: string, value: colour, componentName: string) {
 	return `

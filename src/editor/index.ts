@@ -7,10 +7,7 @@ import {state, scripts, projectID, setSelected} from './scripts/state';
 import './scripts/updatePing';
 import './scripts/eeclient';
 
-import entropyEngine, * as ee from "entropy-engine/src";
-import {entitiesFromJSON} from "entropy-engine/src";
-import {initialiseScenes} from 'entropy-engine/src/JSONprocessor';
-import {cullString} from 'entropy-engine/src/util/general';
+import * as ee from "entropy-engine";
 
 // cache busting
 const scriptFetchHeaders = new Headers();
@@ -41,7 +38,7 @@ async function initFromFiles (id: number) {
         config[key] = data[key];
     }
 
-    initialiseScenes(data['scenes'] || []);
+    ee.initialiseScenes(data['scenes'] || []);
 
     state.sceneCamera = new ee.Entity({
         components: [
@@ -49,9 +46,9 @@ async function initFromFiles (id: number) {
         ]
     });
 
-    state.eeReturns = entropyEngine(config);
+    state.eeReturns = ee.EntropyEngine(config);
 
-    await entitiesFromJSON(data['entities'] || []);
+    await ee.entitiesFromJSON(data['entities'] || []);
 
     setSelected(ee.Entity.entities[0]);
 
@@ -61,10 +58,10 @@ async function initFromFiles (id: number) {
     ee.Scene.active = parseInt(sessionStorage.sceneID) || 0;
 }
 
-async function checkCredentials () {
+async function checkCredentials (): Promise<number> {
     return new Promise(resolve => {
         window.mustBeSignedIn(async () => {
-            const accessLevel = (await window.request('get-project-access', window.apiToken)).accessLevel;
+            const accessLevel = (await window.request('get-project-access', window.apiToken))['accessLevel'];
 
             if (accessLevel < 1) {
                 window.location.href = 'https://entropyengine.dev/accounts/error?type=projectAccessDenied';
@@ -84,6 +81,10 @@ async function checkCredentials () {
 
 async function main () {
     const accessLevel = await checkCredentials();
+    if (accessLevel < 1) {
+        throw 'no access to project';
+    }
+    await ee.initialiseEntropyScript();
     await loadScripts();
     state.currentScript ??= Object.keys(scripts)[0];
 
@@ -95,7 +96,7 @@ async function main () {
 
     const data = await window.request('get-project-name', window.apiToken);
 
-    const name = cullString(data.name, 16);
+    const name = ee.cullString(data.name, 16);
     $(`#project-name`).html(name);
     document.title = name;
 }

@@ -6,7 +6,7 @@ $('#username').html(username);
 
 let projects = $('#projects');
 
-window.request('public-projects', window.apiToken, {username})
+window.request('public-projects', {username})
     .then(async projectNames => {
 
         const myUsername = (await window.request('get-username', window.apiToken)).username;

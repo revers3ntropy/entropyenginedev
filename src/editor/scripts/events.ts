@@ -2,9 +2,7 @@ import {reloadScriptsOnEntities} from "./scripts";
 import { state, ctx, canvas, setState, states, projectID, setSelected } from "./state";
 import {reRender, reRenderCanvas, reRenderCanvasDebug, reRenderSceneToolbar} from "./renderer";
 
-import {rect} from "entropy-engine/src/systems/rendering/basicShapes";
-import { v2, Entity, Scene, Camera, GUIElement, Transform, Collider} from 'entropy-engine/src';
-import {getMousePos} from "entropy-engine/src/input";
+import { rect, getMousePos, v2, Entity, Scene, Camera, GUIElement, Transform, Collider} from 'entropy-engine';
 
 window.addEventListener('click', () => {
     $('#pop-up').css('visibility', 'hidden');

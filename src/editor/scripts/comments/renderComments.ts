@@ -27,7 +27,7 @@ export function renderComments (div: JQuery) {
 	`);
 
 	async function refreshComments (username: string) {
-		const comments = await window.request('get-comments', window.apiToken, {
+		const comments = await window.request('get-comments', {
 			public: false
 		})
 		$('#num-comments').html(comments.length);
@@ -54,32 +54,31 @@ export function renderComments (div: JQuery) {
 				$(`#comment-${commentTxt._id}-menu`).hide();
 				$(`#comment-${commentTxt._id}`).hide();
 
-				await window.request('delete-comment', window.apiToken, {
+				await window.request('delete-comment', {
 					commentID: commentTxt._id
 				})
-				refreshComments(username);
+				await refreshComments(username);
 			});
 		}
 	}
 
 	const addMessage = $("#add-comment");
 
-	window.request('/get-username', window.apiToken)
-		.then(username => {
-			addMessage.keyup(event => {
+	window.request('get-username')
+		.then(async username => {
+			addMessage.keyup(async event => {
 				if (event.keyCode !== 13) return;
 
 				const content = addMessage.val();
 				addMessage.val('');
 
-				window.request('comment', window.apiToken, {
+				await window.request('comment', {
 					content,
 					public: false,
-				}).then(() => {
-					refreshComments(username.username);
-				});
+				})
+				await refreshComments(username.username);
 			});
 
-			refreshComments(username.username);
+			await refreshComments(username.username);
 		});
 }

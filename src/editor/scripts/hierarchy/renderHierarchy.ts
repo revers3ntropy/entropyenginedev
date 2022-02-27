@@ -1,5 +1,5 @@
 import {state, setSelected} from "../state";
-import {Scene, Entity, Transform} from "entropy-engine/src";
+import {Scene, Entity, Transform} from "entropy-engine";
 import {reRender, rightClickOption, setRightClick} from "../renderer";
 import {setRightClickAddEntityMenu} from "./rightClickCreateMenu";
 

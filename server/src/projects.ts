@@ -6,7 +6,7 @@ import fs from "fs";
 import * as path from "path";
 import * as fse from 'fs-extra';
 import mv from 'mv';
-import formidable from 'formidable';
+import { IncomingForm } from 'formidable';
 
 require('dotenv').config();
 
@@ -589,7 +589,7 @@ export const upload: Handler = async ({url, req, res}) => {
             `);
             return;
         }
-        const form = new formidable.IncomingForm();
+        const form = new IncomingForm();
 
         form.parse(req, (err, fields, files) => {
 

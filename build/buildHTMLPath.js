@@ -81,7 +81,6 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 
 			fs.writeFileSync(webpackConfigPath, `
 				const path = require('path');
-				const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 				
 				module.exports = {
 					entry: '${p.resolve(fullPath)}',
@@ -96,14 +95,6 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 					module: {
 						rules: [
 							{
-								test: /\\.less$/,
-								use: [
-									'style-loader',
-									'css-loader',
-									'less-loader'
-								]
-							},
-							{
 								test: /\\.ts$/,
 								loader: 'ts-loader',
 								options: {
@@ -112,10 +103,7 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 								}
 							},
 						]
-					},
-					plugins: [
-						new MiniCssExtractPlugin()
-					]
+					}
 				};
 			`);
 
@@ -161,8 +149,7 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 		fs.mkdirSync(distPath);
 	}
 
-	// main.ts, main.less
-	js = '<script>' + MAIN + '</script>' + js;
+	js = '<script defer>' + MAIN + '</script>' + js;
 
 	const final = minifyHTML(html + css + js + FOOT, {
 		removeAttributeQuotes: false,

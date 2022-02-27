@@ -1,5 +1,4 @@
-// @ts-ignore
-//import * as Chartist from '../../node_modules/chartist-js/dist/chartist.js';
+import * as Chartist from 'chartist';
 
 const currentTime = Math.round(new Date().getTime()/1000);
 

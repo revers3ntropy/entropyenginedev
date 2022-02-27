@@ -1,4 +1,4 @@
-import {Entity, Scene} from "entropy-engine/src";
+import {Entity, Scene} from "entropy-engine";
 import {scripts, scriptURLS} from "./state";
 
 // needed for it to actually import and run this script
@@ -22,8 +22,7 @@ function buildScripts () {
 }
 
 window.backgroundSave = async () => {
-    // raw save, no visible changes
-    await window.request('save-project', window.apiToken, {
+    await window.request('save-project', {
         scripts: buildScripts(),
         json: `
         {

@@ -7,9 +7,7 @@ import {renderSceneMenu} from './renderSceneMenu';
 import {renderComments} from './comments/renderComments';
 import {renderSceneSettings} from "./sceneSettings/sceneSettings";
 
-import { Scene, v2, Camera, Systems, Entity } from "entropy-engine/src";
-import {rect} from "entropy-engine/src/systems/rendering/basicShapes";
-import {renderDebug, renderSelectedOutline, drawCameraViewArea} from 'entropy-engine/src/systems/rendering/debugRenderer';
+import { Scene, v2, Camera, Systems, Entity, rect, renderDebug, renderSelectedOutline, drawCameraViewArea } from "entropy-engine";
 
 /**
  * Shows a popup menu at the cursor

@@ -15,7 +15,7 @@ $(`#submit`).click(async () => {
     const accessLevel = accessElement.val();
 
     if (username) {
-        const usernameExists = await window.request('username-exists', window.apiToken, {
+        const usernameExists = await window.request('username-exists', {
             username: username
         });
         if (usernameExists.exists !== '1') {
@@ -23,7 +23,7 @@ $(`#submit`).click(async () => {
             return;
         }
     }
-    let {error} = await window.request('share-project', window.apiToken, {
+    let {error} = await window.request('share-project', {
         username,
         accessLevel
     });

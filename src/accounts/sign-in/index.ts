@@ -8,7 +8,7 @@ window.validID(localStorage.id).then(valid => {
         const username = $('#username').val();
         const password = $('#password').val();
 
-        localStorage.id = (await window.request('get-id', undefined, {
+        localStorage.id = (await window.request('get-id', {
             username,
             password
         }))._id;

@@ -2,13 +2,9 @@ window.mustBeSignedIn(() => {
     let myProjects = $('#my-projects');
     let sharedWithMe = $('#shared-projects');
 
-    let apiToken: apiTok = {
+    window.request('get-project-names').then(async projectNames => {
 
-    };
-
-    window.request('get-project-names', apiToken).then(async projectNames => {
-
-        const myUsername = (await window.request('get-username', apiToken)).username;
+        const myUsername = (await window.request('get-username')).username;
 
         for (let projectName of projectNames) {
             const isShared = projectName.level != 3;

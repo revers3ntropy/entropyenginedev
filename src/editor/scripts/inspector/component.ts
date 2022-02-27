@@ -2,7 +2,7 @@ import {reRender, rightClickOption, setRightClick} from "../renderer";
 import {state} from "../state";
 import {_componentProperty_} from "./property";
 
-import { Component, Script } from "entropy-engine/src";
+import { Component, Script } from "entropy-engine";
 
 export const _component_ = (component: Component, i: JQuery) => {
 	if (!state.selectedEntity) {
@@ -42,7 +42,7 @@ export const _component_ = (component: Component, i: JQuery) => {
 	const componentHTML = $(`#component-${cName}`);
 
 	let j = 0;
-	for (let property of component.public) {
+	for (let property of component['public']) {
 		let name = component.type;
 		if (name === 'Script') {
 			name = (component as Script).name || component.subtype;
