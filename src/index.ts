@@ -87,7 +87,7 @@ function recentProjects () {
 
             const projectsDiv = $('#recent-projects');
 
-            const myUsername = (await window.request('/get-username', window.apiToken)).username;
+            const myUsername = (await window.request('get-username', window.apiToken)).username;
 
             let i = 0;
             for (let projectName of projectNames) {

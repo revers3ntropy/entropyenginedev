@@ -7,6 +7,7 @@
  * --no-frontend | Don't rebuild the HTML, CSS and JS
  * --no-backend  | Don't rebuild the node backend server
  * --no-upload   | Don't upload anything
+ * --no-types    | Don't type check TS - massive speed boost
  */
 
 // utils
@@ -33,6 +34,8 @@ if (process.argv.indexOf('--silent') !== -1) {
 
 let MAIN = '';
 
+const TYPE_CHECKING = process.argv.indexOf('--no-types') === -1;
+
 async function buildServer () {
 	const start = now();
 
@@ -40,6 +43,9 @@ async function buildServer () {
 		.catch(_ => {
 			throw 'failed to build server: ' + fs.readFileSync('./server/log.txt').toString()
 		});
+
+	await run (`cp ./server/index.js dist/server`);
+	await run (`cp ./server/index.js.map dist/server`);
 
 	timings[`Build Node Server`] = now() - start;
 }
@@ -100,10 +106,10 @@ function logTimings () {
 async function buildWebpack () {
 	const start = now();
 
-	await run('webpack --config webpack.config.js > webpack_log.txt')
+	await run('webpack --config webpack.config.js > ./build/webpack_log.txt')
 		.catch(_ => {
 			console.log(chalk.red`Failed to run webpack:`,
-				String(fs.readFileSync('webpack_log.txt')));
+				String(fs.readFileSync('build/webpack_log.txt')));
 		});
 	if (!fs.existsSync('./webpack_out.js')) {
 		throw chalk.red`NO WEBPACK OUTPUT!`;
@@ -122,7 +128,7 @@ async function main () {
 		if (!QUIET) console.log('Building WebPack...');
 		await buildWebpack().catch(handleError);
 
-		await buildHTML('', QUIET, MAIN, timings, true)
+		await buildHTML('', QUIET, MAIN, timings, true, TYPE_CHECKING)
 			.catch(handleError);
 	}
 
@@ -140,9 +146,9 @@ async function main () {
 
 	timings['Total'] = now() - start;
 
-	const timingsDataFile = p.join(p.resolve(__dirname), 'build-data.json');
+	const timingsDataFile = './build/build-data.json';
 	const timingsDataJSON = JSON.parse(fs.readFileSync(timingsDataFile).toString());
-	timingsDataFile.push(timings);
+	timingsDataJSON.push(timings);
 	fs.writeFileSync(timingsDataFile, JSON.stringify(timingsDataJSON));
 
 	if (!QUIET) {

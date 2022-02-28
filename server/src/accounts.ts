@@ -1,8 +1,6 @@
 import {clean} from "./util";
 import { Handler } from "./index";
-import {query}from './sql';
-import {config} from 'dotenv';
-config();
+import {query} from './sql';
 
 if (!process.env.SEC_IDMAX) {
     throw 'process.env.SEC_IDMAX not defined';

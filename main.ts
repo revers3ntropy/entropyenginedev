@@ -3,6 +3,7 @@ import './styles/global.less';
 import './scripts/util';
 import './scripts/request';
 import './scripts/globalComponents';
+import { apiURL } from "./scripts/constants";
 
 window.apiToken = {
     user: localStorage.id
@@ -11,7 +12,7 @@ window.apiToken = {
 const updatePing = async () => {
     const startTime = performance.now();
 
-    let response = await fetch(`https://entropyengine.dev:50001/ping`, {
+    let response = await fetch(`${apiURL}/ping`, {
         method: 'POST',
         body: JSON.stringify({})
     });
@@ -25,7 +26,7 @@ const updatePing = async () => {
 
     const time = performance.now() - startTime;
 
-    $('#ping').html(Math.floor(time).toFixed(3));
+    $('#ping').html(Math.floor(time).toFixed(0));
 }
 
 setInterval(updatePing, 5000);

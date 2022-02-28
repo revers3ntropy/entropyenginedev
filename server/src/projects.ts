@@ -123,17 +123,16 @@ export const createProject: Handler = async ({res, body, token}) => {
         INSERT INTO projectSaves VALUES (${clean(token.user)}, ${clean(id)}, CURRENT_TIMESTAMP);
    `);
 
-    const dir = `../projects/${id}`;
+    const dir = `../public_html/projects/${id}`;
 
     fs.mkdirSync(dir);
-    fs.mkdirSync(dir + '/assets');
 
     try {
-        fs.copyFileSync('../templates/project.txt', dir + '/index.json');
-        fs.copyFileSync('../templates/globalState.txt', dir + '/globalState.json');
+        fs.copyFileSync('../templates/project.settings', dir + '/project.settings');
+        fs.copyFileSync('../templates/scene.scene', dir + '/main.scene');
 
     } catch (err: any) {
-        console.error(`Creating JSON file in ${dir} failed: ${err}`);
+        console.error(`Creating file in ${dir} failed: ${err}`);
         return;
     }
 
@@ -165,7 +164,7 @@ export const deleteProject: Handler = async ({token, res}) => {
     }
 
     // delete files
-    const dir = `../projects/${token?.project}`;
+    const dir = `../public_html/projects/${token?.project}`;
     fs.rmdirSync(dir, { recursive: true });
 
     await query(`
@@ -269,16 +268,31 @@ export const getProjectEditors: Handler = async ({token, res}) => {
 };
 
 export const save: Handler = async ({token, res, body}) => {
-    const dir = `../projects/${token?.project}`;
-
-    fs.writeFileSync(dir + '/index.json', body.json);
-
-    for (let script of body.scripts) {
-        fs.writeFileSync(script.path, script.text);
+    const dir = `../public_html/projects/${token?.project}/`;
+    if (!token) {
+        res.end(JSON.stringify({"success": false, error: 'auth'}));
+        return;
+    }
+    const [auth, _] = await authLevel(token.user, token.project);
+    if (auth < 1) {
+        res.end(JSON.stringify({"success": false, error: 'auth'}));
+        return;
     }
 
+    function saveAt (dir: string, json: any) {
+        for (let path in json) {
+            if (typeof body[path] === 'string') {
+                fs.writeFileSync(dir + path, json[path]);
+            } else if (typeof body[path] === 'object') {
+                saveAt(dir + json[path], json[path]);
+            }
+        }
+    }
+
+    saveAt(dir, body);
+
     await query(`INSERT INTO projectSaves VALUES(${clean(token?.user)}, ${clean(token?.project)}, CURRENT_TIMESTAMP)`);
-    res.end(`{"result": "true"}`);
+    res.end(`{"success": "true"}`);
 };
 
 export const accessLevel: Handler = async ({token, res}) => {
@@ -306,7 +320,7 @@ export const getName: Handler = async ({res, token}) => {
 };
 
 const buildHTML = (htmlTitle: string, projectID: string): string => {
-    let raw = fs.readFileSync('../templates/buildHTML.txt').toString();
+    let raw = fs.readFileSync('../templates/buildHTML.html').toString();
     raw = raw.toString();
     raw = raw.replace(/ID/, projectID);
     raw = raw.replace(/TITLE/, htmlTitle);
@@ -314,29 +328,9 @@ const buildHTML = (htmlTitle: string, projectID: string): string => {
 };
 
 export const build: Handler = async ({token, res}) => {
-    const projectDir = `../projects/${clean(token?.project)}`;
-    const buildDir = projectDir + '/build';
+    // TODO: needs logic
 
-    if (!fs.existsSync(buildDir)) {
-        // create build folder
-        fs.mkdirSync(buildDir);
-        fs.mkdirSync(buildDir + '/assets');
-        fs.appendFileSync(buildDir + '/index.html', '');
-    }
-
-    // copy scripts and json
-    fs.copyFile(projectDir + '/scripts.js', buildDir + '/scripts.js', () => {});
-    fs.copyFile(projectDir + '/index.json', buildDir + '/index.json', () => {});
-    fs.copyFile(projectDir + '/globalState.json', buildDir + '/globalState.json', () => {});
-
-    // copy assets
-    await fse.copy(projectDir + '/assets', buildDir + '/assets', { overwrite: true });
-
-    fs.writeFileSync(
-        buildDir + '/index.html',
-        buildHTML('Entropy Engine', clean(token?.project))
-    );
-
+    /*
     await query(`
 
         UPDATE projects
@@ -344,37 +338,38 @@ export const build: Handler = async ({token, res}) => {
         WHERE projects._id = ${clean(token?.project)}
 
     `);
+
+     */
     res.end("{}");
 };
 
 
 export const getAssets: Handler = async ({token, res}) => {
-    const dir = `../projects/${clean(token?.project)}/assets`;
-    const files = [];
+    const dir = `../public_html/projects/${clean(token?.project)}`;
+    const files = {};
 
-    for (const fileName of fs.readdirSync(dir)) {
-        files.push({
-            fileName,
-        });
+    function readDir (dir: string, obj: any) {
+
+        for (const fileName of fs.readdirSync(dir)) {
+            let fPath = path.join(dir, fileName);
+            if (fs.lstatSync(fPath).isDirectory()) {
+                obj[fPath] = {};
+                readDir(fPath, obj[fPath]);
+            } else {
+                obj[fPath] = fs.readFileSync(fPath).toString();
+            }
+        }
     }
+
+    readDir(dir, files);
 
     res.end(JSON.stringify(files));
 };
 
 export const deleteAsset: Handler = async ({token, res, body}) => {
-    const path = `../projects/${clean(token?.project)}/assets/${body.fileName}`;
+    const path = `../public_html/projects/${clean(token?.project)}/${body.path}`;
     fs.unlinkSync(path);
     res.end("{}");
-};
-
-export const beenBuilt: Handler = async ({token, res}) => {
-    let built = false;
-
-    if (fs.existsSync(`../projects/${clean(token?.project)}/build/assets`)) {
-        built = true;
-    }
-
-    res.end(JSON.stringify({built}));
 };
 
 export const contributorInfo: Handler = async ({token, res}) => {
@@ -544,28 +539,7 @@ export const topProjectViews: Handler = async ({res}) => {
     res.end(JSON.stringify(data));
 };
 
-
-export const updateGlobalState: Handler = async ({res, body, token}) => {
-    let path;
-
-    if (body.isBuild) {
-        path = `../projects/${clean(token?.project)}/build/globalState.json`;
-    } else {
-        path = `../projects/${clean(token?.project)}/globalState.json`;
-    }
-
-
-    const file = fs.readFileSync(path).toString();
-    const data = JSON.parse(file);
-
-    data[body.name] = body.replace;
-
-    fs.writeFileSync(path, data);
-
-    res.end("{}");
-};
-
-export const upload: Handler = async ({url, req, res}) => {
+export const uploadFile: Handler = async ({url, req, res}) => {
 
     url.shift();
 
@@ -573,13 +547,14 @@ export const upload: Handler = async ({url, req, res}) => {
     const from = url.shift();
     const path = url.join('/') || '';
 
-    const assetsPath = `../projects/${clean(projectID)}/assets`;
+    const assetsPath = `../public_html/projects/${clean(projectID)}`;
+
     folderSize(assetsPath, ({gb, mb}) => {
         if (gb > 1) {
             res.end(`
 
                 <p style="text-align: center; font-size: xx-large">
-                    Looks like you've ran out of space! You have used ${mb} / 1000 MB!
+                    Looks like you've ran out of space! You have used ${mb} / 1.0 GB!
                 </p>
                 
                 <a href="https://entropyengine.dev/editor?p=${projectID}&from=${from}">
@@ -589,6 +564,7 @@ export const upload: Handler = async ({url, req, res}) => {
             `);
             return;
         }
+
         const form = new IncomingForm();
 
         form.parse(req, (err, fields, files) => {
@@ -607,18 +583,18 @@ export const upload: Handler = async ({url, req, res}) => {
                 } else {
                     res.end(`
                         <html lang="eng">
-                            <head>
-                                <title>uploading...</title>  
-                                <meta http-equiv="refresh" content="0;URL='https://entropyengine.dev/editor?p=${clean(projectID)}&from=${from}'"/>
-                            </head>
-                            <body>
-                                <div style="display: flex; align-items: center; justify-content: center; height: 100%">
-                                    <p style="text-align: center; font-size: xx-large">
-                                        File uploaded! Returning to project...
-                                    </p>
-                                </div>
-                            </body>
-                            </html>
+                        <head>
+                            <title>uploading...</title>  
+                            <meta http-equiv="refresh" content="0;URL='https://entropyengine.dev/editor?p=${clean(projectID)}&from=${from}'"/>
+                        </head>
+                        <body>
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%">
+                                <p style="text-align: center; font-size: xx-large">
+                                    File uploaded! Returning to project...
+                                </p>
+                            </div>
+                        </body>
+                        </html>
                     `);
                 }
             });
@@ -626,7 +602,7 @@ export const upload: Handler = async ({url, req, res}) => {
     });
 };
 
-export const findScript: Handler = async ({ token, res }) => {
+export const findScripts: Handler = async ({ token, res }) => {
 
     if (!token) {
         res.end(JSON.stringify({
@@ -646,11 +622,9 @@ export const findScript: Handler = async ({ token, res }) => {
         let files = fs.readdirSync(startPath);
         for (let i = 0; i < files.length; i++){
             let filename = path.join(startPath, files[i]);
-            let stat = fs.lstatSync(filename);
-            if (stat.isDirectory()) {
+            if (fs.lstatSync(filename).isDirectory()) {
                 paths = [...paths, ...fromDir(filename, filter)]; // recurse
-            }
-            else if (filename.indexOf(filter) >= 0) {
+            } else if (filename.indexOf(filter) >= 0) {
                 paths = [...paths, filename];
             }
         }
@@ -664,6 +638,7 @@ export const findScript: Handler = async ({ token, res }) => {
         return;
     }
 
-    let paths = fromDir(`../projects/${clean(token?.project)}/assets`,'.es');
+    let paths = fromDir(`../public_html/projects/${clean(token?.project)}`,'.es');
+    paths = paths.map(p => '../' + p.substring('../public_html/'.length));
     res.end(JSON.stringify(paths));
 };

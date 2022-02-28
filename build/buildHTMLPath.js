@@ -16,9 +16,10 @@ const
  * @param {string} MAIN
  * @param {any} timings
  * @param {boolean} recursive
+ * @param {boolean} types
  * @returns {Promise<number>} time taken to execute
  */
-exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
+exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true, types=true) => {
 	const start = now();
 
 	const paths = fs.readdirSync(p.join('./src/', dir));
@@ -46,7 +47,7 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 
 		if (fs.statSync(fullPath).isDirectory()) {
 			if (recursive) {
-				subDirTime += await exports.buildHTML(p.join(dir, path), QUIET, MAIN, timings);
+				subDirTime += await exports.buildHTML(p.join(dir, path), QUIET, MAIN, timings, types);
 			}
 			continue;
 		}
@@ -59,7 +60,7 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 
 		} else if (path === 'index.less') {
 			const start = now();
-			await run (`lessc ${fullPath} ${distPath}/index.css > ts_less_log.txt`);
+			await run (`lessc ${fullPath} ${distPath}/index.css > ./build/ts_less_log.txt`);
 			if (!fs.existsSync(`${distPath}/index.css`)) {
 				console.log(chalk.red`FILE '${distPath}/index.css' REQUIRED!`);
 				throw new Error();
@@ -99,7 +100,8 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true) => {
 								loader: 'ts-loader',
 								options: {
 									configFile: "${p.resolve('./tsconfig.json')}",
-									allowTsInNodeModules: true
+									allowTsInNodeModules: true,
+									${types ? '' : 'transpileOnly: true'}
 								}
 							},
 						]

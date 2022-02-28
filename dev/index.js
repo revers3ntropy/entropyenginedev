@@ -11,7 +11,7 @@ const now = () => Math.round(performanceNow());
 
 const hostname = '127.0.0.1';
 const HTTP_PORT = 3000;
-const API_PORT = 56787;
+const API_PORT = 50001;
 
 // UTILS
 
@@ -43,19 +43,21 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 
 let MAIN = '';
-const WEBPACK_PATHS = ['./footer.html', 'nav.html', 'types', 'main.ts', 'styles'];
+const WEBPACK_PATHS = ['footer.html', 'nav.html', 'types', 'main.ts', 'styles', 'scripts'];
 
 
 async function startServer () {
 	await (new Promise(async resolve => {
-		run(`node ./server/index.js`);
+		fs.writeFileSync('./server/log.txt', '');
+		// run server asynchronously
+		run(`cd server; node index --dev > log.txt`);
 
 		// keep on checking until the server is ready
 		while (true) {
 			await sleep(100);
 			console.log('Waiting for server to start...');
 			try {
-				const res = await api().catch(() => {});
+				const res = await api('ping').catch(() => {});
 				if (res['ok']) {
 					resolve();
 					return;
@@ -95,11 +97,16 @@ async function fileWatcher () {
 		persistent: true
 	});
 
-	watcher.on('change', p => {
+	let changedPaths = [];
+
+	watcher.on('change', async p => {
 		// remove src/ from stat of path and remove the actual filename
 		p = path.dirname(p.substring(4));
+		if (changedPaths.indexOf(p) !== -1) return;
+		changedPaths.push(p);
 		console.log('File changed in path ' + p);
-		buildHTML(p, true, MAIN, {}, false);
+		await buildHTML(p, true, MAIN, {}, false, true);
+		changedPaths.splice(changedPaths.indexOf(p), 1);
 	});
 }
 
@@ -112,7 +119,7 @@ async function webpackBundleWatcher () {
 		console.log('change in ' + p + '. Rebuilding WebPack Bundle...')
 		await buildWebpack();
 		console.log('Rebuilding with new bundle...');
-		await buildHTML('', true, MAIN, {}, true);
+		await buildHTML('', true, MAIN, {}, true, true);
 		console.log('Finished rebuilding Webpack Bundle');
 	});
 }
@@ -120,7 +127,7 @@ async function webpackBundleWatcher () {
 async function buildWebpack () {
 	const start = now();
 
-	await run('webpack --config webpack.config.js > webpack_log.txt');
+	await run('webpack --config webpack.config.js > ./build/webpack_log.txt');
 	if (!fs.existsSync('./webpack_out.js')) {
 		console.error(chalk.red`NO WEBPACK OUTPUT!`);
 		return;

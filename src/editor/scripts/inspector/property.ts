@@ -122,9 +122,9 @@ export const _componentProperty_ = (object: any, key: string, componentName: str
 	const description = object.description || '';
 
 	let defaultVal = object.default || '';
-	if (typeof object.default === 'object')
+	if (typeof object.default === 'object') {
 		defaultVal = JSON.stringify(object.default);
-
+	}
 
 	let showDefault = !!defaultVal && value !== defaultVal;
 
@@ -149,12 +149,6 @@ export const _componentProperty_ = (object: any, key: string, componentName: str
 		case 'number':
 		case 'string':
 			const isNum = typeof value === 'number';
-
-			if (key === 'url') {
-				// remove the added path for assets
-				const url = value.split('/');
-				value = url[url.length-1];
-			}
 			showValue = `
                     <input 
                         type="${isNum ? 'number' : 'text'}"

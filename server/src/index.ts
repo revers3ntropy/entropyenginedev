@@ -2,6 +2,8 @@ import * as https from "https";
 import * as fs from "fs";
 import * as http from "http";
 import { IncomingMessage, ServerResponse } from "http";
+import {config} from 'dotenv';
+config();
 
 import * as accounts from './accounts';
 import * as projects from './projects';
@@ -73,18 +75,16 @@ const handlers: {[k: string]: Handler} = {
     'get-assets': projects.getAssets,
     'build-project': projects.build,
     'delete-asset': projects.deleteAsset,
-    'has-been-built': projects.beenBuilt,
     'contributor-info': projects.contributorInfo,
     'latest-contributor': projects.latestContributor,
     'all-contributions': projects.allContributors,
     'project-owner': projects.projectOwner,
     'project-views': projects.projectViews,
     'top-projects-by-views': projects.topProjectViews,
-    'upload': projects.upload,
+    'upload': projects.uploadFile,
     'folder-size': util.folderSizePublic,
     'public-projects': projects.publicProjectsFromUser,
-    'has-build': projects.beenBuilt,
-    'find-scripts': projects.findScript,
+    'find-scripts': projects.findScripts,
     'eeclient-upload': misc.receiveEEClientScripts,
 };
 

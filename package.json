@@ -19,7 +19,7 @@
         "chartist": "^0.11.4",
         "chokidar": "^3.5.3",
         "css-loader": "^6.6.0",
-        "entropy-engine": "^0.0.7",
+        "entropy-engine": "^0.0.7-b",
         "entropy-script": "^2.8.3-a",
         "formidable": "^3.1.4",
         "hexoid": "^1.0.0",

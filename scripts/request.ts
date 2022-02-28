@@ -1,14 +1,14 @@
 /**
  * Make sure the connection is open and throw appropriate error if it not
  */
+import { apiURL } from "./constants";
+
 async function networkError () {
     let location = window.location.href;
     window.location.href = 'https://entropyengine.dev/accounts/error?type=serverPingFailed&cb=' + encodeURIComponent(location);
     await new Promise(_ => {});
 }
 
-const apiPort = '50001';
-const apiURL = `https://entropyengine.dev:${apiPort}`;
 
 let checkedServerConnection = false;
 

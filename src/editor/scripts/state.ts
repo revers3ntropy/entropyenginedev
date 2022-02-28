@@ -1,7 +1,7 @@
 import {reRender} from "./renderer";
 import {reloadScriptsOnEntities} from "./scripts";
 
-import {v2, Entity, EntropyEngine} from "entropy-engine";
+import * as ee from "entropy-engine";
 
 export const projectID = window.urlParam('p');
 
@@ -25,10 +25,6 @@ if (!ctx) {
 	throw 'context is not defined';
 }
 
-export const { run } = EntropyEngine({
-	canvasID
-});
-
 // scripts script
 export const scripts: {[k: string]: string} = {};
 export const scriptURLS: {[k: string]: string} = {};
@@ -40,13 +36,8 @@ window.switchScripts = (script: string) => {
 };
 
 export function numScripts () {
-	let count = 0;
-	for (let i in scripts)
-		count++;
-	return count;
+	return Object.keys(scripts).length;
 }
-
-// global state
 
 // window state management
 export enum states {
@@ -67,31 +58,31 @@ window.comments = states.comments;
 export const state: {
 	dragging: boolean,
 	running: boolean,
-	sceneCamera: Entity | null,
-	selectedEntity: Entity | null,
+	sceneCamera: ee.Entity | null,
+	selectedEntity: ee.Entity | null,
 	window: states,
 	eeReturns: any,
 	currentScript: string,
-	dragStart: v2,
-	dragEnd: v2,
+	dragStart: ee.v2,
+	dragEnd: ee.v2,
 } = {
 	window: parseInt(localStorage.statewindow) ?? states.sceneView,
 	eeReturns: {},
 	currentScript: localStorage.currentScript ?? '',
 	dragging: false,
-	dragStart: v2.zero,
-	dragEnd: v2.zero,
+	dragStart: ee.v2.zero,
+	dragEnd: ee.v2.zero,
 	sceneCamera: null,
 	selectedEntity: null,
 	running: false
 };
 
-export const setSelected = (sprite: Entity | null) => void (state.selectedEntity = sprite);
+export const setSelected = (sprite: ee.Entity | null) => void (state.selectedEntity = sprite);
 
-export const setState = (newState: states) => {
+export const setState = async (newState: states) => {
 	if (state.window === newState) return;
 
-	reloadScriptsOnEntities();
+	await reloadScriptsOnEntities();
 	localStorage.statewindow = newState;
 
 	state.window = newState;

@@ -123,7 +123,7 @@ export const receiveEEClientScripts: Handler = async ({res, body, token}) => {
 	}
 
 	for (const path in body.files) {
-		let fullPath = `../projects/${token.project}/assets/${path}`
+		let fullPath = `../public_html/projects/${token.project}/${path}`
 		if (!fs.existsSync(fullPath)) {
 			try {
 				fs.appendFileSync(fullPath, '');

@@ -1,0 +1,7 @@
+Update = func () {
+
+};
+
+Start = func () {
+
+};
