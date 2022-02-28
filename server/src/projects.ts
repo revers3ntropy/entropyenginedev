@@ -4,7 +4,6 @@ import { clean, folderSize } from "./util";
 
 import fs from "fs";
 import * as path from "path";
-import * as fse from 'fs-extra';
 import mv from 'mv';
 import { IncomingForm } from 'formidable';
 
