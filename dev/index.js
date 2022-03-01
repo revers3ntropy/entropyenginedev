@@ -50,14 +50,15 @@ async function startServer () {
 	await (new Promise(async resolve => {
 		fs.writeFileSync('./server/log.txt', '');
 		// run server asynchronously
-		run(`cd server; node index --dev > log.txt`);
+		run(`cd server; node --enable-source-maps index --dev > log.txt`);
 
 		// keep on checking until the server is ready
 		while (true) {
 			await sleep(100);
 			console.log('Waiting for server to start...');
 			try {
-				const res = await api('ping').catch(() => {});
+				const res = await api('ping')
+					.catch(() => {});
 				if (res['ok']) {
 					resolve();
 					return;
@@ -75,6 +76,9 @@ async function startFileServer () {
 			path.join(__dirname, '../dist/public_html/', req.url, 'index.html'),
 			path.join(__dirname, '../dist/public_html/', req.url)
 		];
+
+		console.log(paths);
+
 		for (let possiblePath of paths) {
 			if (!fs.existsSync(possiblePath)) {
 				continue;
@@ -92,6 +96,8 @@ async function startFileServer () {
 	});
 }
 
+let REBUILDING_WEBPACK = false;
+
 async function fileWatcher () {
 	const watcher = chokidar.watch('./src', {
 		persistent: true
@@ -102,9 +108,12 @@ async function fileWatcher () {
 	watcher.on('change', async p => {
 		// remove src/ from stat of path and remove the actual filename
 		p = path.dirname(p.substring(4));
+
 		if (changedPaths.indexOf(p) !== -1) return;
+		if (REBUILDING_WEBPACK) return;
+
 		changedPaths.push(p);
-		console.log('File changed in path ' + p);
+
 		await buildHTML(p, true, MAIN, {}, false, true);
 		changedPaths.splice(changedPaths.indexOf(p), 1);
 	});
@@ -116,11 +125,16 @@ async function webpackBundleWatcher () {
 	});
 
 	watcher.on('change', async p => {
+
+		if (REBUILDING_WEBPACK) return;
+
+		REBUILDING_WEBPACK = true;
 		console.log('change in ' + p + '. Rebuilding WebPack Bundle...')
 		await buildWebpack();
 		console.log('Rebuilding with new bundle...');
 		await buildHTML('', true, MAIN, {}, true, true);
 		console.log('Finished rebuilding Webpack Bundle');
+		REBUILDING_WEBPACK = false;
 	});
 }
 
