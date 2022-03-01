@@ -1,6 +1,5 @@
+// get rid of port if one is included
 const SITE_ROOT = window.location.host.split(':').shift();
-
-console.log(SITE_ROOT);
 
 export const DEV = SITE_ROOT === 'localhost' || SITE_ROOT === '127.0.0.1';
 

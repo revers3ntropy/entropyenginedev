@@ -1,3 +1,4 @@
+console.log(window);
 const toFill = $('#links');
 
 window.validID(localStorage.id)

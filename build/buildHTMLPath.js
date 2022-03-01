@@ -52,6 +52,7 @@ exports.buildHTML = async (dir, QUIET, MAIN, timings={}, recursive=true, types=t
 			continue;
 		}
 
+
 		if (path === 'index.html') {
 			html = `
 				${HEAD}
