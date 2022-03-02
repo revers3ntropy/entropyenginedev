@@ -22,7 +22,7 @@ const API_PORT = 50001;
 const run = async (cmd) => {
 	return new Promise((e) => {
 		exec(cmd, (error, stdout, stderr) => {
-			if (error) console.log(error);
+			if (error) throw error;
 			if (stdout) console.log(stdout);
 			if (stderr) console.error(stderr);
 			e();
@@ -55,7 +55,7 @@ async function startServer () {
 		// keep on checking until the server is ready
 		while (true) {
 			await sleep(100);
-			console.log('Waiting for server to start...');
+			console.log(chalk.yellow`Waiting for server to start...`);
 			try {
 				const res = await api('ping')
 					.catch(() => {});
@@ -77,13 +77,11 @@ async function startFileServer () {
 			path.join(__dirname, '../dist/public_html/', req.url)
 		];
 
-		console.log(paths);
-
 		for (let possiblePath of paths) {
 			if (!fs.existsSync(possiblePath)) {
 				continue;
 			}
-			console.log('serving ' + possiblePath);
+			console.log(`Serving ${possiblePath}`);
 			const content = fs.readFileSync(possiblePath).toString();
 			res.end(content);
 			return;
@@ -92,7 +90,7 @@ async function startFileServer () {
 	});
 
 	server.listen(HTTP_PORT, hostname, () => {
-		console.log(`Server running at http://${hostname}:${HTTP_PORT}/`);
+		console.log(chalk.green`Server running at http://${hostname}:${HTTP_PORT}/`);
 	});
 }
 
@@ -127,13 +125,14 @@ async function webpackBundleWatcher () {
 	watcher.on('change', async p => {
 
 		if (REBUILDING_WEBPACK) return;
-
 		REBUILDING_WEBPACK = true;
-		console.log('change in ' + p + '. Rebuilding WebPack Bundle...')
+		const start = now();
+
+		console.log(chalk.yellow`Change in ${p} Rebuilding WebPack Bundle...`)
 		await buildWebpack();
-		console.log('Rebuilding with new bundle...');
+		console.log(chalk.yellow`Rebuilding with new bundle...`);
 		await buildHTML('', true, MAIN, {}, true, true);
-		console.log('Finished rebuilding Webpack Bundle');
+		console.log(chalk.green`Finished rebuilding Webpack Bundle in ${now() - start}ms`);
 		REBUILDING_WEBPACK = false;
 	});
 }
@@ -149,7 +148,7 @@ async function buildWebpack () {
 	MAIN = fs.readFileSync('./webpack_out.js');
 	fs.unlinkSync('./webpack_out.js');
 
-	console.log(`Rebuild webpack bundle in ${now() - start} ms`);
+	console.log(chalk.green`Rebuild webpack bundle in ${now() - start} ms`);
 }
 
 (async () => {

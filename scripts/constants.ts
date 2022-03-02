@@ -1,11 +1,12 @@
 // get rid of port if one is included
-const SITE_ROOT = window.location.host.split(':').shift();
+export const HOST = window.location.host.split(':').shift();
+export const DEV = HOST === 'localhost' || HOST === '127.0.0.1';
+export const SITE_ROOT = `http${DEV ? '' : 's'}://${window.location.host}`;
+console.log(SITE_ROOT);
 
-export const DEV = SITE_ROOT === 'localhost' || SITE_ROOT === '127.0.0.1';
-
-if (!DEV && SITE_ROOT !==  'entropyengine.dev') {
-    throw `unexpected site root: ${SITE_ROOT}`;
+if (!DEV && HOST !== 'entropyengine.dev') {
+    throw `unexpected site root: ${HOST}`;
 }
 
 export const apiPort = '50001';
-export const apiURL = `http${DEV ? '' : 's'}://${DEV ? 'localhost' : SITE_ROOT}:${apiPort}`;
+export const apiURL = `http${DEV ? '' : 's'}://${DEV ? 'localhost' : HOST}:${apiPort}`;

@@ -3,11 +3,16 @@ import './styles/global.less';
 import './scripts/util';
 import './scripts/request';
 import './scripts/globalComponents';
-import { apiURL } from "./scripts/constants";
+import { apiURL, SITE_ROOT } from "./scripts/constants";
 
 window.apiToken = {
     user: localStorage.id
 };
+
+$('#NAV-account').attr('href', `${SITE_ROOT}/accounts/@`);
+$('#NAV-docs').attr('href', `${SITE_ROOT}/docs`);
+$('#NAV-home').attr('href', `${SITE_ROOT}/`);
+$('#NAV-projects').attr('href', `${SITE_ROOT}/accounts/my-projects`);
 
 const updatePing = async () => {
     const startTime = performance.now();
