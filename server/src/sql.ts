@@ -11,15 +11,14 @@ const dbConfig = {
     multipleStatements: true
 };
 
-let con:  mysql.Connection;
+let con: mysql.Connection;
 
 let hasConnectedSQL = false;
 
 /**
  *   Queries the mySQL database 'entropye_ngine_users'
  *
- *   @param {string} sql The SQL query
- *   @returns {boolean} Has connected yet
+ *   @returns Has connected yet
  */
 export const query = (sql: string): Promise<any> => {
     return new Promise((resolve, fail) => {
