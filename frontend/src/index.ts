@@ -5,17 +5,17 @@ window.validID(localStorage.id)
     .then(signedIn => {
         if (signedIn) {
             toFill.html(`
-                <a href="../my-projects/" style="font-size: 30px">
+                <a href="accounts/my-projects/" style="font-size: 30px">
                     All Projects
                 </a>
                 `);
             recentProjects();
         } else {
             toFill.html(`
-            <a href="../sign-in" style="font-size: 25px; margin: 10px">
+            <a href="accounts/sign-in" style="font-size: 25px; margin: 10px">
                 Sign In
             </a>
-            <a href="../new" style="font-size: 25px">
+            <a href="accounts/new" style="font-size: 25px">
                 Create Account
             </a>
             `);
@@ -33,7 +33,7 @@ window.request ('top-projects-by-views', window.apiToken)
                 project: projectID,
             };
 
-            const name = (await window.request('get-project-name', token)).name;
+            const { name } = (await window.request('get-project-name', token));
 
             const owner = await window.request('project-owner', token);
 

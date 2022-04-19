@@ -1,27 +1,23 @@
-**/*.env
-**/*.pem
-*.env
-*.pem
-*.htaccess
-**/*.htaccess
-/package-lock.json
-**/package-lock.json
-*.txt
-**/*.txt
+*
 
+!frontend/*.ts
+!frontend/*.less
+!frontend/*.html
+!frontend/**/*.ts
+!frontend/**/*.less
+!frontend/**/*.html
+
+!server/*.ts
+!server/**/*.ts
+
+!.eslintignore
+!.eslintrc
 !LICENSE
+!.gitignore
 
-/.idea/
+!**/package.json
+!**/webpack.config.js
+!**/tsconfig.json
 
-/server/node_modules/
-/node_modules/
-
-/dist/public_html/**/*.html
-/dist/public_html/*.html
-
-**/*.js
-*.js
-
-!webpack.config.js
-!build/*.js
 !dev/*.js
+!build/*.js

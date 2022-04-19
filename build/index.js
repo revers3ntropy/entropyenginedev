@@ -1,3 +1,5 @@
+#!/usr/bin/env zx
+
 /**
  * Builds and deploys the project to entropyengine.dev
  * OPTIONS:
@@ -12,7 +14,7 @@
 
 // utils
 const fs = require('fs');
-const {run, sortObjectEntries} = require('./utils');
+const {sortObjectEntries} = require('./utils');
 const {buildHTML} = require('./buildHTMLPath');
 
 const p = require('path');
@@ -39,13 +41,13 @@ const TYPE_CHECKING = process.argv.indexOf('--no-types') === -1;
 async function buildServer () {
 	const start = now();
 
-	await run ('cd server; webpack --config webpack.config.js > log.txt')
+	await $`cd server; webpack --config webpack.config.js > log.txt`
 		.catch(_ => {
 			throw 'failed to build server: ' + fs.readFileSync('./server/log.txt').toString()
 		});
 
-	await run (`cp ./server/index.js dist/server`);
-	await run (`cp ./server/index.js.map dist/server`);
+	await $`cp ./server/index.js dist/server`;
+	await $`cp ./server/index.js.map dist/server`;
 
 	timings[`Build Node Server`] = now() - start;
 }
@@ -58,10 +60,10 @@ async function upload () {
 	for (const path of paths) {
 		console.log('Uploading path ' + path);
 		if (fs.statSync(p.join(p.resolve('./dist/'), path)).isDirectory()) {
-			await run(`sshpass -f './build/sshPass.txt' scp -r ./dist/${path} entropyengine@entropyengine.dev:~/`);
+			await $`sshpass -f './build/sshPass.txt' scp -r ./dist/${path} entropyengine@entropyengine.dev:~/`;
 			continue;
 		}
-		await run(`sshpass -f './build/sshPass.txt' scp ./dist/${path} entropyengine@entropyengine.dev:~/`);
+		await $`sshpass -f './build/sshPass.txt' scp ./dist/${path} entropyengine@entropyengine.dev:~/`;
 	}
 
 	console.log(chalk.green('Finished Uploading'));
@@ -106,10 +108,10 @@ function logTimings () {
 async function buildWebpack () {
 	const start = now();
 
-	await run('webpack --config webpack.config.js > ./build/webpack_log.txt')
+	await $`webpack --config webpack.config.js > ./build/webpack_log.txt`
 		.catch(_ => {
 			console.log(chalk.red`Failed to run webpack:`,
-				String(fs.readFileSync('build/webpack_log.txt')));
+				fs.readFileSync('build/webpack_log.txt').toString());
 		});
 	if (!fs.existsSync('./webpack_out.js')) {
 		throw chalk.red`NO WEBPACK OUTPUT!`;

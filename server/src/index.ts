@@ -1,7 +1,7 @@
 import * as https from "https";
 import * as fs from "fs";
 import * as http from "http";
-import { IncomingMessage, ServerResponse } from "http";
+import type { IncomingMessage, ServerResponse } from "http";
 import {config} from 'dotenv';
 config();
 
@@ -155,7 +155,7 @@ async function serverResponse (req: IncomingMessage, res: ServerResponse) {
 
             handler({url, res, body, req, token});
         });
-    } catch(e) {
+    } catch (e) {
         console.log(`ERROR IN URL ${req.url}: ${e}`);
     }
 

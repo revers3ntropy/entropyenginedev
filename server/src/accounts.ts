@@ -21,7 +21,7 @@ const saltCharacters = process.env.SEC_SALTCHARS,
       saltLength = parseInt(process.env.SEC_SALTLENGTH);
 
 const saltExists = async (salt: string) => {
-    return (await query(`SELECT salt FROM users WHERE salt='${clean(salt)}'`)) > 0;
+    return (await query(`SELECT salt FROM users WHERE salt='${clean(salt)}'`)).length > 0;
 };
 
 const genSalt = () => {
@@ -34,20 +34,20 @@ const genSalt = () => {
 
 
 export const username: Handler = async ({res, token}) => {
-    const value = await query(`SELECT username FROM users WHERE _id=${clean(token?.user)} LIMIT 1`);
+    const value = await query(`
+        SELECT username 
+        FROM users 
+        WHERE _id=${clean(token?.user)} 
+        LIMIT 1
+    `);
     res.end(JSON.stringify(value[0]));
 };
 
 export const userExists: Handler = async ({res, token}) => {
     const data = await query(`
-    
-        SELECT
-            _id
-        FROM 
-             users
-        WHERE 
-              _id = ${clean(token?.user)}
-    
+        SELECT _id
+        FROM users
+        WHERE _id = ${clean(token?.user)}
     `);
 
     res.end(JSON.stringify({
@@ -92,7 +92,15 @@ export const details: Handler = async ({res, token}) => {
 
 export const newUser: Handler = async ({res, body}) => {
 
-    const value = await query(`SELECT FLOOR (1 + RAND() * ${clean(idMax)}) AS value FROM users HAVING value NOT IN (SELECT DISTINCT _id FROM users) LIMIT 1`);
+    const value = await query(`
+        SELECT 
+               FLOOR (1 + RAND() * ${clean(idMax)}) AS value 
+        FROM users 
+        HAVING value 
+            NOT IN (SELECT DISTINCT _id FROM users)
+        LIMIT 1
+    `);
+
     const id = value[0]?.value || Math.ceil(Math.random() * idMax);
 
     let salt = genSalt();

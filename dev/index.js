@@ -1,3 +1,5 @@
+#!/usr/bin/env zx
+
 const fetch = require("axios");
 const { exec } = require("child_process");
 const path = require('path');
@@ -14,21 +16,6 @@ const HTTP_PORT = 3000;
 const API_PORT = 50001;
 
 // UTILS
-
-/**
- * @param {string} cmd
- * @returns {Promise<void>}
- */
-const run = async (cmd) => {
-	return new Promise((e) => {
-		exec(cmd, (error, stdout, stderr) => {
-			if (error) throw error;
-			if (stdout) console.log(stdout);
-			if (stderr) console.error(stderr);
-			e();
-		});
-	});
-}
 
 const api = async (path='', body={}) => {
 	try {
@@ -49,8 +36,9 @@ const WEBPACK_PATHS = ['footer.html', 'nav.html', 'types', 'main.ts', 'styles', 
 async function startServer () {
 	await (new Promise(async resolve => {
 		fs.writeFileSync('./server/log.txt', '');
+
 		// run server asynchronously
-		run(`cd server; node --enable-source-maps index --dev > log.txt`);
+		$`cd server; node --enable-source-maps index --dev > log.txt`;
 
 		// keep on checking until the server is ready
 		while (true) {
@@ -140,7 +128,7 @@ async function webpackBundleWatcher () {
 async function buildWebpack () {
 	const start = now();
 
-	await run('webpack --config webpack.config.js > ./build/webpack_log.txt');
+	await $`webpack --config webpack.config.js > ./build/webpack_log.txt`;
 	if (!fs.existsSync('./webpack_out.js')) {
 		console.error(chalk.red`NO WEBPACK OUTPUT!`);
 		return;

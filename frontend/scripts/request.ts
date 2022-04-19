@@ -5,7 +5,7 @@ import { apiURL } from "./constants";
 
 async function networkError () {
     let location = window.location.href;
-    window.location.href = 'https://entropyengine.dev/accounts/error?type=serverPingFailed&cb=' + encodeURIComponent(location);
+    window.location.assign('/error?type=serverPingFailed&cb=' + encodeURIComponent(location));
     await new Promise(_ => {});
 }
 
